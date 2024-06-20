@@ -88,6 +88,47 @@ class TestKaiserBessel:
         assert ct.allclose(E_kb * (1 - eps), E_kbF, np.single)  # low-precision sufficient
 
 
+class TestPPoly:
+    @pytest.mark.parametrize("sym", [True, False])
+    def test_value(self, sym):
+        # output values match ground truth
+        kbF = ftk_kernel.KaiserBesselF(beta=10)
+        ppoly = ftk_kernel.PPoly.from_kernel(kbF, B=100, N=20, sym=sym)  # an extreme fit
+
+        x = np.linspace(-kbF.support(), kbF.support(), 73)
+        y_gt = kbF(x)
+        y = ppoly(x)
+        assert ct.allclose(y, y_gt, y_gt.dtype)
+
+    @pytest.mark.parametrize(
+        "dtype",
+        [
+            np.single,
+            np.double,
+        ],
+    )
+    def test_prec(self, dtype):
+        # output dtype matches input dtype.
+        kbF = ftk_kernel.KaiserBesselF(beta=10)
+        ppoly = ftk_kernel.PPoly.from_kernel(kbF, B=100, N=20, sym=False)  # an extreme fit
+
+        assert ppoly(dtype(0)).dtype == dtype  # scalar in/out ok
+        v = np.linspace(-ppoly.support(), ppoly.support(), 11).astype(dtype)
+        assert ppoly(v).dtype == dtype  # vector in/out ok
+
+    @pytest.mark.parametrize("sym", [True, False])
+    def test_fit_kernel(self, sym):
+        # fit_kernel() produces right (B,N) values
+        kbF = ftk_kernel.KaiserBesselF(beta=10)
+        B, N = 13, 21
+        w, p = ftk_kernel.PPoly.fit_kernel(kbF, B, N, sym)
+        assert w.shape == (B, N + 1)
+        if sym:
+            assert np.allclose(p, kbF.support() / B)
+        else:
+            assert np.allclose(p, 2 * kbF.support() / B)
+
+
 # Ground truth re-implementations of KB pulses for testing purposes -----------
 def kb(x: float, beta: float) -> float:
     # f(x) = \frac{

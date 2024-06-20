@@ -1,6 +1,7 @@
 import pathlib as plib
 
 import numpy as np
+import scipy.linalg as spl
 import scipy.special as sps
 
 from fourier_toolkit.config import generate_module
@@ -8,6 +9,7 @@ from fourier_toolkit.config import generate_module
 __all__ = [
     "KaiserBessel",
     "KaiserBesselF",
+    "PPoly",
 ]
 
 
@@ -113,3 +115,158 @@ class KaiserBesselF(KaiserBessel):
 
     def low_level_callable(self) -> callable:
         return self._pkg.applyF
+
+
+class PPoly(Kernel):
+    r"""
+    Piecewise-Polynomial pulse.
+
+    For non-symmetric functions f: [-s, s] -> R:
+        f(x) = \sum_{n=0...N} w[b, n] x**n
+           b = int(x + s) / pitch  # bin index
+           all bins lie in [-s, s]
+    For symmetric functions f: [-s, s] -> R:
+        f(x) = \sum_{n=0...N} w[b, n] |x|**n
+           b = int(|x| / pitch)  # bin index
+           all bins lie in [0, s].
+
+    w = (B, N+1) polynomial coefficients. (B bins, order-N segments)
+    """
+
+    template_path = plib.Path(__file__).parent / "_ppoly_template.txt"
+
+    def __init__(
+        self,
+        weight: np.ndarray,
+        pitch: float,
+        sym: bool,
+    ):
+        """
+        Parameters
+        ----------
+        weight: ndarray
+            (B, N+1) coefficients encoding a B-piecewise polynomial of order N.
+
+            Coefficients are ordered in decreasing powers (aN,...,a0).
+        pitch: float
+            Width of each bin.
+        sym: bool
+            Symmetric or non-symmetric parameterization provided.
+        """
+        self._weight = weight
+        assert pitch > 0
+        self._pitch = float(pitch)
+        self._sym = bool(sym)
+
+        self._pkg = generate_module(
+            path=self.template_path,
+            subs=dict(
+                sym=self._sym,
+                bin_count=self._weight.shape[0],
+                poly_order=self._weight.shape[1] - 1,
+                pitch_rcp=1 / self._pitch,
+                support=self.support(),
+                weight=self._print_weights(),
+            ),
+        )
+
+    def support(self) -> float:
+        B = self._weight.shape[0]
+        if self._sym:
+            s = B * self._pitch
+        else:
+            s = B * self._pitch / 2
+        return float(s)
+
+    def low_level_callable(self) -> callable:
+        return self._pkg.apply
+
+    @classmethod
+    def fit_kernel(
+        cls,
+        kern: Kernel,
+        B: int,
+        N: int,
+        sym: bool,
+    ):
+        """
+        Find (weight, pitch) pair which best approximates a given kernel.
+
+        Parameters
+        ----------
+        kern: Kernel
+            Function to approximate.
+        B: int
+            Number of piecewise bins.
+        N: int
+            Polynomial order.
+        sym: bool
+            Assume kernel is symmetric.
+
+        Returns
+        -------
+        weight: ndarray
+            (B, N+1) coefficients encoding a B-piecewise polynomial of order N.
+
+            Coefficients are ordered in decreasing powers (aN,...,a0).
+        pitch: float
+            Width of each bin.
+        """
+        assert B >= 1
+        assert N >= 0
+
+        if sym:
+            pitch = kern.support() / B
+            bin_bound = np.linspace(0, kern.support(), B + 1)
+        else:
+            pitch = 2 * kern.support() / B
+            bin_bound = np.linspace(-kern.support(), kern.support(), B + 1)
+
+        offset = np.linspace(0, pitch, N + 1)
+        weight = np.zeros((B, N + 1))
+        for b in range(B):
+            A = (bin_bound[b] + offset.reshape(-1, 1)) ** np.arange(N, -1, -1)  # (N+1, N+1)
+            y = kern(bin_bound[b] + offset)
+            weight[b], *_ = spl.lstsq(A, y)
+
+        return weight, pitch
+
+    @classmethod
+    def from_kernel(
+        cls,
+        kern: Kernel,
+        B: int,
+        N: int,
+        sym: bool,
+    ):
+        """
+        Create instance by approximating a kernel.
+
+        Parameters
+        ----------
+        kern: Kernel
+            Function to approximate.
+        B: int
+            Number of piecewise bins.
+        N: int
+            Polynomial order.
+        sym: bool
+            Assume kernel is symmetric.
+        """
+        w, p = cls.fit_kernel(kern, B, N, sym)
+        return cls(w, p, sym)
+
+    def _print_weights(self) -> str:
+        # Print each bin weight on seperable line.
+        B = self._weight.shape[0]
+        N = self._weight.shape[1] - 1
+
+        s = ""
+        for b in range(B):
+            s += "    ("
+            for n in range(N + 1):
+                s += f"{self._weight[b, n]},"
+            s += "),\n"
+
+        s = s[:-1]  # drop final \n
+        return s

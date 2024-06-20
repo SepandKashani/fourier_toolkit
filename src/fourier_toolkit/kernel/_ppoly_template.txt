@@ -1,0 +1,74 @@
+# This is a template file used by `_kernel.py`.
+# Dollar-enclosed variables are replaced at runtime.
+
+import numba as nb
+import numba.types as nbt
+import numpy as np
+
+nb_flags = dict(
+    nopython=True,
+    nogil=True,
+    cache=True,
+    forceobj=False,
+    parallel=False,
+    error_model="numpy",
+    fastmath=True,
+    locals={},
+    boundscheck=False,
+)
+jit = nb.jit(
+    [
+        nbt.float32(nbt.float32),
+        nbt.float64(nbt.float64),
+    ],
+    **nb_flags,
+)
+vectorize = nb.vectorize(
+    [
+        nbt.float32(nbt.float32),
+        nbt.float64(nbt.float64),
+    ],
+    target="cpu",
+    cache=True,
+)
+
+
+sym = ${sym}  # symmetric kernel
+B = ${bin_count}  # number of piecewise segments
+N = ${poly_order}  # polynomial order
+pitch_rcp = ${pitch_rcp}
+support = ${support}
+weight = (  # (B, N+1) polynomial coefficients in (aN,...,a0) order
+${weight}
+)
+
+
+@nb.jit(
+    [
+        nbt.float32(nbt.float32, nbt.UniTuple(nbt.float32, N + 1)),
+        nbt.float64(nbt.float64, nbt.UniTuple(nbt.float64, N + 1)),
+    ],
+    **nb_flags,
+)
+def horner(x, a):
+    # Evaluate via Horner's rule
+    #     f(x) = \sum_{n=0...N} a_n x**n
+    #
+    # Coefficients provided in order (aN,...,a0)
+    y = a[0]
+    for n in range(1, N + 1):
+        y *= x
+        y += a[n]
+    return y
+
+
+@vectorize
+@jit
+def apply(x):
+    if sym:
+        idx = min(int(abs(x) * pitch_rcp), B - 1)
+        y = horner(abs(x), weight[idx])
+    else:
+        idx = min(int((x + support) * pitch_rcp), B - 1)
+        y = horner(x, weight[idx])
+    return y
