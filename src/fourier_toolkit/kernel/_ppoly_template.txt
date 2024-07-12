@@ -62,7 +62,6 @@ def horner(x, a):
     return y
 
 
-@vectorize
 @jit
 def apply(x):
     if sym:
@@ -72,3 +71,6 @@ def apply(x):
         idx = min(int((x + support) * pitch_rcp), B - 1)
         y = horner(x, weight[idx])
     return y
+
+
+v_apply = vectorize(apply)

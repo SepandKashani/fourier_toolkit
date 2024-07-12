@@ -32,9 +32,9 @@ class Kernel:
         """
         pass
 
-    def low_level_callable(self) -> callable:
+    def low_level_callable(self, ufunc: bool) -> callable:
         """
-        Numba-compiled ufunc.
+        Numba-compiled function, in scalar or ufunc version.
 
         Useful to pass around explicitly to 3rd-party functions.
         """
@@ -46,7 +46,7 @@ class Kernel:
 
         Must accept FP32/FP64 inputs.
         """
-        func = self.low_level_callable()
+        func = self.low_level_callable(ufunc=True)
         return func(x)
 
 
@@ -75,8 +75,11 @@ class KaiserBessel(Kernel):
     def support(self) -> float:
         return 1.0
 
-    def low_level_callable(self) -> callable:
-        return self._pkg.apply
+    def low_level_callable(self, ufunc: bool) -> callable:
+        if ufunc:
+            return self._pkg.v_apply
+        else:
+            return self._pkg.apply
 
     @classmethod
     def beta_from_eps(cls, eps: float) -> float:
@@ -113,8 +116,11 @@ class KaiserBesselF(KaiserBessel):
     def support(self) -> float:
         return self._beta / (2 * np.pi)
 
-    def low_level_callable(self) -> callable:
-        return self._pkg.applyF
+    def low_level_callable(self, ufunc: bool) -> callable:
+        if ufunc:
+            return self._pkg.v_applyF
+        else:
+            return self._pkg.applyF
 
 
 class PPoly(Kernel):
@@ -178,8 +184,11 @@ class PPoly(Kernel):
             s = B * self._pitch / 2
         return float(s)
 
-    def low_level_callable(self) -> callable:
-        return self._pkg.apply
+    def low_level_callable(self, ufunc: bool) -> callable:
+        if ufunc:
+            return self._pkg.v_apply
+        else:
+            return self._pkg.apply
 
     @classmethod
     def fit_kernel(

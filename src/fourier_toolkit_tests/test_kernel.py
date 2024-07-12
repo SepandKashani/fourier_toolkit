@@ -63,8 +63,8 @@ class TestKaiserBessel:
         opF = ftk_kernel.KaiserBesselF.from_eps(1e-16)
 
         kb0, kbF0 = op(0), opF(0)
-        kb_int, *_ = spi.quad(op.low_level_callable(), -op.support(), op.support())
-        kbF_int, *_ = spi.quad(opF.low_level_callable(), -opF.support(), opF.support())
+        kb_int, *_ = spi.quad(op.low_level_callable(False), -op.support(), op.support())
+        kbF_int, *_ = spi.quad(opF.low_level_callable(False), -opF.support(), opF.support())
 
         assert ct.allclose(kb0, kbF_int, np.single)  # low-precision sufficient
         assert ct.allclose(kbF0, kb_int, np.single)
