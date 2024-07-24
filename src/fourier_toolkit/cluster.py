@@ -1,5 +1,3 @@
-import itertools
-
 import numpy as np
 
 import fourier_toolkit.numba as ftk_numba
@@ -144,40 +142,36 @@ def fuse_cluster(
         # Initialize state variables:
         # * cl_LL, cl_UR: dict[int, float(D,)]
         # * cl_group: dict[int, set]
-        cl_LL, cl_UR = ftk_numba.group_minmax(x, x_idx, cl_info)
-        cl_LL = {q: cl_LL[q] for q in range(Q)}
-        cl_UR = {q: cl_UR[q] for q in range(Q)}
+        _cl_LL, _cl_UR = ftk_numba.group_minmax(x, x_idx, cl_info)
+        cl_LL = ftk_numba.dict_factory(fdtype)
+        cl_UR = ftk_numba.dict_factory(fdtype)
+        for q in range(Q):
+            cl_LL[q] = _cl_LL[q]
+            cl_UR[q] = _cl_UR[q]
         cl_group = {q: {q} for q in range(Q)}
 
         # Fuse clusters until completion
         clusters = set(range(Q))
         q = Q  # fused cluster index
-        candidates_available = True
-        while (len(clusters) > 1) and candidates_available:
-            for i, j in itertools.combinations(clusters, 2):
+        while len(clusters) > 1:
+            fuseable, (i, j) = ftk_numba.fuseable_candidate(cl_LL, cl_UR, bbox_dim)
+            if fuseable:
                 bbox_LL = np.fmin(cl_LL[i], cl_LL[j])
+                cl_LL[q] = bbox_LL
+                cl_LL.pop(i), cl_LL.pop(j)
+
                 bbox_UR = np.fmax(cl_UR[i], cl_UR[j])
+                cl_UR[q] = bbox_UR
+                cl_UR.pop(i), cl_UR.pop(j)
 
-                fuseable = np.all(bbox_UR - bbox_LL <= bbox_dim)
-                if fuseable:
-                    cl_LL[q] = bbox_LL
-                    cl_LL.pop(i), cl_LL.pop(j)
+                cl_group[q] = cl_group[i] | cl_group[j]
+                cl_group.pop(i), cl_group.pop(j)
 
-                    cl_UR[q] = bbox_UR
-                    cl_UR.pop(i), cl_UR.pop(j)
-
-                    cl_group[q] = cl_group[i] | cl_group[j]
-                    cl_group.pop(i), cl_group.pop(j)
-
-                    clusters.add(q)
-                    clusters.remove(i), clusters.remove(j)
-                    q += 1
-
-                    # clusters have changed -> skip rest of the for loop
-                    break
+                clusters.add(q)
+                clusters.remove(i), clusters.remove(j)
+                q += 1
             else:
-                # no clusters could be fused -> terminate while loop
-                candidates_available = False
+                break
 
         # Encode (xF_idx, clF_info)
         L = len(cl_group)

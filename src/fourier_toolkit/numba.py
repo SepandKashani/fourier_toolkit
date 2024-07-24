@@ -1,11 +1,13 @@
 import numba as nb
 import numba.types as nbt
 import numpy as np
+from numba.typed import Dict
 
 __all__ = [
     "count_sort",
     "digitize",
     "filter_to_bbox",
+    "fuseable_candidate",
     "group_minmax",
     "minmax",
 ]
@@ -37,6 +39,13 @@ f32_2C_t = nbt.Array(f32_t, 2, "C")
 f64_t = nbt.float64
 f64_1C_t = nbt.Array(f64_t, 1, "C")
 f64_2C_t = nbt.Array(f64_t, 2, "C")
+# dict types --------------------------
+f32_dict_t = nbt.DictType(i_t, nbt.Array(f32_t, 1, "C"))
+f64_dict_t = nbt.DictType(i_t, nbt.Array(f64_t, 1, "C"))
+dict_factory = lambda np_dtype: Dict.empty(  # to runtime-construct dict-types above
+    key_type=i_t,
+    value_type=nbt.Array(nb.from_dtype(np_dtype), 1, "C"),
+)
 
 
 @nb.jit(
@@ -283,3 +292,67 @@ def filter_to_bbox(
         mask[m] = inside
 
     return mask
+
+
+@nb.jit(
+    [
+        nbt.Tuple((b_t, nbt.UniTuple(i_t, 2)))(f32_dict_t, f32_dict_t, f32_1C_t),
+        nbt.Tuple((b_t, nbt.UniTuple(i_t, 2)))(f64_dict_t, f64_dict_t, f64_1C_t),
+    ],
+    **_nb_flags,
+    parallel=False,
+)
+def fuseable_candidate(
+    cl_LL: dict,
+    cl_UR: dict,
+    bbox_dim: np.ndarray,
+) -> tuple:
+    # Computes code below more efficiently:
+    #     clusters = cl_LL.keys()
+    #     for i, j in itertools.combinations(clusters, 2):
+    #         bbox_LL = np.fmin(cl_LL[i], cl_LL[j])
+    #         bbox_UR = np.fmax(cl_UR[i], cl_UR[j])
+    #         fuseable = np.all(bbox_UR - bbox_LL <= bbox_dim)
+    #         if fuseable:
+    #             return fuseable, (i, j)
+    #     return False, (0, 0)
+    #
+    # Parameters
+    # ----------
+    # cl_LL, cl_UR: dict[int, ndarray[float]]
+    #     Q entries.
+    # bbox_dim: ndarray[float]
+    #     (D,)
+    #
+    # Returns
+    # -------
+    # fuseable: bool
+    #     There exists a candidate (i, j) pair.
+    # i, j: int
+    #     Cluster indices to fuse.
+    fdtype = bbox_dim.dtype
+    D = len(bbox_dim)
+    Q = len(cl_LL)
+
+    if Q == 1:
+        return False, (0, 0)
+    else:
+        bbox_LL = np.zeros(D, dtype=fdtype)
+        bbox_UR = np.zeros(D, dtype=fdtype)
+
+        clusters = list(cl_LL.keys())
+
+        for i in range(Q):
+            for j in range(i + 1, Q):
+                _i = clusters[i]
+                _j = clusters[j]
+
+                fuseable = True
+                for d in range(D):
+                    bbox_LL[d] = min(cl_LL[_i][d], cl_LL[_j][d])
+                    bbox_UR[d] = max(cl_UR[_i][d], cl_UR[_j][d])
+                    fuseable &= bbox_UR[d] - bbox_LL[d] <= bbox_dim[d]
+
+                if fuseable:
+                    return fuseable, (_i, _j)
+        return False, (0, 0)
