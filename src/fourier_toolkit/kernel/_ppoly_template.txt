@@ -3,7 +3,6 @@
 
 import numba as nb
 import numba.types as nbt
-import numpy as np
 
 nb_flags = dict(
     nopython=True,
