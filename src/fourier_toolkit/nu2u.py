@@ -1,7 +1,9 @@
 import warnings
 
+import ducc0.fft as dfft
 import numba as nb
 import numpy as np
+import scipy.fft as sfft
 
 import fourier_toolkit.complex as ftk_complex
 import fourier_toolkit.ffs as ftk_ffs
@@ -187,7 +189,7 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
             p.upsampfac,
             p.upsampfac_ratio,
         )
-        x_bbox_dim, v_bbox_dim = self._infer_bbox_dims(
+        x_bbox_dim, _ = self._infer_bbox_dims(
             *(np.ptp(x, axis=0), v_spec["step"] * (v_spec["num"] - 1)),
             *(w_x, w_v),
             p.domain,
@@ -220,17 +222,26 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
             cfg.alpha_x,
             *(p.max_cluster_size, p.max_window_ratio),
         )
+        v_info = self._u_filter_info(
+            *("v", cfg.v0, cfg.dv, cfg.N, cfg.Vc[0]),
+            *(cfg.T, cfg.K, cfg.L),
+            *(cfg.Ov, cfg.Sv),
+            *(cfg.phi, cfg.alpha_v),
+        )
         # =====================================================================
 
         # adjust contents of `cfg`:
         #   - (x,) -> partition/cluster order. [Was user-order before.]
         #   - (x_idx,) -> partition AND cluster order. [Was partition-order before.]
-        #   - adds extra fields from _cluster_info().
+        #   - x-domain: adds extra fields from _nu_cluster_info().
+        #   - v-domain: adds extra fields from _u_filter_info().
         cfg = cfg._asdict()
         cfg.update(
             x=x[x_info.x_idx],  # canonical partition/cluster order
             Qx=len(x_info.x_cl_bound) - 1,
             **x_info._asdict(),
+            # -------------------------
+            **v_info._asdict(),
         )
         self.cfg = ftk_util.as_namedtuple(**cfg)
 
@@ -316,6 +327,167 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
         return ax
 
     # Helper routines (internal) ----------------------------------------------
+    @staticmethod
+    def _u_filter_info(
+        label: str,
+        p0: np.ndarray,
+        dp: np.ndarray,
+        pN: np.ndarray,
+        pC: np.ndarray,
+        T: np.ndarray,
+        K: np.ndarray,
+        L: np.ndarray,
+        Op: np.ndarray,
+        Sp: np.ndarray,
+        phi: np.ndarray,
+        alpha: np.ndarray,
+    ):
+        r"""
+        Compute kernels/etc needed for uniform interpolation.
+
+        Parameters
+        ----------
+        label: "x", "v"
+            Variable label.
+
+            [Not strictly required since `v` is the only uniform domain.
+             May be useful the day U2NU() is no longer a sub-class of NU2U().]
+        p0: ndarray[float]
+            (D,) lattice starting point :math:`\bbp_{0} \in \bR^{D}`.
+        dp: ndarray[float]
+            (D,) lattice step :math:`\Delta_{p} \in \bR^{D}`.
+        pN: ndarray[int]
+            (D,) lattice node-count :math:`\{ N_{1},\ldots,N_{D} \} \in \bN^{D}`.
+        pC: ndarray[float]
+            (D,) lattice centroid.
+        T: ndarray[float]
+            (D,) FFS period.
+        K: ndarray[int]
+            (D,) Max FS frequency computed.
+        L: ndarray[int]
+            (D,) FFS transform length.
+        Op: ndarray[int]
+            (Op1,...,OpD) upsampling factors.
+        Sp: ndarray[int]
+            (Sp1,...,SpD) subsampling factors.
+        phi: Kernel
+            Spread/interp pulse \phi_{\beta}(s)
+        alpha: ndarray[float]
+            (D,) kernel scale factors :math:`\{ \alpha_{1},\ldots,\alpha_{D} \}`.
+
+        Returns
+        -------
+        info: namedtuple
+            Filter metadata, with fields:
+
+            * ${label}_kernel: tuple[ndarray[float]]
+                (Op1, w1),...,(OpD,wD) convolution kernels.
+            * ${label}_anchor: tuple[ndarray[int]]
+                (Op1,),...,(OpD,) indices to extract samples from circular convolution; per axial kernel.
+            * ${label}_num: ndarray[int]
+                (D,) length of circular convolution to extract.
+                I.e. the signal of interest is
+
+                iFFT(...)[anchor[0]  :  anchor[0]   + num[0],
+                                    ...
+                          anchor[D-1]:  anchor[D-1] + num[D-1]]
+        """
+        # [Intuition in D=1 case; partitions/stack-dims omitted /w.l.o.g.]
+        #
+        # Given hFS(L,), the (centered) output frequencies g_{0}^{\ctft}(v) are obtained by interpolation:
+        #     g0F(v) = \sum_{k} hFS_k \psi_v(v - k / T)
+        # When v is uniformly distributed, i.e. v_n = v0 + dv * n, then
+        #     g0F(v_{O q + s}) = \sum_{k} hFS_k \psi_v( v0 + [s/O + (q-k)] / T ),
+        # which we re-write as
+        #     b^{s}[q] = \sum_{k} hFS[k] a^{s}[q-k],
+        # with
+        #     a^{s}[k] = \psi_v( v0 + [s/O + k] / T )
+        #
+        # In other words all N g0F values can be computed by convolving hFS with O filters of length w_v, then interleaving their outputs.
+        # These convolutions can be done efficiently via a length-L FFT.
+        # (Circular convolution suffices since hFS is already padded by construction.)
+        #
+        # The equations above describe the O-oversampling case, i.e. when N ~ (2K+1)O
+        # The S-subsampling case, i.e. when N S ~ (2K+1), is similar but omitted for clarity.
+        #
+        # This function computes
+        # - the filter coefficients a^{s}
+        # - the selector `slice(start,start+num,1)` to extract b^{s} from each iFFT output.
+        idtype, fdtype = np.int64, np.double
+
+        D = len(p0)
+        pNX = pN * Sp  # (D,)
+
+        p_kernel = [None] * D
+        p_anchor = [None] * D
+        p_num = np.ceil(pNX / Op).astype(idtype)
+        for d in range(D):
+            # Compute Op kernels of length ~w_p.
+            #
+            # Q: Why ~w_p?
+            # A: Because kernels are sometimes non-zero from different starting offsets given the sampling pattern.
+            #    Moreover we want to store them all in a 2D array for simplicity, so they are slightly padded if needed.
+            #    Finally, since the convolutions take place at runtime via FFT-convolve and since w_p < L, it doesn't matter if kernels are slightly wider than necessary.
+            a = np.zeros((Op[d], 2 * K[d] + 1), dtype=fdtype)  # (Op, 2K+1)
+            s, k = np.meshgrid(
+                np.arange(Op[d]),
+                np.arange(-K[d], K[d] + 1),
+                indexing="ij",
+                sparse=True,
+            )
+            phi_args = (p0[d] - pC[d]) + (1 / T[d]) * ((s / Op[d]) + k)
+            phi_args *= alpha[d]
+            mask = abs(phi_args) <= 1
+            a[mask] = phi(phi_args[mask])
+            a = a[:, np.any(a > 0, axis=0)]  # (Op, ~w_p)
+            p_kernel[d] = a
+
+            # Q: How to correctly determine which slice of the FFT(pNX,) output to keep?
+            # A: Difficult to do analytically given kernels `a` above have different non-zero supports sometimes.
+            #    A robust method is to
+            #    1. compute what the interpolated output `b_gt` must be analytically for a known input.
+            #       The known input is the DC signal \tilde{h} s.t. hFS_0 = 1, hence
+            #           b_gt[n] = g0F(v_n)
+            #                   = \sum_{-K..K} hFS_k \psi_v(v_n - k/T)
+            #                   = \psi_v(v_n)
+            #    2. compare slices of `b_gt` with each output `b^{s}` obtained via FFT-convolve, and find the correct offset via correlation.
+            #
+            #       We are working on 1D sequences, so this up-front work is insignificant in practice.
+
+            # We first compute the interleaved output `b_gt`...
+            b_gt = np.zeros(pNX[d], dtype=fdtype)
+            phi_args = (p0[d] - pC[d]) + (dp[d] / Sp[d]) * np.arange(pNX[d])
+            phi_args *= alpha[d]
+            mask = abs(phi_args) <= 1
+            b_gt[mask] = phi(phi_args[mask])
+
+            # ... then compute b(Op, ~w_p), ...
+            anchor = np.zeros(Op[d], dtype=idtype)
+            hFS = np.zeros(L[d], dtype=fdtype)
+            hFS[K[d]] = 1
+            b = sfft.ifft(  # (Ov, L)
+                sfft.fft(hFS) * sfft.fft(a, n=L[d], axis=-1),
+                axis=-1,
+            ).real
+
+            # ... to finally extract the right sub-sequence via correlation.
+            for s in range(Op[d]):
+                anchor[s] = np.correlate(
+                    b[s],
+                    b_gt[s :: Op[d]],
+                    mode="valid",
+                ).argmax()
+            p_anchor[d] = anchor
+
+        info = ftk_util.as_namedtuple(
+            **{
+                f"{label}_kernel": tuple(p_kernel),
+                f"{label}_anchor": tuple(p_anchor),
+                f"{label}_num": p_num,
+            }
+        )
+        return info
+
     @classmethod
     def _init_metadata(
         cls,
@@ -389,7 +561,14 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
             * Vd0: (D,) float           [v-domain partition spread V_{d}^{0}; extent of freqs wanted]
             * Vd: (D,) float            [v-domain partition spread V_{d};     extent of freqs needed]
             * Ov: (D,) int >= 1         [v-domain oversampling factor \bbO_{v}]
-            * Sv: (D,) int >= 1         [v-domain subsampling factor \bbS_{v}]
+            * Sv: (D,) int >= 1         [v-domain subsampling  factor \bbS_{v}]
+            * v_kernel (Ov1,~w_v1),     [v-domain convolution kernels]
+                           ...,
+                       (OvD,~w_vD) float
+            * v_anchor: (Ov1,),         [v-domain convolution extraction index]
+                         ...,
+                        (OvD,) int
+            * v_num: (D,) int           [v-domain convolution extraction length]
         """
         D = x.shape[1]
 
@@ -402,21 +581,27 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
         sigma_x = upsampfac**upsampfac_ratio
 
         # As much v-domain stuff as possible --------------
+        # Setting (Vc, Vd0) as below always guarantees a lattice node lies at the origin in centered coordinates.
         N = N
         v0 = v0
         dv = dv
         Pv = 1
-        Vc = (v0 + dv * (N - 1) / 2).reshape(Pv, D)
-        Vd0 = dv * (N - 1)
+        Vc = (v0 + (dv / 2) * np.where(N % 2 == 1, N - 1, N)).reshape(Pv, D)
+        Vd0 = dv * np.where(N % 2 == 1, N - 1, N)
         sigma_v = upsampfac ** (1 - upsampfac_ratio)
 
-        # To be overwritten after _cluster_info() ---------
+        # To be overwritten after _nu_cluster_info() ------
         Qx = None
         x = x  # user-order for now
         x_idx = x_idx  # partition-order only for now
         x_cl_bound = None
         x_anchor = None
         x_num = None
+
+        # To be overwritten after _u_filter_info() --------
+        v_kernel = None
+        v_anchor = None
+        v_num = None
 
         # (x,v)-dependant stuff ---------------------------
         w_x, w_v = cls._infer_kernel_widths(
@@ -541,6 +726,9 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
             Vd=Vd,
             Ov=Ov,
             Sv=Sv,
+            v_kernel=v_kernel,
+            v_anchor=v_anchor,
+            v_num=v_num,
         )
         return info
 
@@ -571,42 +759,107 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
-        # reshape/cast (v, hFS)
+        # useful variables
         sh = hFS.shape[2 : -self.cfg.D]  # (...,)
-        Ns = int(np.prod(sh))
-        hFS = hFS.reshape(self.cfg.Px, Ns, *self.cfg.L)  # (Px, Ns, L1,...,LD)
-        Xc = self.cfg.Xc.astype(fdtype, copy=False)
-        Vc = self.cfg.Vc.astype(fdtype, copy=False)[0]  # (D,)
-        v0 = self.cfg.v0.astype(fdtype, copy=False)
-        dv = self.cfg.dv.astype(fdtype, copy=False)
+        NX = self.cfg.v_num * self.cfg.Ov  # (D,)
+        Xc = self.cfg.Xc.astype(fdtype, copy=False)  # (Px, D)
+        A = [None] * self.cfg.D  # (Ov1, L1),...,(OvD, LD)
+        mod = [None] * self.cfg.D  # (Px, NX1),...,(Px,NXD)
+        for d in range(self.cfg.D):
+            A[d] = sfft.fft(
+                self.cfg.v_kernel[d].astype(fdtype),
+                n=self.cfg.L[d],
+                axis=-1,
+            )
 
-        # todo: perform interpolation to g0F(Px, Ns, N1,...,ND) ===============
-        v = [None] * self.cfg.D
-        for d, (_v0, _dv, _N) in enumerate(zip(v0, dv, self.cfg.N)):
-            v[d] = (_v0 - Vc[d]) + _dv * np.arange(_N, dtype=fdtype)
-        v = np.stack(np.meshgrid(*v, indexing="ij"), axis=-1)  # (N1,...,ND, D)
-        v = v.reshape(self.cfg.N.prod(), self.cfg.D)  # (N1*...*N1, D)
-        op = ftk_spread.UniformSpread(
-            x=v,  # canonical (centered) v-lattice
-            z_spec=dict(  # FFS v-lattice
-                start=self.cfg.F_v0,
-                step=self.cfg.F_dv,
-                num=self.cfg.L,
-            ),
-            phi=self.cfg.phi.low_level_callable(ufunc=False),
-            alpha=self.cfg.alpha_v,
+            _v = np.arange(NX[d], dtype=fdtype)
+            _v *= self.cfg.dv[d] / self.cfg.Sv[d]
+            _v += self.cfg.v0[d]
+            mod[d] = ftk_complex.cexp((-2 * np.pi) * (Xc[:, [d]] * _v))
+
+        # helper functions
+        fftn = lambda x: dfft.c2c(
+            x,
+            axes=tuple(range(-self.cfg.D, 0)),
+            forward=True,
+            inorm=0,
+            nthreads=self.cfg.fft_nthreads,
         )
-        g0F = op.adjoint(hFS)  # (Px, Ns, L1,...,LD) -> (Px, Ns, N1*...*ND)
-        g0F = g0F.reshape(self.cfg.Px, Ns, *self.cfg.N)
-        # =====================================================================
+        ifftn = lambda x: dfft.c2c(
+            x,
+            axes=tuple(range(-self.cfg.D, 0)),
+            forward=False,
+            inorm=2,
+            nthreads=self.cfg.fft_nthreads,
+        )
+        b_roi = lambda s: tuple(  # (D,) -> tuple[slice]
+            slice(_v_anchor[_s], _v_anchor[_s] + _v_num, 1)
+            for (_v_anchor, _v_num, _s) in zip(
+                self.cfg.v_anchor,
+                self.cfg.v_num,
+                s,
+            )
+        )
+        gF_roi = lambda s: tuple(  # (D,) -> tuple[slice]
+            slice(_s, _s + _NX, _Ov)
+            for (_s, _NX, _Ov) in zip(
+                s,
+                NX,
+                self.cfg.Ov,
+            )
+        )
+        A_roi = lambda s: tuple(  # (D,) -> tuple[ndarray]
+            _A[_s]
+            for (_A, _s) in zip(
+                A,
+                s,
+            )
+        )
+        mod_roi = lambda s: tuple(  # (D,) -> tuple[ndarray]
+            _mod[:, _roi]
+            for (_mod, _roi) in zip(
+                mod,
+                gF_roi(s),
+            )
+        )
 
-        # mod/reduce x-partitions
-        _mod = [None] * self.cfg.D
-        for d, (_v0, _dv, _N) in enumerate(zip(v0, dv, self.cfg.N)):
-            _v = _v0 + _dv * np.arange(_N, dtype=fdtype)
-            _mod[d] = ftk_complex.cexp((-2 * np.pi) * (Xc[:, [d]] * _v))
-        gF = ftk_linalg.hadamard_outer2(g0F, *_mod)  # (Ns, N1,...,ND)
-        gF = gF.reshape(*sh, *self.cfg.N)  # (..., N1,...,ND)
+        # reshape (hFS,)
+        hFS = hFS[0]  # (Px, ..., L1,...,LD)
+
+        # compute hFS spectrum (after dropping alias error)
+        for d in range(self.cfg.D):
+            select = [slice(None)] * self.cfg.D
+            select[d] = slice(
+                2 * self.cfg.K[d] + 1,
+                self.cfg.L[d],
+                1,
+            )
+            hFS[..., *select] = 0
+        HFS = fftn(hFS)  # (Px, ..., L1,...,LD)
+
+        # interp/mod/reduce v-subsets
+        gF = np.zeros((*sh, *NX), dtype=cdtype)  # (..., NX1,...,NXD)
+        for s in np.ndindex(tuple(self.cfg.Ov)):
+            b = ifftn(
+                ftk_linalg.hadamard_outer(
+                    HFS,
+                    *A_roi(s),
+                )
+            )
+            gF[..., *gF_roi(s)] = ftk_linalg.hadamard_outer2(
+                b[..., *b_roi(s)],
+                *mod_roi(s),
+            )
+
+        # trim gF
+        select = tuple(
+            slice(0, _N * _Sv, _Sv)
+            for (_N, _Sv) in zip(
+                self.cfg.N,
+                self.cfg.Sv,
+            )
+        )
+        gF = gF[..., *select]  # (..., N1,...,ND)
         return gF
 
     def _bw_spread(self, gF: np.ndarray) -> np.ndarray:
