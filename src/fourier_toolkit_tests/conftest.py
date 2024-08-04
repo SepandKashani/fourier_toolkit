@@ -20,6 +20,34 @@ def allclose(
     return match
 
 
+def rel_error(
+    a: np.ndarray,
+    b: np.ndarray,
+    D: int,
+) -> np.ndarray:
+    r"""
+    Relative distance between 2 vectors.
+
+    Parameters
+    ----------
+    a: ndarray[float/complex]
+        (..., N1,...,ND)
+    b: ndarray[float/complex]
+        (..., N1,...,ND)
+    D: int
+
+    Returns
+    -------
+    rel: ndarray[float]
+        (...,)  \norm{a-b}{2} / \norm{b}{2}
+    """
+    axes = tuple(range(-D, 0))
+    num = np.sum((a - b) * (a - b).conj(), axis=axes).real
+    den = np.sum(b * b.conj(), axis=axes).real
+    rel = np.sqrt(num / den)
+    return rel
+
+
 def relclose(
     a: np.ndarray,
     b: np.ndarray,
@@ -45,10 +73,8 @@ def relclose(
         \norm{a - b}{2} <= eps * \norm{b}{2}
     """
     assert 0 <= eps < 1
-    axes = tuple(np.arange(-D, 0))
-    lhs = np.sum((a - b) * (a - b).conj(), axis=axes).real  # (...,)
-    rhs = np.sum(b * b.conj(), axis=axes).real  # (...,)
-    close = np.all(lhs <= (eps**2) * rhs)
+    r_err = rel_error(a, b, D)
+    close = np.all(r_err <= eps)
     return close
 
 
