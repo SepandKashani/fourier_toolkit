@@ -876,7 +876,115 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
         hFS: ndarray
             (Pv, Px, ..., L1,...,LD) FS coefficients [w/ FFS padding].
         """
-        raise NotImplementedError  # todo
+        translate = ftk_util.TranslateDType(gF.dtype)
+        fdtype = translate.to_float()
+        cdtype = translate.to_complex()
+
+        # useful variables
+        sh = gF.shape[: -self.cfg.D]  # (...,)
+        NX = self.cfg.v_num * self.cfg.Ov  # (D,)
+        Xc = self.cfg.Xc.astype(fdtype, copy=False)  # (Px, D)
+        A = [None] * self.cfg.D  # (Ov1, L1),...,(OvD, LD)
+        mod = [None] * self.cfg.D  # (Px, NX1),...,(Px,NXD)
+        for d in range(self.cfg.D):
+            A[d] = sfft.fft(
+                self.cfg.v_kernel[d].astype(fdtype),
+                n=self.cfg.L[d],
+                axis=-1,
+            ).conj()
+
+            _v = np.arange(NX[d], dtype=fdtype)
+            _v *= self.cfg.dv[d] / self.cfg.Sv[d]
+            _v += self.cfg.v0[d]
+            mod[d] = ftk_complex.cexp((2 * np.pi) * (Xc[:, [d]] * _v))
+
+        # helper functions
+        fftn = lambda x: dfft.c2c(
+            x,
+            axes=tuple(range(-self.cfg.D, 0)),
+            forward=True,
+            inorm=0,
+            nthreads=self.cfg.fft_nthreads,
+        )
+        ifftn = lambda x: dfft.c2c(
+            x,
+            axes=tuple(range(-self.cfg.D, 0)),
+            forward=False,
+            inorm=2,
+            nthreads=self.cfg.fft_nthreads,
+        )
+        b_roi = lambda s: tuple(  # (D,) -> tuple[slice]
+            slice(_v_anchor[_s], _v_anchor[_s] + _v_num, 1)
+            for (_v_anchor, _v_num, _s) in zip(
+                self.cfg.v_anchor,
+                self.cfg.v_num,
+                s,
+            )
+        )
+        gF_roi = lambda s: tuple(  # (D,) -> tuple[slice]
+            slice(_s, _s + _NX, _Ov)
+            for (_s, _NX, _Ov) in zip(
+                s,
+                NX,
+                self.cfg.Ov,
+            )
+        )
+        A_roi = lambda s: tuple(  # (D,) -> tuple[ndarray]
+            _A[_s]
+            for (_A, _s) in zip(
+                A,
+                s,
+            )
+        )
+        mod_roi = lambda s: tuple(  # (D,) -> tuple[ndarray]
+            _mod[:, _roi]
+            for (_mod, _roi) in zip(
+                mod,
+                gF_roi(s),
+            )
+        )
+
+        # upsample gF
+        if np.any(NX != self.cfg.N):
+            select = tuple(
+                slice(0, _N * _Sv, _Sv)
+                for (_N, _Sv) in zip(
+                    self.cfg.N,
+                    self.cfg.Sv,
+                )
+            )
+            _gF = np.zeros((*sh, *NX), dtype=gF.dtype)  # (..., NX1,...,NXD)
+            _gF[..., *select] = gF
+            gF = _gF
+
+        # split/mod/spread v-subsets
+        HFS = np.zeros((self.cfg.Px, *sh, *self.cfg.L), dtype=cdtype)  # (Px, ..., L1,...,LD)
+        b = np.empty_like(HFS)
+        for s in np.ndindex(tuple(self.cfg.Ov)):
+            b[:] = 0
+            b[..., *b_roi(s)] = ftk_linalg.hadamard_outer3(
+                gF[..., *gF_roi(s)],
+                *mod_roi(s),
+            )
+            HFS += ftk_linalg.hadamard_outer(
+                fftn(b),
+                *A_roi(s),
+            )
+
+        # compute hFS (then drop alias error)
+        hFS = ifftn(HFS)  # (Px, ..., L1,...,LD)
+        for d in range(self.cfg.D):
+            select = [slice(None)] * self.cfg.D
+            select[d] = slice(
+                2 * self.cfg.K[d] + 1,
+                self.cfg.L[d],
+                1,
+            )
+            hFS[..., *select] = 0
+
+        # reshape (hFS,)
+        hFS = hFS[np.newaxis]  # (Pv, Px, ..., L1,...,LD)
+        return hFS
 
     def _de_convolve(self, gF: np.ndarray) -> np.ndarray:
         r"""
