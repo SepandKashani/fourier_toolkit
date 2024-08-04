@@ -1,0 +1,37 @@
+test_nu2nu/u2nu/nu2u
+    (test_value_apply, test_math_adjoint) use a fixed eps threshold of 1e-3 for all comparisons.
+    This should be changed to vary with kernel stopband energy.
+test_nu2u.test_apply
+    Something in fw_interpolate() and bw_spread() catastrophically breaks error estimates when inputs are 32-bit.
+    64-bit inputs are not concerned.
+    Since operations used in these methods match those in NU->NU up to the FFT, I suspect FP32 FFTs are introducing "noise" in the process.
+    To be investigated further.
+nu2u (u2nu as by-product)
+    fw_interpolate() and bw_spread() are speed-wise on-par with NU2NU's same-named functions since the np.ndindex() loops are done sequentially.
+    [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
+    Memory consumption is lower however due to materializing L-sized arrays instead of N-sized.
+    Consider explicit parallel evaluation of each iterate if Ov is large.
+
+Observations
+    nu2nu spread/interp time
+        Masking spread/interp, but still doing all modulations, reduces runtime by 80%.
+        spread/interp are therefore the bottleneck when M/N large.
+
+        I noticed you can speed up cfg.f_[spread,interp]() by 30% if hard-coding the kernel instead of dynamically supplying it.
+        We don't do this optimization to be able to test different kernels easily though.
+    does stacking benefit for cheap kernels?
+        triangle
+            3x runtime to do 60 stacks
+        poly order 20
+            ~35x faster than kb
+            ~3x slower than triangle
+                so runtime increase should be closer to triangle
+        kb
+            1.6x runtime to do 60 stacks
+    ftk vs finufft
+        init time differences as function of M
+        runtime speed as function of M / fft size
+        what explains runtime delta?
+            fftn() vs fftw()
+            kernel eval speed (triangle gives good boost)
+            thread overhead
