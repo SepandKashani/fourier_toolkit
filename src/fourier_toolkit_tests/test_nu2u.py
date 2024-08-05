@@ -261,7 +261,7 @@ class TestNU2U:
         # max_bbox_ratio,
         # max_bbox_anisotropy,
     ) -> ftk_nu2u.NU2U:
-        return ftk_nu2u.NU2U(
+        op = ftk_nu2u.NU2U(
             x=x_m,
             v_spec=v_spec,
             isign=isign,
@@ -270,6 +270,13 @@ class TestNU2U:
             upsampfac_ratio=upsampfac_ratio,
             chunked=chunked,
         )
+
+        # Make sure chunking is doing what is expected
+        if chunked:
+            assert op.cfg.Px > 1
+            assert op.cfg.Pv == 1
+
+        return op
 
     # Helper functions --------------------------------------------------------
     @staticmethod
