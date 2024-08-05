@@ -9,6 +9,181 @@ import fourier_toolkit_tests.conftest as ct
 pytestmark = pytest.mark.filterwarnings("ignore::numba.NumbaExperimentalFeatureWarning")
 
 
+def _generate_NU2NU_inputs() -> list:
+    # Create (D, x_m, v_n, chunked, domain) pairs used to initialize fixtures
+    data = []
+
+    # D=1, no chunk ---------------------------------------
+    D, chunked, domain = 1, False, "xv"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=2,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=2.1,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=1, chunk x ----------------------------------------
+    D, chunked, domain = 1, True, "x"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=200,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=21,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=1, chunk v ----------------------------------------
+    D, chunked, domain = 1, True, "v"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=200,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=21,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=1, chunk xv ---------------------------------------
+    D, chunked, domain = 1, True, "xv"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=200,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=201,
+        N_blk=100,
+        sparsity_ratio=5e-2,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=2, no chunk ---------------------------------------
+    D, chunked, domain = 2, False, "xv"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=2,
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=2.1,
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=2, chunk x ----------------------------------------
+    D, chunked, domain = 2, True, "x"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=[250, 251],
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=1,
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=2, chunk v ----------------------------------------
+    D, chunked, domain = 2, True, "v"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=[250, 251],
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=1,
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    # D=2, chunk xv ---------------------------------------
+    D, chunked, domain = 2, True, "xv"
+    rng = np.random.default_rng(0)
+    x_m = ct.generate_point_cloud(
+        N_point=250,
+        D=D,
+        bbox_dim=[10, 11],
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    v_n = ct.generate_point_cloud(
+        N_point=251,
+        D=D,
+        bbox_dim=[0.1, 130],
+        N_blk=100,
+        sparsity_ratio=(5e-2) ** D,
+        rng=rng,
+    )
+    data.append((D, x_m, v_n, chunked, domain))
+
+    return data
+
+
 class TestNU2NU:
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
@@ -80,36 +255,6 @@ class TestNU2NU:
         assert ct.relclose(lhs, rhs, D=1, eps=1e-3)  # todo: progressive eps?
 
     # Fixtures ----------------------------------------------------------------
-    @pytest.fixture(params=[1, 2])  # we don't do 3D since [unchunked] Heisenberg volume may be large.
-    def space_dim(self, request) -> int:
-        return request.param
-
-    @pytest.fixture
-    def x_m(self, space_dim) -> np.ndarray:
-        rng = np.random.default_rng()
-        x = ct.generate_point_cloud(
-            N_point=50,
-            D=space_dim,
-            bbox_dim=np.arange(space_dim) + 10,
-            N_blk=np.arange(space_dim) + 20,
-            sparsity_ratio=0.1,
-            rng=rng,
-        )
-        return x
-
-    @pytest.fixture
-    def v_n(self, space_dim) -> np.ndarray:
-        rng = np.random.default_rng()
-        v = ct.generate_point_cloud(
-            N_point=51,
-            D=space_dim,
-            bbox_dim=np.arange(space_dim) + 7,
-            N_blk=np.arange(space_dim) + 10,
-            sparsity_ratio=0.1,
-            rng=rng,
-        )
-        return v
-
     @pytest.fixture(params=[-1, 1])
     def isign(self, request) -> int:
         return request.param
@@ -128,25 +273,6 @@ class TestNU2NU:
 
     @pytest.fixture(
         params=[
-            (False, "xv"),  # domain doesn't matter
-            (True, "x"),
-            (True, "v"),
-            (True, "xv"),
-        ]
-    )
-    def chunked_domain(self, request) -> tuple[bool, str]:
-        return request.param
-
-    @pytest.fixture
-    def chunked(self, chunked_domain) -> bool:
-        return chunked_domain[0]
-
-    @pytest.fixture
-    def domain(self, chunked_domain) -> str:
-        return chunked_domain[1]
-
-    @pytest.fixture(
-        params=[
             np.float32,
             np.float64,
         ]
@@ -155,6 +281,36 @@ class TestNU2NU:
         # FP precisions to test implementation.
         # This is NOT the dtype of inputs, just sets the precision.
         return np.dtype(request.param)
+
+    @pytest.fixture(params=_generate_NU2NU_inputs())
+    def D_xM_vN_chunked_domain(self, request) -> tuple:
+        D, x_m, v_n, chunked, domain = request.param
+        return (D, x_m, v_n, chunked, domain)
+
+    @pytest.fixture
+    def space_dim(self, D_xM_vN_chunked_domain) -> int:
+        D, x_m, v_n, chunked, domain = D_xM_vN_chunked_domain
+        return D
+
+    @pytest.fixture
+    def x_m(self, D_xM_vN_chunked_domain) -> int:
+        D, x_m, v_n, chunked, domain = D_xM_vN_chunked_domain
+        return x_m
+
+    @pytest.fixture
+    def v_n(self, D_xM_vN_chunked_domain) -> int:
+        D, x_m, v_n, chunked, domain = D_xM_vN_chunked_domain
+        return v_n
+
+    @pytest.fixture
+    def chunked(self, D_xM_vN_chunked_domain) -> int:
+        D, x_m, v_n, chunked, domain = D_xM_vN_chunked_domain
+        return chunked
+
+    @pytest.fixture
+    def domain(self, D_xM_vN_chunked_domain) -> int:
+        D, x_m, v_n, chunked, domain = D_xM_vN_chunked_domain
+        return domain
 
     @pytest.fixture
     def op(  # we only test settings which affect accuracy, not runtime
@@ -178,7 +334,7 @@ class TestNU2NU:
         # max_bbox_ratio,
         # max_bbox_anisotropy,
     ) -> ftk_nu2nu.NU2NU:
-        return ftk_nu2nu.NU2NU(
+        op = ftk_nu2nu.NU2NU(
             x=x_m,
             v=v_n,
             isign=isign,
@@ -188,6 +344,22 @@ class TestNU2NU:
             chunked=chunked,
             domain=domain,
         )
+
+        # Make sure chunking is doing what is expected
+        if chunked:
+            if domain == "x":
+                assert op.cfg.Px > 1
+                assert op.cfg.Pv == 1
+            elif domain == "v":
+                assert op.cfg.Px == 1
+                assert op.cfg.Pv > 1
+            elif domain == "xv":
+                assert op.cfg.Px > 1
+                assert op.cfg.Pv > 1
+            else:
+                assert False
+
+        return op
 
     # Helper functions --------------------------------------------------------
     @staticmethod
