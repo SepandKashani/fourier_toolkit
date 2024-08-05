@@ -194,6 +194,49 @@ class Uniform2NonUniform(ftk_nu2u.NU2U):
         w = super().apply(z)
         return w
 
+    def diagnostic_plot(
+        self,
+        domain: str,
+        axes: tuple[int] = None,
+        ax=None,
+    ):
+        """
+        Plot (2D projection of) decomposed domain.
+
+        This method is not thread safe! (See implementation notes as to why.)
+
+        Parameters
+        ----------
+        domain: "x", "v"
+            Domain to plot.
+        axes: tuple[int]
+            (2,) projection axes.
+
+            Can be unspecified for (1D, 2D) transforms.
+        ax: Axes
+            Axes to draw on. A new ax/figure is allocated if unspecified.
+
+        Returns
+        -------
+        ax: Axes
+        """
+        domain = domain.lower().strip()
+        assert domain in ("x", "v")
+        domain = {
+            "x": "v",
+            "v": "x",
+        }[domain]
+
+        msg = "diagnostic_plot(): x/v domain labels are reversed (due to implementation reasons)."
+        warnings.warn(msg)
+
+        ax = super().diagnostic_plot(
+            domain=domain,
+            axes=axes,
+            ax=ax,
+        )
+        return ax
+
     # Helper routines (internal) ----------------------------------------------
 
 
