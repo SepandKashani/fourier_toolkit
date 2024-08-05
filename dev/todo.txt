@@ -1,11 +1,12 @@
 test_nu2nu/u2nu/nu2u
     (test_value_apply, test_math_adjoint) use a fixed eps threshold of 1e-3 for all comparisons.
     This should be changed to vary with kernel stopband energy.
-test_nu2u.test_apply
-    Something in fw_interpolate() and bw_spread() catastrophically breaks error estimates when inputs are 32-bit.
-    64-bit inputs are not concerned.
-    Since operations used in these methods match those in NU->NU up to the FFT, I suspect FP32 FFTs are introducing "noise" in the process.
-    To be investigated further.
+nu2nu / nu2u / u2nu
+    The transforms have difficulty when ALL computations are performed in FP32: accuracy suffers greatly.
+    In contrast FP64 computations match expected accuracy targets well.
+    Something in the processing pipeline in FP32 mode is very sensitive to numerical errors.
+    This effect is more pronounced in nu2u / u2nu where fast uniform-spread/interp is performed via FFTs.
+    To be investigated.
 nu2u (u2nu as by-product)
     fw_interpolate() and bw_spread() are speed-wise on-par with NU2NU's same-named functions since the np.ndindex() loops are done sequentially.
     [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
@@ -35,3 +36,8 @@ Observations
             fftn() vs fftw()
             kernel eval speed (triangle gives good boost)
             thread overhead
+    nu2nu vs hvox
+        10-20x speedup due to vectorized spread/interp.
+            effect more pronounced for kb kernel vs kb_ppoly
+            shows that performing less kernel evals benefits total runtime.
+        Reduced data re-ordering also counts, but negligeable in spread/interp-dominant workloads.
