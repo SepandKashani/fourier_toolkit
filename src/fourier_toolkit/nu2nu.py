@@ -185,7 +185,10 @@ class NonUniform2NonUniform:
             p.upsampfac_ratio,
         )
         x_bbox_dim, v_bbox_dim = self._infer_bbox_dims(
-            *(np.ptp(x, axis=0), np.ptp(v, axis=0)),
+            *(
+                np.ptp(x, axis=0) + np.finfo(np.double).eps,  # guard against single-point transforms
+                np.ptp(v, axis=0) + np.finfo(np.double).eps,
+            ),
             *(w_x, w_v),
             p.domain,
             *(p.max_bbox_ratio, p.max_bbox_anisotropy),
