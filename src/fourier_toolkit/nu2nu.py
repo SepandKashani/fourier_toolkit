@@ -339,8 +339,11 @@ class NonUniform2NonUniform:
         if self.cfg.D == 1:
             raise NotImplementedError  # needs different plotting mechanism
         elif self.cfg.D == 2:
+            if axes is None:
+                axes = [0, 1]
             axes = ftk_util.broadcast_seq(axes, 2, np.int64)
         elif self.cfg.D > 2:
+            assert axes is not None, "Parameter[axes] must be provided for 3D+ transforms."
             axes = ftk_util.broadcast_seq(axes, 2, np.int64)
         assert np.all((-self.cfg.D <= axes) & (axes < self.cfg.D))
         assert len(np.unique(axes)) == 2
