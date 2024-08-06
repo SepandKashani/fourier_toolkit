@@ -350,8 +350,8 @@ class NonUniform2NonUniform:
 
         pts = getattr(self.cfg, domain)[:, axes]  # (M, 2)
         Pc = getattr(self.cfg, f"{domain.upper()}c")[:, axes]  # (P, 2)
-        Pd = getattr(self.cfg, f"{domain.upper()}d")[axes]  # (P, 2)
-        Pd0 = getattr(self.cfg, f"{domain.upper()}d0")[axes]  # (P, 2)
+        Pd = getattr(self.cfg, f"{domain.upper()}d")[axes]  # (2,)
+        Pd0 = getattr(self.cfg, f"{domain.upper()}d0")[axes]  # (2,)
         P = getattr(self.cfg, f"P{domain}")  # P
 
         # Draw Maximum BBox ---------------------------------------------------
