@@ -55,7 +55,10 @@ class UniformSpread:
     where :math:`\phi_{d}: [-1, 1] \to \bR` and :math:`\alpha_{d} > 0`.
     """
 
-    template_path = plib.Path(__file__).parent / "_template.txt"
+    template_path = {  # static_kernel -> template_file
+        True: plib.Path(__file__).parent / "_template_static.txt",
+        False: plib.Path(__file__).parent / "_template_dynamic.txt",
+    }
 
     def __init__(
         self,
@@ -67,6 +70,7 @@ class UniformSpread:
         max_cluster_size: int = 10_000,
         max_window_ratio: tuple[float] = 10,
         nthreads: int = 0,
+        static: bool = False,
     ):
         r"""
         Parameters
@@ -108,6 +112,8 @@ class UniformSpread:
             `max_window_ratio` defines the quantities :math:`\{ r_{1},\ldots,r_{D} \}`.
         nthreads: int
             Number of threads used to spread sub-grids. If 0, use all cores.
+        static: bool
+            Inline kernel functions.
 
         Notes
         -----
@@ -122,6 +128,9 @@ class UniformSpread:
           overheads.
         * `max_window_ratio` should be chosen based on the point distribution.
           Set it to `inf` if only cluster size matters.
+        * When `static=False`, each call to spread/interpolate() calls the kernel `phi` multiple times as a sub-routine.
+          When `static=True`, then kernels are inlined into spread/interpolate() leading to shortened runtimes.
+          The drawback is the need to re-compile often if many UniformSpread() instances are created with different kernels.
         """
         assert x.ndim in (1, 2)
         if x.ndim == 1:
@@ -165,6 +174,7 @@ class UniformSpread:
             # -------------------------
             phi=phi,
             alpha=alpha,
+            static=bool(static),
             # -------------------------
             max_cluster_size=max_cluster_size,
             max_window_ratio=max_window_ratio,
@@ -172,16 +182,34 @@ class UniformSpread:
             # -------------------------
             **cl_info._asdict(),
         )
+
+        subs_kwargs = dict(
+            z_rank=D,
+            z_shape=", ".join([f"len(z[{d}])" for d in range(D)]),
+            support=", ".join([f"z_ub[{d}] - z_lb[{d}] + 1" for d in range(D)]),
+            idx=", ".join([f"z_lb[{d}] + offset[{d}]" for d in range(D)]),
+            range_D=tuple(range(D)),
+            range_Dp1=tuple(range(1, D + 1)),
+        )
+        if static:  # add extra substitutions
+            # kernel compile-time imports
+            phi_import = [None] * self.cfg.D
+            for d in range(self.cfg.D):
+                mod_name = self.cfg.phi[d].__module__
+                func_name = self.cfg.phi[d].__code__.co_name
+
+                phi_import[d] = f"from {mod_name} import {func_name} as phi{d}"
+            subs_kwargs["phi_import"] = "\n".join(phi_import)
+
+            # phi = (phi1,...,phiD)
+            phi = ""
+            for d in range(self.cfg.D):
+                phi += f"    phi{d},\n"
+            phi = phi[:-1]  # drop final \n
+            subs_kwargs["phi"] = phi
         pkg = generate_module(
-            path=self.template_path,
-            subs=dict(
-                z_rank=D,
-                z_shape=", ".join([f"len(z[{d}])" for d in range(D)]),
-                support=", ".join([f"z_ub[{d}] - z_lb[{d}] + 1" for d in range(D)]),
-                idx=", ".join([f"z_lb[{d}] + offset[{d}]" for d in range(D)]),
-                range_D=tuple(range(D)),
-                range_Dp1=tuple(range(1, D + 1)),
-            ),
+            path=self.template_path[static],
+            subs=subs_kwargs,
         )
         self._spread = pkg.spread
         self._interpolate = pkg.interpolate
@@ -234,14 +262,23 @@ class UniformSpread:
             for q in range(Q):
                 a, b = self.cfg.cl_bound[q : q + 2]
 
-                future = executor.submit(
-                    self._spread,
-                    x=x[a:b, :],
-                    w=w[:, a:b],
-                    z=z_roi(q),
-                    phi=self.cfg.phi,
-                    a=k_scale,
-                )
+                if self.cfg.static:
+                    future = executor.submit(
+                        self._spread,
+                        x=x[a:b, :],
+                        w=w[:, a:b],
+                        z=z_roi(q),
+                        a=k_scale,
+                    )
+                else:
+                    future = executor.submit(
+                        self._spread,
+                        x=x[a:b, :],
+                        w=w[:, a:b],
+                        z=z_roi(q),
+                        phi=self.cfg.phi,
+                        a=k_scale,
+                    )
                 fs[q], fs2cl[future] = future, q
 
         # update global grid
@@ -301,14 +338,23 @@ class UniformSpread:
             for q in range(Q):
                 a, b = self.cfg.cl_bound[q : q + 2]
 
-                future = executor.submit(
-                    self._interpolate,
-                    x=x[a:b, :],
-                    g=g[:, *roi(q)],
-                    z=z_roi(q),
-                    phi=self.cfg.phi,
-                    a=k_scale,
-                )
+                if self.cfg.static:
+                    future = executor.submit(
+                        self._interpolate,
+                        x=x[a:b, :],
+                        g=g[:, *roi(q)],
+                        z=z_roi(q),
+                        a=k_scale,
+                    )
+                else:
+                    future = executor.submit(
+                        self._interpolate,
+                        x=x[a:b, :],
+                        g=g[:, *roi(q)],
+                        z=z_roi(q),
+                        phi=self.cfg.phi,
+                        a=k_scale,
+                    )
                 fs[q], fs2cl[future] = future, q
 
         # update global support
