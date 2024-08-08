@@ -17,9 +17,6 @@ Observations
     nu2nu spread/interp time
         Masking spread/interp, but still doing all modulations, reduces runtime by 80%.
         spread/interp are therefore the bottleneck when M/N large.
-
-        I noticed you can speed up cfg.f_[spread,interp]() by 30% if hard-coding the kernel instead of dynamically supplying it.
-        We don't do this optimization to be able to test different kernels easily though.
     does stacking benefit for cheap kernels?
         triangle
             3x runtime to do 60 stacks
