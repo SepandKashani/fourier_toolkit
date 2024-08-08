@@ -26,7 +26,7 @@ def rel_error(
     D: int,
 ) -> np.ndarray:
     r"""
-    Relative distance between 2 vectors.
+    Relative L2-distance between 2 vectors.
 
     Parameters
     ----------
@@ -45,6 +45,34 @@ def rel_error(
     num = np.sum((a - b) * (a - b).conj(), axis=axes).real
     den = np.sum(b * b.conj(), axis=axes).real
     rel = np.sqrt(num / den)
+    return rel
+
+
+def max_error(
+    a: np.ndarray,
+    b: np.ndarray,
+    D: int,
+) -> np.ndarray:
+    r"""
+    Relative Linf-distance between 2 vectors.
+
+    Parameters
+    ----------
+    a: ndarray[float/complex]
+        (..., N1,...,ND)
+    b: ndarray[float/complex]
+        (..., N1,...,ND)
+    D: int
+
+    Returns
+    -------
+    rel: ndarray[float]
+        (...,)  \norm{a-b}{\inf} / \norm{b}{\inf}
+    """
+    axes = tuple(range(-D, 0))
+    num = np.max(abs(a - b), axis=axes)
+    den = np.max(abs(b), axis=axes)
+    rel = num / den
     return rel
 
 
