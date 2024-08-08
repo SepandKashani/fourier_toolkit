@@ -672,6 +672,7 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
             z_spec=dict(start=F_x0, step=F_dx, num=L),
             phi=phi.low_level_callable(ufunc=False),
             alpha=alpha_x,
+            static=True,
         )
         f_spread = u_spread._spread
         f_interpolate = u_spread._interpolate
