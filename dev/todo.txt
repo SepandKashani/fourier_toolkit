@@ -7,6 +7,9 @@ nu2nu / nu2u / u2nu
     Something in the processing pipeline in FP32 mode is very sensitive to numerical errors.
     This effect is more pronounced in nu2u / u2nu where fast uniform-spread/interp is performed via FFTs.
     To be investigated.
+
+    While the kernel is now inlined in Numba, this does not mean it is actually inlined in ASM.
+    There is no way to force this behavior via Numba, so spreading/interpolation cannot be accelerated further at this level of abstraction.
 nu2u (u2nu as by-product)
     fw_interpolate() and bw_spread() are speed-wise on-par with NU2NU's same-named functions since the np.ndindex() loops are done sequentially.
     [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
