@@ -14,4 +14,10 @@ Installation
 
 .. code-block:: bash
 
-   pip install git+https://github.com/SepandKashani/fourier_toolkit
+   # user install
+   pip install fourier_toolkit@git+https://github.com/SepandKashani/fourier_toolkit.git
+
+   # developer install
+   git clone https://github.com/SepandKashani/fourier_toolkit.git
+   cd fourier_toolkit/
+   pip install -e ".[dev]"
