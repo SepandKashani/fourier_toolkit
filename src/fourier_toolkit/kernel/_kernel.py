@@ -7,6 +7,7 @@ import scipy.special as sps
 from fourier_toolkit.config import generate_module
 
 __all__ = [
+    "Kernel",
     "KaiserBessel",
     "KaiserBesselF",
     "PPoly",
