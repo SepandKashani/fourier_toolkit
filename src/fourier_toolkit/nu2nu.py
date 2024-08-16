@@ -1086,14 +1086,24 @@ class NonUniform2NonUniform:
         # spread/interp compiled code ---------------------
         # We need the compiled [spread,interpolate]() functions which UniformSpread uses, but will apply them manually
         # instead of via UniformSpread.[apply,adjoint]().  We therefore construct a cheap US instance just to extract
-        # these objects.
-        u_spread = ftk_spread.UniformSpread(
-            x=np.zeros((1, D), dtype=np.double),  # doesn't matter
-            z_spec=dict(start=F_x0, step=F_dx, num=L),
-            phi=phi.low_level_callable(ufunc=False),
-            alpha=alpha_x,
-            static=True,
-        )
+        # these objects. We distinguish between different kernel types since *_ppoly variants can be inlined for better
+        # performance.
+        if kernel_type == "kb":
+            u_spread = ftk_spread.UniformSpread(
+                x=np.zeros((1, D), dtype=np.double),  # doesn't matter
+                z_spec=dict(start=F_x0, step=F_dx, num=L),
+                phi=phi.low_level_callable(ufunc=False),
+                alpha=alpha_x,
+                inline_kernel=False,
+            )
+        elif kernel_type == "kb_ppoly":
+            u_spread = ftk_spread.UniformSpread(
+                x=np.zeros((1, D), dtype=np.double),  # doesn't matter
+                z_spec=dict(start=F_x0, step=F_dx, num=L),
+                phi=phi,
+                alpha=alpha_x,
+                inline_kernel=True,
+            )
         f_spread = u_spread._spread
         f_interpolate = u_spread._interpolate
 
@@ -1245,7 +1255,8 @@ class NonUniform2NonUniform:
             )
         )
 
-        # kernel scale
+        # kernel (func, scale)
+        k_func = (self.cfg.phi.low_level_callable(ufunc=False),) * self.cfg.D
         k_scale = self.cfg.alpha_x.astype(fdtype)  # (D,)
 
         # spread each cluster onto its sub-grid on the right partition
@@ -1270,6 +1281,7 @@ class NonUniform2NonUniform:
                     x=_x,
                     w=_w,
                     z=l_roi(qx),
+                    phi=k_func,
                     a=k_scale,
                 )
 
@@ -1335,7 +1347,8 @@ class NonUniform2NonUniform:
             )
         )
 
-        # kernel scale
+        # kernel (func, scale)
+        k_func = (self.cfg.phi.low_level_callable(ufunc=False),) * self.cfg.D
         k_scale = self.cfg.alpha_x.astype(fdtype)  # (D,)
 
         # interpolate each sub-grid onto sample points in the right partition.
@@ -1354,6 +1367,7 @@ class NonUniform2NonUniform:
                     x=_x,
                     g=g0[px, :, *roi(qx)],
                     z=l_roi(qx),
+                    phi=k_func,
                     a=k_scale,
                 )
 
@@ -1527,7 +1541,8 @@ class NonUniform2NonUniform:
             )
         )
 
-        # kernel scale
+        # kernel (func, scale)
+        k_func = (self.cfg.phi.low_level_callable(ufunc=False),) * self.cfg.D
         k_scale = self.cfg.alpha_v.astype(fdtype)  # (D,)
 
         # interpolate each sub-grid onto freq points in the right partition.
@@ -1546,6 +1561,7 @@ class NonUniform2NonUniform:
                     x=_v,
                     g=hFS[pv, :, *roi(qv)],
                     z=l_roi(qv),
+                    phi=k_func,
                     a=k_scale,
                 )
 
@@ -1619,7 +1635,8 @@ class NonUniform2NonUniform:
             )
         )
 
-        # kernel scale
+        # kernel (func, scale)
+        k_func = (self.cfg.phi.low_level_callable(ufunc=False),) * self.cfg.D
         k_scale = self.cfg.alpha_v.astype(fdtype)  # (D,)
 
         # spread each cluster onto its sub-grid on the right partition.
@@ -1644,6 +1661,7 @@ class NonUniform2NonUniform:
                     x=_v - Vc[pv],
                     w=_gF,
                     z=l_roi(qv),
+                    phi=k_func,
                     a=k_scale,
                 )
 
