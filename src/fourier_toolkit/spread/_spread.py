@@ -7,6 +7,7 @@ import numba as nb
 import numpy as np
 
 import fourier_toolkit.cluster as ftk_cluster
+import fourier_toolkit.kernel as ftk_kernel
 import fourier_toolkit.numba as ftk_numba
 import fourier_toolkit.util as ftk_util
 from fourier_toolkit.config import generate_module
@@ -55,8 +56,8 @@ class UniformSpread:
     where :math:`\phi_{d}: [-1, 1] \to \bR` and :math:`\alpha_{d} > 0`.
     """
 
-    template_path = {  # static_kernel -> template_file
-        True: plib.Path(__file__).parent / "_template_static.txt",
+    template_path = {  # inline_kernel -> template_file
+        True: plib.Path(__file__).parent / "_template_inline.txt",
         False: plib.Path(__file__).parent / "_template_dynamic.txt",
     }
 
@@ -70,7 +71,7 @@ class UniformSpread:
         max_cluster_size: int = 10_000,
         max_window_ratio: tuple[float] = 10,
         nthreads: int = 0,
-        static: bool = False,
+        inline_kernel: bool = False,
     ):
         r"""
         Parameters
@@ -88,10 +89,13 @@ class UniformSpread:
         phi: tuple[callable]
             (D,) kernels :math:`\{ \phi_{1},\ldots,\phi_{D} \}`.
 
-            Functions must be Numba-compiled funcs with the following signatures:
+
+            If `inline_kernel` is False (default), then functions must be Numba-compiled funcs with the following signatures:
 
             * float32(float32)
             * float64(float64)
+
+            If `inline_kernel` is True, then `phi` must be a ``PPoly`` instance. (See `inline_kernel`.)
         alpha: tuple[float]
             (D,) kernel scale factors :math:`\{ \alpha_{1},\ldots,\alpha_{D} \}`.
         max_cluster_size: int
@@ -112,8 +116,11 @@ class UniformSpread:
             `max_window_ratio` defines the quantities :math:`\{ r_{1},\ldots,r_{D} \}`.
         nthreads: int
             Number of threads used to spread sub-grids. If 0, use all cores.
-        static: bool
+        inline_kernel: bool
             Inline kernel functions.
+
+            This only works if `phi` is a ``PPoly`` instance shared across all dimensions.
+            An error is raised if inlining fails.
 
         Notes
         -----
@@ -128,9 +135,6 @@ class UniformSpread:
           overheads.
         * `max_window_ratio` should be chosen based on the point distribution.
           Set it to `inf` if only cluster size matters.
-        * When `static=False`, each call to spread/interpolate() calls the kernel `phi` multiple times as a sub-routine.
-          When `static=True`, then kernels are inlined into spread/interpolate() leading to shortened runtimes.
-          The drawback is the need to re-compile often if many UniformSpread() instances are created with different kernels.
         """
         assert x.ndim in (1, 2)
         if x.ndim == 1:
@@ -144,6 +148,18 @@ class UniformSpread:
         assert np.all(z_spec["num"] > 0)
 
         phi = tuple(ftk_util.broadcast_seq(phi, D, None))
+        assert all(map(callable, phi))
+        if inline_kernel:
+            # Expecting PPoly(support=1) instance shared among dimensions
+            for d in range(D):
+                assert isinstance(phi[d], ftk_kernel.PPoly)
+                assert phi[d] is phi[0]
+                assert np.isclose(phi[d].support(), 1)
+
+            phi_low_level = (phi[0].low_level_callable(ufunc=False),) * D
+        else:
+            phi_low_level = phi
+
         alpha = ftk_util.broadcast_seq(alpha, D, np.double)
         assert np.all(alpha > 0)
 
@@ -172,9 +188,8 @@ class UniformSpread:
             dz=z_spec["step"],
             N=z_spec["num"],
             # -------------------------
-            phi=phi,
+            phi=phi_low_level,
             alpha=alpha,
-            static=bool(static),
             # -------------------------
             max_cluster_size=max_cluster_size,
             max_window_ratio=max_window_ratio,
@@ -191,24 +206,19 @@ class UniformSpread:
             range_D=tuple(range(D)),
             range_Dp1=tuple(range(1, D + 1)),
         )
-        if static:  # add extra substitutions
-            # kernel compile-time imports
-            phi_import = [None] * self.cfg.D
-            for d in range(self.cfg.D):
-                mod_name = self.cfg.phi[d].__module__
-                func_name = self.cfg.phi[d].__code__.co_name
+        if inline_kernel:  # add extra substitutions
+            _phi = phi[0]
+            subs_kwargs.update(
+                ppoly_sym=_phi._sym,
+                ppoly_bin_count=_phi._weight.shape[0],
+                ppoly_order=_phi._weight.shape[1] - 1,
+                ppoly_pitch_rcp=1 / _phi._pitch,
+                ppoly_support=_phi.support(),
+                ppoly_weight=_phi._print_weights(),
+            )
 
-                phi_import[d] = f"from {mod_name} import {func_name} as phi{d}"
-            subs_kwargs["phi_import"] = "\n".join(phi_import)
-
-            # phi = (phi1,...,phiD)
-            phi = ""
-            for d in range(self.cfg.D):
-                phi += f"    phi{d},\n"
-            phi = phi[:-1]  # drop final \n
-            subs_kwargs["phi"] = phi
         pkg = generate_module(
-            path=self.template_path[static],
+            path=self.template_path[inline_kernel],
             subs=subs_kwargs,
         )
         self._spread = pkg.spread
@@ -262,23 +272,14 @@ class UniformSpread:
             for q in range(Q):
                 a, b = self.cfg.cl_bound[q : q + 2]
 
-                if self.cfg.static:
-                    future = executor.submit(
-                        self._spread,
-                        x=x[a:b, :],
-                        w=w[:, a:b],
-                        z=z_roi(q),
-                        a=k_scale,
-                    )
-                else:
-                    future = executor.submit(
-                        self._spread,
-                        x=x[a:b, :],
-                        w=w[:, a:b],
-                        z=z_roi(q),
-                        phi=self.cfg.phi,
-                        a=k_scale,
-                    )
+                future = executor.submit(
+                    self._spread,
+                    x=x[a:b, :],
+                    w=w[:, a:b],
+                    z=z_roi(q),
+                    phi=self.cfg.phi,
+                    a=k_scale,
+                )
                 fs[q], fs2cl[future] = future, q
 
         # update global grid
@@ -338,23 +339,14 @@ class UniformSpread:
             for q in range(Q):
                 a, b = self.cfg.cl_bound[q : q + 2]
 
-                if self.cfg.static:
-                    future = executor.submit(
-                        self._interpolate,
-                        x=x[a:b, :],
-                        g=g[:, *roi(q)],
-                        z=z_roi(q),
-                        a=k_scale,
-                    )
-                else:
-                    future = executor.submit(
-                        self._interpolate,
-                        x=x[a:b, :],
-                        g=g[:, *roi(q)],
-                        z=z_roi(q),
-                        phi=self.cfg.phi,
-                        a=k_scale,
-                    )
+                future = executor.submit(
+                    self._interpolate,
+                    x=x[a:b, :],
+                    g=g[:, *roi(q)],
+                    z=z_roi(q),
+                    phi=self.cfg.phi,
+                    a=k_scale,
+                )
                 fs[q], fs2cl[future] = future, q
 
         # update global support

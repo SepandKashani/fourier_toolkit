@@ -5,8 +5,6 @@ import numba as nb
 import numba.types as nbt
 import numpy as np
 
-${phi_import}
-
 nb_flags = dict(
     nopython=True,
     nogil=True,
@@ -49,10 +47,56 @@ f64_dC_t = nbt.Array(f64_t, 1 + D, "C")
 # lattice types -----------------------
 l32_t = nbt.UniTuple(f32_1C_t, D)
 l64_t = nbt.UniTuple(f64_1C_t, D)
-
-phi = (  # inlined kernels
-${phi}
+# kernel types ------------------------
+k32_t = nbt.UniTuple(nbt.FunctionType(f32_t(f32_t)), D)
+k64_t = nbt.UniTuple(nbt.FunctionType(f64_t(f64_t)), D)
+# PPoly fields ------------------------
+ppoly_sym = ${ppoly_sym}  # symmetric kernel
+ppoly_B = ${ppoly_bin_count}  # number of piecewise segments
+ppoly_N = ${ppoly_order}  # polynomial order
+ppoly_pitch_rcp = ${ppoly_pitch_rcp}
+ppoly_support = ${ppoly_support}
+ppoly_weight = (  # (B, N+1) polynomial coefficients in (aN,...,a0) order
+${ppoly_weight}
 )
+
+@nb.jit(
+    [
+        f32_t(f32_t, nbt.UniTuple(f32_t, ppoly_N + 1)),
+        f64_t(f64_t, nbt.UniTuple(f64_t, ppoly_N + 1)),
+    ],
+    **nb_flags,
+    inline="always",
+)
+def horner(x, a):
+    # Evaluate via Horner's rule
+    #     f(x) = \sum_{n=0...N} a_n x**n
+    #
+    # Coefficients provided in order (aN,...,a0)
+    y = a[0]
+    for n in range(1, ppoly_N + 1):
+        y *= x
+        y += a[n]
+    return y
+
+
+@nb.jit(
+    [
+        f32_t(f32_t),
+        f64_t(f64_t),
+    ],
+    **nb_flags,
+    inline="always",
+)
+def _phi(x):
+    if ppoly_sym:
+        idx = min(int(abs(x) * ppoly_pitch_rcp), ppoly_B - 1)
+        y = horner(abs(x), ppoly_weight[idx])
+    else:
+        idx = min(int((x + ppoly_support) * ppoly_pitch_rcp), ppoly_B - 1)
+        y = horner(x, ppoly_weight[idx])
+    return y
+
 
 @nb.jit(
     [
@@ -60,6 +104,7 @@ ${phi}
         nbt.UniTuple(i_t, 2)(f64_t, f64_t, f64_1C_t),
     ],
     **nb_flags,
+    inline="always",
 )
 def find_bounds(x, s, z):
     # Parameters
@@ -85,14 +130,14 @@ def find_bounds(x, s, z):
 
 @nb.jit(
     [
-        f32_dC_t(f32_2C_t, f32_2A_t, l32_t, f32_1C_t),
-        c32_dC_t(f32_2C_t, c32_2A_t, l32_t, f32_1C_t),
-        f64_dC_t(f64_2C_t, f64_2A_t, l64_t, f64_1C_t),
-        c64_dC_t(f64_2C_t, c64_2A_t, l64_t, f64_1C_t),
+        f32_dC_t(f32_2C_t, f32_2A_t, l32_t, k32_t, f32_1C_t),
+        c32_dC_t(f32_2C_t, c32_2A_t, l32_t, k32_t, f32_1C_t),
+        f64_dC_t(f64_2C_t, f64_2A_t, l64_t, k64_t, f64_1C_t),
+        c64_dC_t(f64_2C_t, c64_2A_t, l64_t, k64_t, f64_1C_t),
     ],
     **nb_flags,
 )
-def spread(x, w, z, a):
+def spread(x, w, z, phi, a):
     # Efficient sampling of
     #     g(z) = sum_{m} w_m \psi(z - x_m)
     #     \psi(x) = \phi(a x)
@@ -102,6 +147,7 @@ def spread(x, w, z, a):
     #     x (Mq, D) offsets x_m
     #     w (Ns, Mq) [stacked] weights w_m
     #     z ((S1,),...,(SD,)) lattice points
+    #     phi (D,) kernels \phi [unused inside body]
     #     a (D,) kernel scales `a`
     # Returns
     #     g (Ns, S1,...,SD) [stacked] samples of g(x)
@@ -126,7 +172,7 @@ def spread(x, w, z, a):
             # compute kernel weight
             k = 1
             for d in range(D):
-                k *= phi[d](a[d] * (z[d][idx[d]] - x[m, d]))
+                k *= _phi(a[d] * (z[d][idx[d]] - x[m, d]))
 
             # spread onto grid
             for ns in range(Ns):
@@ -138,14 +184,14 @@ def spread(x, w, z, a):
 
 @nb.jit(
     [
-        f32_2C_t(f32_2C_t, f32_dA_t, l32_t, f32_1C_t),
-        c32_2C_t(f32_2C_t, c32_dA_t, l32_t, f32_1C_t),
-        f64_2C_t(f64_2C_t, f64_dA_t, l64_t, f64_1C_t),
-        c64_2C_t(f64_2C_t, c64_dA_t, l64_t, f64_1C_t),
+        f32_2C_t(f32_2C_t, f32_dA_t, l32_t, k32_t, f32_1C_t),
+        c32_2C_t(f32_2C_t, c32_dA_t, l32_t, k32_t, f32_1C_t),
+        f64_2C_t(f64_2C_t, f64_dA_t, l64_t, k64_t, f64_1C_t),
+        c64_2C_t(f64_2C_t, c64_dA_t, l64_t, k64_t, f64_1C_t),
     ],
     **nb_flags,
 )
-def interpolate(x, g, z, a):
+def interpolate(x, g, z, phi, a):
     # Efficient evaluation of
     #     w_m = \sum_{n} g_n \psi(z_n - x_m)
     #     \psi(x) = \phi(a x)
@@ -155,6 +201,7 @@ def interpolate(x, g, z, a):
     #     x (Mq, D) offsets x_m
     #     g (Ns, S1,...,SD) [stacked] samples g_n
     #     z ((S1,),...,(SD,)) lattice points
+    #     phi (D,) kernels \phi [unused inside body]
     #     a (D,) kernel scales `a`
     # Returns
     #     w (Ns, Mq) [stacked] weights w_m
@@ -179,7 +226,7 @@ def interpolate(x, g, z, a):
             # compute kernel weight
             k = 1
             for d in range(D):
-                k *= phi[d](a[d] * (z[d][idx[d]] - x[m, d]))
+                k *= _phi(a[d] * (z[d][idx[d]] - x[m, d]))
 
             # spread onto support point
             for ns in range(Ns):

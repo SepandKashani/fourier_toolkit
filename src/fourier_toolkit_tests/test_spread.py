@@ -3,6 +3,7 @@ import numba.types as nbt
 import numpy as np
 import pytest
 
+import fourier_toolkit.kernel as ftk_kernel
 import fourier_toolkit.spread as ftk_spread
 import fourier_toolkit.util as ftk_util
 import fourier_toolkit_tests.conftest as ct
@@ -18,8 +19,10 @@ class TestUniformSpread:
     #     z_{n} = z0 + dz * n
     # where
     #     \psi(z) = \phi(\alpha z)
-    #     \phi(x) = (1-|x|^2) 1_{-1 <= x < 0}
-    #             + (1-|x|)   1_{0 <= x <= 1}
+    #     \phi(x) = (1-|x|^2) 1_{-1 <= x <  0}
+    #             + (1-|x|)   1_{ 0 <= x <= 1}
+    #             OR
+    #             = (1-|x|^2) 1_{-1 <= x <= 1}
     # \alpha chosen s.t.
     #     (2 / dz) (k_max / N-1) \le \alpha \le (2 / dz)
     # which guarantees \psi support in [dz, k_max * dz], i.e. [1--k_max] samples.
@@ -147,36 +150,79 @@ class TestUniformSpread:
         x_m = np.concatenate([x_b, x_i, x_o], axis=0)  # (M + 6, D)
         return x_m
 
-    @pytest.fixture
-    def phi(self, space_dim) -> tuple[callable]:
-        nb_flags = dict(
-            nopython=True,
-            nogil=True,
-            cache=False,  # don't cache during tests
-            forceobj=False,
-            parallel=False,
-            error_model="numpy",
-            fastmath=True,
-            locals={},
-            boundscheck=False,
-        )
-        jit = nb.jit(
-            [
-                nbt.float32(nbt.float32),
-                nbt.float64(nbt.float64),
-            ],
-            **nb_flags,
-        )
+    @pytest.fixture(params=[True, False])
+    def inline_kernel(self, request) -> bool:
+        return request.param
 
-        @jit
-        def kernel(x):
-            if 0 <= x <= 1:
-                y = 1 - x
-            elif -1 <= x < 0:
-                y = 1 - (x**2)
+    @pytest.fixture(params=[True, False])
+    def symmetric_kernel(self, request) -> bool:
+        return request.param
+
+    @pytest.fixture
+    def phi(self, space_dim, symmetric_kernel, inline_kernel) -> tuple[callable]:
+        if inline_kernel:
+            if symmetric_kernel:
+                kernel = ftk_kernel.PPoly(
+                    weight=np.array(
+                        [
+                            [-1, 0, 1],  # (-1)x**2 + (+0)x + (+1)
+                        ]
+                    ),
+                    pitch=1,
+                    sym=True,
+                )
             else:
-                y = 0
-            return y
+                kernel = ftk_kernel.PPoly(
+                    weight=np.array(
+                        [
+                            [-1, 0, 1],  # (-1)x**2 + (+0)x + (+1)
+                            [0, -1, 1],  # (+0)x**2 + (-1)x + (+1)
+                        ]
+                    ),
+                    pitch=1,
+                    sym=False,
+                )
+        else:
+            nb_flags = dict(
+                nopython=True,
+                nogil=True,
+                cache=False,  # don't cache during tests
+                forceobj=False,
+                parallel=False,
+                error_model="numpy",
+                fastmath=True,
+                locals={},
+                boundscheck=False,
+            )
+            jit = nb.jit(
+                [
+                    nbt.float32(nbt.float32),
+                    nbt.float64(nbt.float64),
+                ],
+                **nb_flags,
+            )
+
+            if symmetric_kernel:
+
+                @jit
+                def kernel(x):
+                    if -1 <= x <= 1:
+                        y = 1 - (x**2)
+                    else:
+                        y = 0
+                    return y
+
+            else:
+
+                @jit
+                def kernel(x):
+                    if 0 <= x <= 1:
+                        y = 1 - x
+                    elif -1 <= x < 0:
+                        y = 1 - (x**2)
+                    else:
+                        y = 0
+                    return y
 
         return (kernel,) * space_dim
 
@@ -202,8 +248,10 @@ class TestUniformSpread:
             {"max_cluster_size": 450, "max_window_ratio": 10, "nthreads": 0},
         ]
     )
-    def kwargs(self, request) -> dict:
-        return request.param
+    def kwargs(self, inline_kernel, request) -> dict:
+        data = request.param.copy()
+        data.update(inline_kernel=inline_kernel)
+        return data
 
     @pytest.fixture(
         params=[
@@ -239,5 +287,8 @@ class TestUniformSpread:
         offset = z.reshape(*N, 1, D) - x  # (N1,...,ND,M,D)
         A = np.ones((*N, M), dtype=np.double)
         for d in range(D):
-            A *= phiv[d](alpha[d] * offset[..., d])
+            phi_args = alpha[d] * offset[..., d]
+            mask = abs(phi_args) <= 1
+            A[mask] *= phiv[d](phi_args[mask])
+            A[~mask] = 0
         return A
