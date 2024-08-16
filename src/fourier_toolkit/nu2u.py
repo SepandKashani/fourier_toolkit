@@ -666,14 +666,24 @@ class NonUniform2Uniform(ftk_nu2nu.NU2NU):
         # spread/interp compiled code ---------------------
         # We need the compiled [spread,interpolate]() functions which UniformSpread uses, but will apply them manually
         # instead of via UniformSpread.[apply,adjoint]().  We therefore construct a cheap US instance just to extract
-        # these objects.
-        u_spread = ftk_spread.UniformSpread(
-            x=np.zeros((1, D), dtype=np.double),  # doesn't matter
-            z_spec=dict(start=F_x0, step=F_dx, num=L),
-            phi=phi.low_level_callable(ufunc=False),
-            alpha=alpha_x,
-            static=True,
-        )
+        # these objects. We distinguish between different kernel types since *_ppoly variants can be inlined for better
+        # performance.
+        if kernel_type == "kb":
+            u_spread = ftk_spread.UniformSpread(
+                x=np.zeros((1, D), dtype=np.double),  # doesn't matter
+                z_spec=dict(start=F_x0, step=F_dx, num=L),
+                phi=phi.low_level_callable(ufunc=False),
+                alpha=alpha_x,
+                inline_kernel=False,
+            )
+        elif kernel_type == "kb_ppoly":
+            u_spread = ftk_spread.UniformSpread(
+                x=np.zeros((1, D), dtype=np.double),  # doesn't matter
+                z_spec=dict(start=F_x0, step=F_dx, num=L),
+                phi=phi,
+                alpha=alpha_x,
+                inline_kernel=True,
+            )
         f_spread = u_spread._spread
         f_interpolate = u_spread._interpolate
 
