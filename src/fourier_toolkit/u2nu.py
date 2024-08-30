@@ -51,6 +51,7 @@ class Uniform2NonUniform(ftk_nu2u.NU2U):
         eps: float = 1e-6,
         upsampfac: tuple[float] = 2,
         upsampfac_ratio: tuple[float] = 0.5,
+        kernel_param_type: str = "bounded",
         # Runtime behavior ------------
         kernel_type: str = "kb_ppoly",
         fft_nthreads: int = 0,
@@ -79,7 +80,8 @@ class Uniform2NonUniform(ftk_nu2u.NU2U):
         isign: +1, -1
             Sign of the exponent.
         eps: float
-            Kernel stopband relative energy :math:`\epsilon \in ]0, 1[`.
+            [kernel_param_type=bounded] Kernel stopband relative energy :math:`\epsilon \in ]0, 1[`.
+            [kernel_param_type=finufft] Target relative error :math:`\epsilon \in ]0, 1[`.
         upsampfac: tuple[float]
             Total upsampling factor :math:`\sigma = \sigma_{x} \sigma_{v} > 1`.
         upsampfac_ratio: tuple[float]
@@ -91,6 +93,13 @@ class Uniform2NonUniform(ftk_nu2u.NU2U):
                    \sigma_{x} & = \sigma^{\epsilon_{\sigma}} \\
                    \sigma_{v} & = \sigma^{1 - \epsilon_{\sigma}}
                \end{align}
+        kernel_param_type: str
+            How to choose kernel parameters.
+
+            Must be one of:
+
+            * "bounded": ensures eps-bandwidths of (\psi_{x}, \psi_{v}) are located in the safe zone.
+            * "finufft": uses relations derived in FINUFFT paper.
         kernel_type: str
             Which kernel to use for spreading/interpolation.
 
@@ -152,6 +161,7 @@ class Uniform2NonUniform(ftk_nu2u.NU2U):
             eps=eps,
             upsampfac=upsampfac,
             upsampfac_ratio=upsampfac_ratio,
+            kernel_param_type=kernel_param_type,
             # Runtime behavior ------------
             kernel_type=kernel_type,
             fft_nthreads=fft_nthreads,
