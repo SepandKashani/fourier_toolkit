@@ -1,7 +1,7 @@
-test_nu2nu/u2nu/nu2u
+test_nu2nu/u2nu/nu2u/nufft1/nufft2
     (test_value_apply, test_math_adjoint) use a fixed eps threshold of 1e-3 for all comparisons.
     This should be changed to vary with kernel stopband energy.
-nu2nu / nu2u / u2nu
+nu2nu / nu2u / u2nu / nufft1 / nufft2
     The transforms have difficulty when ALL computations are performed in FP32: accuracy suffers greatly.
     In contrast FP64 computations match expected accuracy targets well.
     Something in the processing pipeline in FP32 mode is very sensitive to numerical errors.
@@ -12,6 +12,9 @@ nu2u (u2nu as by-product)
     [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
     Memory consumption is lower however due to materializing L-sized arrays instead of N-sized.
     Consider explicit parallel evaluation of each iterate if Ov is large.
+nufft1 / nufft2
+    Add chunking support (easy)
+
 
 Observations
     nu2nu spread/interp time
