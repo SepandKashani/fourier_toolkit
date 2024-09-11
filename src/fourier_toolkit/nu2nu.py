@@ -19,6 +19,7 @@ import fourier_toolkit.util as ftk_util
 __all__ = [
     "NonUniform2NonUniform",
     "NU2NU",
+    "NUFFT3",
 ]
 
 # Disable all warnings for the entire module
@@ -1831,3 +1832,4 @@ class NonUniform2NonUniform:
 
 
 NU2NU = NonUniform2NonUniform  # alias
+NUFFT3 = NonUniform2NonUniform  # alias
