@@ -12,9 +12,6 @@ nu2u (u2nu as by-product)
     [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
     Memory consumption is lower however due to materializing L-sized arrays instead of N-sized.
     Consider explicit parallel evaluation of each iterate if Ov is large.
-nufft1 / nufft2
-    Add chunking support (easy)
-
 
 Observations
     nu2nu spread/interp time
