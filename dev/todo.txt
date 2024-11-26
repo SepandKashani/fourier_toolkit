@@ -12,29 +12,3 @@ nu2u (u2nu as by-product)
     [We actually see that each iterate does not saturate the CPU the same way NU2NU's methods do.]
     Memory consumption is lower however due to materializing L-sized arrays instead of N-sized.
     Consider explicit parallel evaluation of each iterate if Ov is large.
-
-Observations
-    nu2nu spread/interp time
-        Masking spread/interp, but still doing all modulations, reduces runtime by 80%.
-        spread/interp are therefore the bottleneck when M/N large.
-    does stacking benefit for cheap kernels?
-        triangle
-            3x runtime to do 60 stacks
-        poly order 20
-            ~35x faster than kb
-            ~3x slower than triangle
-                so runtime increase should be closer to triangle
-        kb
-            1.6x runtime to do 60 stacks
-    ftk vs finufft
-        init time differences as function of M
-        runtime speed as function of M / fft size
-        what explains runtime delta?
-            fftn() vs fftw()
-            kernel eval speed (triangle gives good boost)
-            thread overhead
-    nu2nu vs hvox
-        10-20x speedup due to vectorized spread/interp.
-            effect more pronounced for kb kernel vs kb_ppoly
-            shows that performing less kernel evals benefits total runtime.
-        Reduced data re-ordering also counts, but negligeable in spread/interp-dominant workloads.
