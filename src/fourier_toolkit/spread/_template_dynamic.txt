@@ -113,21 +113,27 @@ def spread(x, w, z, phi, a):
     g = np.zeros((*S, Ns), dtype=w.dtype)  # (S1,...,SD, Ns)
     z_lb = np.empty(D, dtype=i_t)
     z_ub = np.empty(D, dtype=i_t)
+    psi_v = np.zeros((D, max(S)), dtype=x.dtype)  # \psi values
     for m in range(Mq):
         for d in range(D):
             s = 1 / a[d]
             z_lb[d], z_ub[d] = find_bounds(x[m, d], s, z[d])
-
         support = (${support},)
-        for offset in np.ndindex(support):
-            idx = (${idx},)
 
-            # compute kernel weight
+        # compute (axial) kernel weights
+        for d in range(D):
+            for offset in range(support[d]):
+                idx = z_lb[d] + offset
+                psi_v[d, offset] = phi[d](a[d] * (z[d][idx] - x[m, d]))
+
+        for offset in np.ndindex(support):
+            # compute (total) kernel weight
             k = 1
             for d in range(D):
-                k *= phi[d](a[d] * (z[d][idx[d]] - x[m, d]))
+                k *= psi_v[d, offset[d]]
 
             # spread onto grid
+            idx = (${idx},)
             for ns in range(Ns):
                 g[*idx, ns] += k * w[m, ns]
 
@@ -167,21 +173,27 @@ def interpolate(x, g, z, phi, a):
     w = np.zeros((Mq, Ns), dtype=g.dtype)  # (Mq, Ns)
     z_lb = np.empty(D, dtype=i_t)
     z_ub = np.empty(D, dtype=i_t)
+    psi_v = np.zeros((D, max(S)), dtype=x.dtype)  # \psi values
     for m in range(Mq):
         for d in range(D):
             s = 1 / a[d]
             z_lb[d], z_ub[d] = find_bounds(x[m, d], s, z[d])
-
         support = (${support},)
-        for offset in np.ndindex(support):
-            idx = (${idx},)
 
-            # compute kernel weight
+        # compute (axial) kernel weights
+        for d in range(D):
+            for offset in range(support[d]):
+                idx = z_lb[d] + offset
+                psi_v[d, offset] = phi[d](a[d] * (z[d][idx] - x[m, d]))
+
+        for offset in np.ndindex(support):
+            # compute (total) kernel weight
             k = 1
             for d in range(D):
-                k *= phi[d](a[d] * (z[d][idx[d]] - x[m, d]))
+                k *= psi_v[d, offset[d]]
 
             # spread onto support point
+            idx = (${idx},)
             for ns in range(Ns):
                 w[m, ns] += k * g[*idx, ns]
 
