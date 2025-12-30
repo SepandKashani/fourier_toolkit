@@ -1,16 +1,29 @@
 import warnings
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, NamedTuple
 from collections.abc import Iterable, Callable, Iterator
+from collections import namedtuple
 from numpy.typing import NDArray, DTypeLike
 import numpy as np
 
 __all__ = [
+    "as_namedtuple",
     "broadcast_seq",
     "cast_warn",
     "TranslateDType",
     "UniformSpec",
 ]
+
+
+def as_namedtuple(**kwargs) -> NamedTuple:
+    """
+    Store mapping as named-tuple.
+
+    The goal is to provide more convenient access to dictionary entries via `.key` syntax.
+    """
+    nt_t = namedtuple("nt_t", kwargs.keys())
+    y = nt_t(**kwargs)
+    return y
 
 
 def broadcast_seq(
