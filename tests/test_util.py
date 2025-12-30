@@ -71,3 +71,50 @@ class TestCastWarn:
             assert w
 
         assert y.dtype == out_dtype
+
+
+class TestTranslateDType:
+    @pytest.mark.parametrize(
+        ["in_dtype", "out_dtype"],
+        [
+            (np.int32, np.int32),
+            (np.int64, np.int64),
+            (np.float32, np.int32),
+            (np.float64, np.int64),
+            (np.complex64, np.int32),
+            (np.complex128, np.int64),
+        ],
+    )
+    def test_to_int(self, in_dtype, out_dtype):
+        dtype = ftku.TranslateDType(in_dtype).to_int()
+        assert dtype == out_dtype
+
+    @pytest.mark.parametrize(
+        ["in_dtype", "out_dtype"],
+        [
+            (np.int32, np.float32),
+            (np.int64, np.float64),
+            (np.float32, np.float32),
+            (np.float64, np.float64),
+            (np.complex64, np.float32),
+            (np.complex128, np.float64),
+        ],
+    )
+    def test_to_float(self, in_dtype, out_dtype):
+        dtype = ftku.TranslateDType(in_dtype).to_float()
+        assert dtype == out_dtype
+
+    @pytest.mark.parametrize(
+        ["in_dtype", "out_dtype"],
+        [
+            (np.int32, np.complex64),
+            (np.int64, np.complex128),
+            (np.float32, np.complex64),
+            (np.float64, np.complex128),
+            (np.complex64, np.complex64),
+            (np.complex128, np.complex128),
+        ],
+    )
+    def test_to_complex(self, in_dtype, out_dtype):
+        dtype = ftku.TranslateDType(in_dtype).to_complex()
+        assert dtype == out_dtype
