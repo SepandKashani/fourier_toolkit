@@ -5,6 +5,28 @@ import warnings
 import fourier_toolkit.util as ftku
 
 
+class TestAsNamedTuple:
+    def test_creation(self):
+        x = {"a": 1, "b": 2}
+        y = ftku.as_namedtuple(**x)
+
+        assert hasattr(y, "a") and y.a == 1
+        assert hasattr(y, "b") and y.b == 2
+
+    def test_no_copy(self):
+        # if objects stored in mapping, only references are stored in the namedtuple.
+        x = {"a": np.r_[1, 2], "b": 1}
+        y = ftku.as_namedtuple(**x)
+
+        x["b"] += 1
+        assert x["b"] == 2
+        assert y.b == 1
+
+        assert y.a is x["a"]
+        x["a"] += 1
+        assert np.allclose(y.a, np.r_[2, 3])
+
+
 class TestBroadcastSeq:
     def test_tuplizes(self):
         assert ftku.broadcast_seq(x=1) == (1,)
