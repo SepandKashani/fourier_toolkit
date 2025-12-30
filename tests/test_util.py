@@ -118,3 +118,88 @@ class TestTranslateDType:
     def test_to_complex(self, in_dtype, out_dtype):
         dtype = ftku.TranslateDType(in_dtype).to_complex()
         assert dtype == out_dtype
+
+
+class TestUniformSpec:
+    def test_scalar_input(self):
+        uspec_1 = ftku.UniformSpec(1, 0.5, 5)
+        uspec_2 = ftku.UniformSpec((1,), 0.5, (5,))
+        assert uspec_1 == uspec_2
+
+        uspec_3 = ftku.UniformSpec(1, (0.5, 0.25), 3)
+        assert uspec_3.start == (1, 1)
+        assert uspec_3.step == (0.5, 0.25)
+        assert uspec_3.num == (3, 3)
+
+    def test_center_span_initialization(self):
+        uspec_1 = ftku.UniformSpec(center=1, span=2, num=5)
+        uspec_2 = ftku.UniformSpec(start=0, step=0.5, num=5)
+        assert uspec_1 == uspec_2
+
+        # multi-dim case
+        uspec_3 = ftku.UniformSpec(center=1, span=(2, 3), num=5)
+        uspec_4 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, 0.75), num=5)
+        assert uspec_3 == uspec_4
+
+    def test_properties(self):
+        uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)
+        assert uspec_1.ndim == 1
+        assert uspec_1.center == (1,)
+        assert uspec_1.span == (2,)
+
+        uspec_2 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, 0.75), num=5)
+        assert uspec_2.ndim == 2
+        assert uspec_2.center == (1, 1)
+        assert uspec_2.span == (2, 3)
+
+    @pytest.mark.parametrize("sparse", [True, False])
+    def test_meshgrid(self, sparse):
+        # 1D case
+        uspec_1 = ftku.UniformSpec(start=1, step=0.1, num=9)
+        mesh_1 = uspec_1.meshgrid(np, sparse)
+        mesh_1_gt = (1 + 0.1 * np.arange(9),)
+        assert len(mesh_1) == len(mesh_1_gt) == 1
+        assert np.allclose(mesh_1[0], mesh_1_gt[0])
+
+        # multi-dimensional case
+        uspec_2 = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=9)
+        mesh_2 = uspec_2.meshgrid(np, sparse)
+        mesh_2_gt = np.meshgrid(
+            *(
+                1 + 0.1 * np.arange(9),
+                1 + 0.2 * np.arange(9),
+            ),
+            indexing="ij",
+            sparse=sparse,
+        )
+        assert len(mesh_2) == len(mesh_2_gt) == 2
+        for m2, m2gt in zip(mesh_2, mesh_2_gt):
+            assert m2.shape == m2gt.shape
+            assert np.allclose(m2, m2gt)
+
+    def test_knots(self):
+        uspec = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=(9, 8))
+        knots = uspec.knots(np)
+        knots_gt = np.stack(
+            np.meshgrid(
+                *(
+                    1 + 0.1 * np.arange(9),
+                    1 + 0.2 * np.arange(8),
+                ),
+                indexing="ij",
+            ),
+            axis=-1,
+        )
+
+        assert knots.shape == knots_gt.shape == (9, 8, 2)
+        assert np.allclose(knots, knots_gt)
+
+    def test_neg(self):
+        uspec = ftku.UniformSpec(1, (2, 0.5), (3, 4))
+        mesh = uspec.meshgrid(np)
+
+        neg_uspec = -uspec
+        neg_mesh = neg_uspec.meshgrid(np)
+
+        assert np.allclose(-mesh[0][::-1, ::-1], neg_mesh[0])
+        assert np.allclose(-mesh[1][::-1, ::-1], neg_mesh[1])
