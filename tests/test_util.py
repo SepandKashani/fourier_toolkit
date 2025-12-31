@@ -95,6 +95,26 @@ class TestCastWarn:
         assert y.dtype == out_dtype
 
 
+class TestNextFastLen:
+    def test_5s_in_5s_out(self):
+        # Function is a no-op for 5-smooth inputs.
+        for s in self._5_smooth():
+            assert ftku.next_fast_len(s) == s
+
+    def test_always_gt_n(self):
+        # Predicted 5-smooth number always >= input
+        for n in range(1, 10_000):
+            assert n <= ftku.next_fast_len(n)
+
+    # Fixtures ----------------------------------------------------------------
+    @classmethod
+    def _5_smooth(cls) -> NDArray:
+        exp = np.arange(10 + 1)
+        s2, s3, s5 = np.meshgrid(2**exp, 3**exp, 5**exp, indexing="ij", sparse=True)
+        s235 = np.sort((s2 * s3 * s5).reshape(-1))
+        return s235
+
+
 class TestTranslateDType:
     @pytest.mark.parametrize(
         ["in_dtype", "out_dtype"],
