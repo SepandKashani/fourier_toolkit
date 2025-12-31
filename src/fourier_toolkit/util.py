@@ -1,3 +1,4 @@
+import importlib.resources as ir
 import warnings
 from dataclasses import dataclass
 from typing import Optional, NamedTuple
@@ -10,6 +11,7 @@ __all__ = [
     "as_namedtuple",
     "broadcast_seq",
     "cast_warn",
+    "next_fast_len",
     "TranslateDType",
     "UniformSpec",
 ]
@@ -61,6 +63,36 @@ def cast_warn(x: NDArray, dtype: DTypeLike) -> NDArray:
         msg = f"{x.shape}: {x.dtype} -> {y.dtype} cast performed."
         warnings.warn(msg)
     return y
+
+
+def next_fast_len(n: int) -> int:
+    """
+    Find a good FFT size.
+
+    For broadest compatibility with FFT libraries, the search is restricted to 5-smooth numbers, i.e. numbers of the form :math:`2^{a} 3^{b} 5^{c}`.
+
+    Parameters
+    ----------
+    n: int
+        Lower bound on FFT length.
+
+    Returns
+    -------
+    n_next: int
+        A 5-smooth FFT length such that `n_next >= n`.
+    """
+    assert 1 <= n <= (2**10) * (3**10) * (5**10)  # known pre-computed range
+
+    path = ir.files("fourier_toolkit") / "resources" / "5_smooth.txt"
+    with ir.as_file(path) as f:
+        candidates = np.loadtxt(f, dtype=int, comments="#")
+    idx = np.searchsorted(candidates, n, side="right")
+
+    if candidates[idx - 1] == n:
+        n_next = n
+    else:
+        n_next = int(candidates[idx])
+    return n_next
 
 
 class TranslateDType:
