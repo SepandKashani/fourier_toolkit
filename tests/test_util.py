@@ -249,3 +249,14 @@ class TestUniformSpec:
 
         assert np.allclose(-mesh[0][::-1, ::-1], neg_mesh[0])
         assert np.allclose(-mesh[1][::-1, ::-1], neg_mesh[1])
+
+
+class TestInterval:
+    def test_positive_span(self):
+        ftku.Interval(1, 2)  # ok
+        with pytest.raises(Exception):
+            ftku.Interval(1, span=0)
+
+    def test_bounds(self):
+        bbox = ftku.Interval((0, 2), (2, 4))
+        assert bbox.bounds() == ((-1, 1), (0, 4))
