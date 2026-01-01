@@ -183,6 +183,10 @@ class TestUniformSpec:
         uspec_4 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, 0.75), num=5)
         assert uspec_3 == uspec_4
 
+        with pytest.raises(Exception):
+            # (num >= 2) mandatory
+            ftku.UniformSpec(center=0, span=1, num=1)
+
     def test_properties(self):
         uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)
         assert uspec_1.ndim == 1

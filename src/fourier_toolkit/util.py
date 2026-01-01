@@ -191,7 +191,7 @@ class UniformSpec:
             step = broadcast_seq(step, None, float)
             assert all(s > 0 for s in step)
             num = broadcast_seq(num, None, int)
-            assert all(n > 0 for n in num)
+            assert all(n >= 1 for n in num)
 
             D = max(map(len, (start, step, num)))
             self.start = broadcast_seq(start, D)
@@ -202,7 +202,7 @@ class UniformSpec:
             span = broadcast_seq(span, None, float)
             assert all(s > 0 for s in span)
             num = broadcast_seq(num, None, int)
-            assert all(n > 0 for n in num)
+            assert all(n >= 2 for n in num)
 
             D = max(map(len, (center, span, num)))
             center = broadcast_seq(center, D)
