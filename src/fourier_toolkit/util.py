@@ -11,6 +11,7 @@ __all__ = [
     "as_namedtuple",
     "broadcast_seq",
     "cast_warn",
+    "Interval",
     "next_fast_len",
     "TranslateDType",
     "UniformSpec",
@@ -256,3 +257,51 @@ class UniformSpec:
         """
         x = xp.stack(self.meshgrid(xp), axis=-1)
         return x
+
+
+@dataclass
+class Interval:
+    r"""
+    Multi-dimensional interval specifier.
+
+    Defines a box given its center :math:`\bbx_{c} \in \bR^{D}` and width :math:`\Delta_{\bbx} \in \bR_{+}^{D}`.
+    """
+
+    center: tuple[float]
+    span: tuple[float]
+
+    def __init__(self, center, span):
+        r"""
+        Parameters
+        ----------
+        center: tuple[float]
+            \bbx_{c} \in \bR^{D}
+        span: tuple[float]
+            \Delta_{\bbx} \in \bR_{+}^{D}
+        """
+        # parameter validation
+        uspec = UniformSpec(center=center, span=span, num=2)
+
+        self.center = uspec.center
+        self.span = uspec.span
+
+    @property
+    def ndim(self) -> int:
+        return len(self.center)
+
+    def bounds(self) -> tuple:
+        """
+        Axial interval (start, stop) values.
+
+        Returns
+        -------
+        interval: tuple[tuple[float]]
+            ((L1,R1),...,(LD,RD)) interval limits.
+        """
+        return tuple(
+            (c - 0.5 * s, c + 0.5 * s)
+            for (c, s) in zip(
+                self.center,
+                self.span,
+            )
+        )
