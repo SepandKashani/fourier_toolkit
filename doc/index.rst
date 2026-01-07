@@ -1,10 +1,7 @@
-Fourier Toolkit documentation
-=============================
-
-A short introduction to the project.
+.. include:: ../README.rst
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :hidden:
 
    api
