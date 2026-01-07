@@ -1,0 +1,29 @@
+[project]
+name = "fourier_toolkit"
+version = "0.1.0"
+description = "Collection of utilities to compute Fourier Transforms."
+readme = "README.rst"
+authors = [
+    { name = "Sepand KASHANI", email = "sepand@kashani.ch" }
+]
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "finufft>=2.2.0",
+    "numpy>=2.0.0",
+    "opt-einsum>=3.3.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.18,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+    "pytest>=9.0.2",
+    "ruff>=0.14.10",
+    "scipy>=1.16.3",
+    "sphinx>=9.0.4",
+    "ty>=0.0.8",
+]
