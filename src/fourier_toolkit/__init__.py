@@ -1,3 +1,8 @@
+import importlib.metadata
+
+__version__ = importlib.metadata.version("fourier_toolkit")
+
+
 from .nufft import (
     nu2nu as nu2nu,
     nu2u as nu2u,

@@ -1,11 +1,22 @@
+import datetime as dt
+import importlib.metadata as im
 import os
 import sys
 
+
 sys.path.insert(0, os.path.abspath("../src"))  # src-layout project structure
 
+# Project information ---------------------------------------------------------
+cfg = im.metadata("fourier_toolkit")
 project = "Fourier Toolkit"
-copyright = "2026, Sepand KASHANI"
-author = "Sepand KASHANI"
+author = cfg["Author-email"]
+copyright = f"{dt.date.today().year}, {author}"
+
+# Compute legible version info.
+version = cfg["Version"]  # <semver>[.devXXX][+<git-hash>]
+version = version.strip().split("+")[0]  # restrict to <semver>[.devXXX]
+release = version
+# -----------------------------------------------------------------------------
 
 extensions = [
     "sphinx.ext.autodoc",
