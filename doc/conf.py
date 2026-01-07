@@ -13,6 +13,7 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.bibtex",
 ]
 
 templates_path = ["_templates"]
@@ -183,3 +184,6 @@ napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = False
 napoleon_use_param = True
 napoleon_use_rtype = True
+
+bibtex_bibfiles = ["bibliography.bib"]
+bibtex_reference_style = "label"

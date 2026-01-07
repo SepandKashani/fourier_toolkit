@@ -25,5 +25,6 @@ dev = [
     "ruff>=0.14.10",
     "scipy>=1.16.3",
     "sphinx>=9.0.4",
+    "sphinxcontrib-bibtex>=2.6.5",
     "ty>=0.0.8",
 ]
