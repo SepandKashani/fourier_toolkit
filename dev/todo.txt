@@ -1,0 +1,9 @@
+- Add GPU support
+  Modules are already written to work transparently with (NumPy, CuPy) arrays, but there are probably bugs to iron out.
+
+  1. Test suite: explicitly test CuPy inputs.
+  2. Iron out bugs, in this order:
+     - util.py
+     - linalg.py
+     - ufft.py
+     - nufft.py
