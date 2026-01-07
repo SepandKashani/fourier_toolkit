@@ -19,3 +19,7 @@ wheels/
 # UV-related
 .python-version
 uv.lock
+
+# Sphinx
+doc/_build/
+doc/generated/
