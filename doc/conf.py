@@ -20,9 +20,15 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Theme options ---------------------------------------------------------------
-
 html_theme = "bizstyle"
 html_static_path = ["_static"]
+html_sidebars = {
+    "**": [
+        "globaltoc.html",
+        "relations.html",
+        "searchbox.html",
+    ]
+}
 
 # Extension options -----------------------------------------------------------
 autodoc_member_order = "bysource"
