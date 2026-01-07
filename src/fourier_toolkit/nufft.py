@@ -2,7 +2,7 @@ import finufft
 import fourier_toolkit.util as ftku
 import numpy as np
 import math
-from numpy.typing import NDArray
+import fourier_toolkit.typing as ftkt
 
 __all__ = [
     "nu2nu",
@@ -14,12 +14,12 @@ _eps_default: float = 1e-6
 
 
 def nu2nu(
-    x: NDArray,
-    v: NDArray,
-    w: NDArray,
+    x: ftkt.ArrayR,
+    v: ftkt.ArrayR,
+    w: ftkt.ArrayRC,
     eps: float = _eps_default,
     **kwargs,
-) -> NDArray:
+) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)
 
@@ -39,11 +39,11 @@ def nu2nu(
 
     Parameters
     ----------
-    x: NDArray[float]
+    x: ArrayR
         (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.
-    v: NDArray[float]
+    v: ArrayR
         (N, D) frequencies :math:`\bbv_{n} \in \bR^{D}`.
-    w: NDArray[float/complex]
+    w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
@@ -53,7 +53,7 @@ def nu2nu(
 
     Returns
     -------
-    z: NDArray[complex]
+    z: ArrayC
         (..., N) weights :math:`z_{n} \in \bC`.
 
     Notes
@@ -85,12 +85,12 @@ def nu2nu(
 
 
 def nu2u(
-    x: NDArray,
+    x: ftkt.ArrayR,
     v_spec: ftku.UniformSpec,
-    w: NDArray,
+    w: ftkt.ArrayRC,
     eps: float = _eps_default,
     **kwargs,
-) -> NDArray:
+) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)
 
@@ -118,11 +118,11 @@ def nu2u(
 
     Parameters
     ----------
-    x: NDArray[float]
+    x: ArrayR
         (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice specifier.
-    w: NDArray[float/complex]
+    w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
@@ -132,7 +132,7 @@ def nu2u(
 
     Returns
     -------
-    z: NDArray[complex]
+    z: ArrayC
         (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
 
     Notes
@@ -173,11 +173,11 @@ def nu2u(
 
 def u2nu(
     x_spec: ftku.UniformSpec,
-    v: NDArray,
-    w: NDArray,
+    v: ftkt.ArrayR,
+    w: ftkt.ArrayRC,
     eps: float = _eps_default,
     **kwargs,
-) -> NDArray:
+) -> ftkt.ArrayC:
     r"""
     Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)
 
@@ -207,9 +207,9 @@ def u2nu(
     ----------
     x_spec: UniformSpec
         :math:`\bbx_{m}` lattice specifier.
-    v: NDArray[float]
+    v: ArrayR
         (N, D) support points :math:`\bbv_{n} \in \bR^{D}`.
-    w: NDArray[float/complex]
+    w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
@@ -219,7 +219,7 @@ def u2nu(
 
     Returns
     -------
-    z: NDArray[complex]
+    z: ArrayC
         (..., N) weights :math:`z_{n} \in \bC`.
 
     Notes
@@ -259,7 +259,7 @@ def u2nu(
 
 
 # Helper routines (internal) ---------------------------------------------------
-def _canonicalize_knots(xv: NDArray) -> NDArray:
+def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
     """
     Transform (x, v) knots to canonical form:
     - shape (M|N, D)
@@ -268,11 +268,11 @@ def _canonicalize_knots(xv: NDArray) -> NDArray:
 
     Parameters
     ----------
-    xv: NDArray[float]
+    xv: ArrayR
 
     Returns
     -------
-    xv_c: NDArray[float]
+    xv_c: ArrayR
         Canonical form of `xv`.
     """
     assert xv.ndim in (1, 2)
@@ -287,7 +287,7 @@ def _canonicalize_knots(xv: NDArray) -> NDArray:
     return xv_c
 
 
-def _canonicalize_weights(w: NDArray, M: int) -> tuple[NDArray, tuple]:
+def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
     """
     Transform (w,) weights to canonical form:
     - shape (n_trans, M)
@@ -296,11 +296,11 @@ def _canonicalize_weights(w: NDArray, M: int) -> tuple[NDArray, tuple]:
 
     Parameters
     ----------
-    w: NDArray[float/complex]
+    w: ArrayRC
 
     Returns
     -------
-    w_c: NDArray[complex]
+    w_c: ArrayC
         Canonical form of `w`.
     sh: tuple[int]
         Shape to transform the output of `plan.execute()` to.
@@ -319,20 +319,20 @@ def _canonicalize_weights(w: NDArray, M: int) -> tuple[NDArray, tuple]:
 
 
 def _create_plan(
-    x: NDArray,
-    v: NDArray,
-    w: NDArray,
+    x: ftkt.ArrayR,
+    v: ftkt.ArrayR,
+    w: ftkt.ArrayC,
     eps: float,
     **kwargs,
 ) -> finufft.Plan:
     r"""
     Parameters
     ----------
-    x: NDArray[float]
+    x: ArrayR
         (M, D)
-    v: NDArray[float]
+    v: ArrayR
         (N, D)
-    w: NDArray[complex]
+    w: ArrayC
         (n_trans, M)
     eps: ]0, 1[
     kwargs: dict

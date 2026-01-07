@@ -1,4 +1,4 @@
-from numpy.typing import NDArray
+import fourier_toolkit.typing as ftkt
 import opt_einsum as oe
 
 __all__ = [
@@ -6,7 +6,7 @@ __all__ = [
 ]
 
 
-def hadamard_outer(x: NDArray, *args: list[NDArray]) -> NDArray:
+def hadamard_outer(x: ftkt.ArrayRC, *args: list[ftkt.ArrayRC]) -> ftkt.ArrayRC:
     r"""
     Compute Hadamard product of `x` with outer product of `args`:
 
@@ -16,14 +16,14 @@ def hadamard_outer(x: NDArray, *args: list[NDArray]) -> NDArray:
 
     Parameters
     ----------
-    x: NDArray
+    x: ArrayRC
         (..., N1,...,ND)
-    args[k]: NDArray
+    args[k]: ArrayRC
         (Nk,)
 
     Returns
     -------
-    y: NDArray
+    y: ArrayRC
         (..., N1,...,ND)
 
     Note

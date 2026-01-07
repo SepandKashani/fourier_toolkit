@@ -1,10 +1,11 @@
+import fourier_toolkit.typing as ftkt
 import importlib.resources as ir
 import warnings
 from dataclasses import dataclass
 from typing import Optional, NamedTuple
 from collections.abc import Iterable, Callable, Iterator
 from collections import namedtuple
-from numpy.typing import NDArray, DTypeLike
+from numpy.typing import DTypeLike
 import numpy as np
 
 __all__ = [
@@ -53,7 +54,7 @@ def broadcast_seq(
     return y
 
 
-def cast_warn(x: NDArray, dtype: DTypeLike) -> NDArray:
+def cast_warn(x: ftkt.ArrayRC, dtype: DTypeLike) -> ftkt.ArrayRC:
     """
     Cast `x` to `dtype` if type mis-match.
 
@@ -238,24 +239,24 @@ class UniformSpec:
         neg_x0 = tuple(-(x0 + dx * (nx - 1)) for (x0, dx, nx) in self)
         return UniformSpec(start=neg_x0, step=self.step, num=self.num)
 
-    def meshgrid(self, xp, sparse: bool = False) -> tuple[NDArray]:
+    def meshgrid(self, xp, sparse: bool = False) -> tuple[ftkt.ArrayR]:
         """
         Equivalent of :py:func:`numpy.meshgrid`.
 
         Returns
         -------
-        mesh: tuple[NDArray]
+        mesh: tuple[ArrayR]
             (D,) axial knot coordinates
         """
         mesh_1D = tuple(x0 + dx * xp.arange(nx) for (x0, dx, nx) in self)
         mesh = xp.meshgrid(*mesh_1D, indexing="ij", sparse=sparse)
         return mesh
 
-    def knots(self, xp) -> NDArray:
+    def knots(self, xp) -> ftkt.ArrayR:
         """
         Returns
         -------
-        x: NDArray
+        x: ArrayR
             (M1,...,MD, D) mesh coordinates
         """
         x = xp.stack(self.meshgrid(xp), axis=-1)

@@ -1,7 +1,7 @@
+import fourier_toolkit.typing as ftkt
 import numpy as np
 import math
 import cmath
-from numpy.typing import NDArray
 
 import fourier_toolkit.linalg as ftkl
 import fourier_toolkit.util as ftku
@@ -15,8 +15,8 @@ __all__ = [
 def u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: NDArray,
-) -> NDArray:
+    w: ftkt.ArrayRC,
+) -> ftkt.ArrayC:
     r"""
     Multi-dimensional Uniform-to-Uniform Fourier Transform. (:math:`\tuu`)
 
@@ -47,12 +47,12 @@ def u2u(
         :math:`\bbx_{m}` lattice.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice.
-    w: NDArray[float/complex]
+    w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
 
     Returns
     -------
-    z: NDArray[complex]
+    z: ArrayC
         (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
 
     Notes
@@ -101,54 +101,54 @@ class DFT:
             D=D,
         )
 
-    def apply(self, x: NDArray) -> NDArray:
+    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bby = F \bbx`.
 
         Parameters
         ----------
-        x: NDArray[float/complex]
+        x: ArrayRC
             (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
-        y: NDArray[complex]
+        y: ArrayC
             (..., N1,...,ND) output :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = x.__array_namespace__()
         y = xp.fft.fftn(x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
         return y
 
-    def adjoint(self, y: NDArray) -> NDArray:
+    def adjoint(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bbx = F^{\adj} \bby`.
 
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
             (..., N1,...,ND) input :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
-        x: NDArray[complex]
+        x: ArrayC
             (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = y.__array_namespace__()
         x = xp.fft.ifftn(y, axes=tuple(range(-self.cfg.D, 0)), norm="forward")
         return x
 
-    def inverse(self, y: NDArray) -> NDArray:
+    def inverse(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Inverse transform :math:`\bbx = F^{-1} \bby`.
 
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
             (..., N1,...,ND) input :math:`\bby = \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
-        x: NDArray[complex]
+        x: ArrayC
             (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = y.__array_namespace__()
@@ -216,18 +216,18 @@ class CZT:
             L=tuple(ftku.next_fast_len(n + m - 1) for (n, m) in zip(N, M)),
         )
 
-    def apply(self, x: NDArray) -> NDArray:
+    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bby = C \bbx`.
 
         Parameters
         ----------
-        x: NDArray[float/complex]
+        x: ArrayRC
             (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
-        y: NDArray[complex]
+        y: ArrayC
             (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
         """
         AWk2, FWk2, Wk2, extract = self._mod_params_apply(x)
@@ -245,18 +245,18 @@ class CZT:
         y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
         return y
 
-    def adjoint(self, y: NDArray) -> NDArray:
+    def adjoint(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bbx = C^{\adj} \bby`.
 
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
             (..., M1,...,MD) input :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
 
         Returns
         -------
-        x: NDArray[complex]
+        x: ArrayC
             (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         # CZT^{\adjoint}(y,M,A,W)[n] = CZT(y,N,A=1,W=W*)[n] * A^{n}
@@ -273,19 +273,19 @@ class CZT:
         return x
 
     # Helper routines (internal) ----------------------------------------------
-    def _mod_params_apply(self, x: NDArray):
+    def _mod_params_apply(self, x: ftkt.ArrayRC):
         """
         Parameters
         ----------
-        x: NDArray[float/complex]
+        x: ArrayRC
 
         Returns
         -------
-        AWk2: NDArray[complex]
+        AWk2: ArrayC
             (N1,),...,(ND,) pre-FFT modulation vectors.
-        FWk2: NDArray[complex]
+        FWk2: ArrayC
             (L1,),...,(LD,) FFT of convolution filters.
-        Wk2: NDArray[complex]
+        Wk2: ArrayC
             (M1,),...,(MD,) post-FFT modulation vectors.
         extract: list[slice]
             (slice1,...,sliceD) FFT interval to extract.
@@ -327,15 +327,15 @@ class CZT:
 
         return AWk2, FWk2, Wk2, extract
 
-    def _mod_params_adjoint(self, y: NDArray):
+    def _mod_params_adjoint(self, y: ftkt.ArrayRC):
         """
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
 
         Returns
         -------
-        An: NDArray[complex]
+        An: ArrayC
             (N1,),...,(ND,) vectors.
         """
         translate = ftku.TranslateDType(y.dtype)
@@ -397,18 +397,18 @@ class U2U:
             czt_axes=tuple(czt_axes),
         )
 
-    def apply(self, w: NDArray) -> NDArray:
+    def apply(self, w: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bbz = U \bbw`.
 
         Parameters
         ----------
-        w: NDArray[float/complex]
+        w: ArrayRC
             (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
 
         Returns
         -------
-        z: NDArray[complex]
+        z: ArrayC
             (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
         """
         _w = w
@@ -433,18 +433,18 @@ class U2U:
         z = _w
         return z
 
-    def adjoint(self, z: NDArray) -> NDArray:
+    def adjoint(self, z: ftkt.ArrayRC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bbw = U^{\adj} \bbz`.
 
         Parameters
         ----------
-        z: NDArray[float/complex]
+        z: ArrayRC
             (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
 
         Returns
         -------
-        w: NDArray[complex]
+        w: ArrayC
             (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
         """
         _z = z
@@ -473,21 +473,21 @@ class U2U:
         return w
 
     # Helper routines (internal) ----------------------------------------------
-    def _fft_params(self, y: NDArray):
+    def _fft_params(self, y: ftkt.ArrayRC):
         """
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
 
         Returns
         -------
         ax_fft: tuple[int]
             Permutation tuple to move FFT axes to end of `y`.
-        Cp: NDArray
+        Cp: ArrayC
             (N1,),...,(ND,) pre-FFT modulation vectors.
         fft: FFT
             FFT() instance.
-        Bp: NDArray
+        Bp: ArrayC
             (N1,),...,(ND,) post-FFT modulation vectors.
         ax_ifft: tuple[int]
             Permutation tuple to undo initial axis transposition.
@@ -531,11 +531,11 @@ class U2U:
 
         return (ax_fft, Cp, fft, Bp, ax_ifft)
 
-    def _czt_params(self, y: NDArray):
+    def _czt_params(self, y: ftkt.ArrayRC):
         """
         Parameters
         ----------
-        y: NDArray[float/complex]
+        y: ArrayRC
 
         Returns
         -------
@@ -543,7 +543,7 @@ class U2U:
             Permutation tuple to move CZT axes to end of `y`.
         czt: CZT
             CZT(A,W,M,N) instance.
-        B: NDArray
+        B: ArrayC
             (N1,),...,(ND,) post-CZT modulation vectors.
         ax_iczt: tuple[int]
             Permutation tuple to undo initial axis transposition.
