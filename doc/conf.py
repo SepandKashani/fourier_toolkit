@@ -9,6 +9,7 @@ author = "Sepand KASHANI"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
@@ -23,6 +24,15 @@ html_theme = "bizstyle"
 html_static_path = ["_static"]
 
 # Extension options -----------------------------------------------------------
+autodoc_member_order = "bysource"
+autodoc_typehints = "none"
+
+intersphinx_mapping = {
+    "finufft": ("https://finufft.readthedocs.io/en/latest/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "python": ("https://docs.python.org/3", None),
+}
+
 mathjax3_config = dict(
     tex=dict(
         macros={
@@ -150,13 +160,11 @@ mathjax3_config = dict(
             "tr": r"\operatorname*{tr}",
             "grad": r"\operatorname*{\nabla}",
             # Fourier-related -------------------------------------------------
-            "dftt": r"DFT",
             "dft": r"\operatorname*{\texttt{DFT}}",
-            "dtftt": r"DTFT",
+            "fft": r"\operatorname*{\texttt{FFT}}",
+            "czt": r"\operatorname*{\texttt{CZT}}",
             "dtft": r"\operatorname*{\texttt{DTFT}}",
-            "fst": r"FS",
             "fs": r"\operatorname*{\texttt{FS}}",
-            "ctftt": r"FT",
             "ctft": r"\operatorname*{\texttt{F}}",
             "tuu": r"{\texttt{U} \to \texttt{U}}",
             "tnuu": r"{\texttt{NU} \to \texttt{U}}",
@@ -165,14 +173,13 @@ mathjax3_config = dict(
             "circconv": r"\operatorname*{\circledast}",
             "conv": r"\operatorname*{\ast}",
             "epsBandwidth": [r"\cB_{ #1 }", 1],
-            # -----------------------------------------------------------------
         },
-    )
+    ),
 )
 
 napoleon_google_docstring = False
 napoleon_numpy_docstring = True
-napoleon_include_init_with_doc = False
+napoleon_include_init_with_doc = True
 napoleon_include_private_with_doc = False
 napoleon_use_param = True
 napoleon_use_rtype = True
