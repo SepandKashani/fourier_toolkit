@@ -21,7 +21,7 @@ def nu2nu(
     **kwargs,
 ) -> NDArray:
     r"""
-    Multi-dimensional NonUniform-to-NonUniform Fourier Transform.
+    Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)
 
     Given the Dirac stream
 
@@ -29,11 +29,11 @@ def nu2nu(
 
        f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
 
-    computes samples of :math:`f^{F}`, i.e.,
+    computes samples of :math:`f^{\ctft}`, i.e.,
 
     .. math::
 
-       f^{F}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n}) \in \bR^{D}`.
 
@@ -48,8 +48,8 @@ def nu2nu(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
-        Extra parameters for FINUFFT planner.
-        (For advanced users only; see FINUFFT docs.)
+        Extra parameters for :py:class:`finufft.Plan`.
+        (For advanced users only.)
 
     Returns
     -------
@@ -59,6 +59,7 @@ def nu2nu(
     Notes
     -----
     (x,v,w) must have the same numerical precision:
+
     - (x,v) float32, (w,) complex64
     - (x,v) float64, (w,) complex128
     """
@@ -91,7 +92,7 @@ def nu2u(
     **kwargs,
 ) -> NDArray:
     r"""
-    Multi-dimensional NonUniform-to-Uniform Fourier Transform.
+    Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)
 
     Given the Dirac stream
 
@@ -99,19 +100,19 @@ def nu2u(
 
        f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
 
-    computes samples of :math:`f^{F}`, i.e.,
+    computes samples of :math:`f^{\ctft}`, i.e.,
 
     .. math::
 
-       f^{F}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbx_{m} \in \bR^{D}`, and :math:`\bbv_{n}` lies on the regular lattice
 
     .. math::
 
-       \begin{align}
-           \bbv_{\bbn} &= \bbv_{0} + \Delta_{\bbv} \odot \bbn, & [\bbn]_{d} \in \{0,\ldots,N_{d}-1\},
-       \end{align}
+       \bbv_{\bbn} = \bbv_{0} + \Delta_{\bbv} \odot \bbn,
+       \qquad
+       [\bbn]_{d} \in \discreteRange{0}{N_{d}-1},
 
     with :math:`N = \prod_{d} N_{d}`.
 
@@ -126,8 +127,8 @@ def nu2u(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
-        Extra parameters for FINUFFT planner.
-        (For advanced users only; see FINUFFT docs.)
+        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.
+        (For advanced users only.)
 
     Returns
     -------
@@ -137,12 +138,13 @@ def nu2u(
     Notes
     -----
     * (x,w) must have the same numerical precision:
+
       - (x,) float32, (w,) complex64
       - (x,) float64, (w,) complex128
 
-    * This implementation is a thin shell around an NU->NU transform.
+    * This implementation is a thin shell around an :math:`\tnunu` transform.
       This is because type-1 NUFFTs impose limits on domain(x, v_spec) that are a hindrance in practice.
-      The price of relying on an NU->NU transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.
+      The price of relying on an :math:`\tnunu` transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.
       Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.
     """
     x = _canonicalize_knots(x)
@@ -177,7 +179,7 @@ def u2nu(
     **kwargs,
 ) -> NDArray:
     r"""
-    Multi-dimensional Uniform-to-NonUniform Fourier Transform.
+    Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)
 
     Given the Dirac stream
 
@@ -185,19 +187,19 @@ def u2nu(
 
        f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
 
-    computes samples of :math:`f^{F}`, i.e.,
+    computes samples of :math:`f^{\ctft}`, i.e.,
 
     .. math::
 
-       f^{F}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbv_{n} \in \bR^{D}`, and :math:`\bbx_{m}` lies on the regular lattice
 
     .. math::
 
-       \begin{align}
-           \bbx_{\bbm} &= \bbx_{0} + \Delta_{\bbx} \odot \bbm, & [\bbm]_{d} \in \{0,\ldots,M_{d}-1\},
-       \end{align}
+       \bbx_{\bbm} = \bbx_{0} + \Delta_{\bbx} \odot \bbm,
+       \qquad
+       [\bbm]_{d} \in \discreteRange{0}{M_{d}-1},
 
     with :math:`M = \prod_{d} M_{d}`.
 
@@ -212,8 +214,8 @@ def u2nu(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
-        Extra parameters for FINUFFT planner.
-        (For advanced users only; see FINUFFT docs.)
+        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.
+        (For advanced users only.)
 
     Returns
     -------
@@ -223,12 +225,13 @@ def u2nu(
     Notes
     -----
     * (v,w) must have the same numerical precision:
+
       - (v,) float32, (w,) complex64
       - (v,) float64, (w,) complex128
 
-    * This implementation is a thin shell around an NU->NU transform.
+    * This implementation is a thin shell around an :math:`\tnunu` transform.
       This is because type-2 NUFFTs impose limits on domain(x_spec, v) that are a hindrance in practice.
-      The price of relying on an NU->NU transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.
+      The price of relying on an :math:`\tnunu` transform is an extra interpolation step before the FFT, but its runtime is rarely the bottleneck.
       Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.
     """
     M, Dx = x_spec.num, x_spec.ndim

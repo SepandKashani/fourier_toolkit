@@ -8,6 +8,7 @@ import fourier_toolkit.util as ftku
 
 __all__ = [
     "u2u",
+    "U2U",
 ]
 
 
@@ -17,7 +18,7 @@ def u2u(
     w: NDArray,
 ) -> NDArray:
     r"""
-    Multi-dimensional Uniform-to-Uniform Fourier Transform.
+    Multi-dimensional Uniform-to-Uniform Fourier Transform. (:math:`\tuu`)
 
     Given the Dirac stream
 
@@ -25,20 +26,18 @@ def u2u(
 
        f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
 
-    computes samples of :math:`f^{F}`, i.e.,
+    computes samples of :math:`f^{\ctft}`, i.e.,
 
     .. math::
 
-       f^{F}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n})` lie on the regular lattice
 
     .. math::
 
-       \begin{align}
-           \bbx_{\bbm} &= \bbx_{0} + \Delta_{\bbx} \odot \bbm, & [\bbm]_{d} \in \{0,\ldots,M_{d}-1\}, \\
-           \bbv_{\bbn} &= \bbv_{0} + \Delta_{\bbv} \odot \bbn, & [\bbn]_{d} \in \{0,\ldots,N_{d}-1\},
-       \end{align}
+       \bbx_{\bbm} &= \bbx_{0} + \Delta_{\bbx} \odot \bbm, \qquad [\bbm]_{d} \in \discreteRange{0}{M_{d}-1}, \\
+       \bbv_{\bbn} &= \bbv_{0} + \Delta_{\bbv} \odot \bbn, \qquad [\bbn]_{d} \in \discreteRange{0}{N_{d}-1},
 
     with :math:`M = \prod_{d} M_{d}` and :math:`N = \prod_{d} N_{d}`.
 
@@ -58,8 +57,8 @@ def u2u(
 
     Notes
     -----
-    U->U transforms for arbitrary (x_spec,v_spec) can be implemented using the CZT algorithm (2 FFTs), but a single FFT can be used in some cases.
-    This implementation chooses the (FFT,CZT) per axis to maximize efficiency.
+    :math:`\tuu` transforms for arbitrary (x_spec,v_spec) can be implemented using the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
+    This implementation chooses the (FFT, CZT) per axis to maximize efficiency.
     """
     op = U2U(x_spec=x_spec, v_spec=v_spec)
     z = op.apply(w)
@@ -83,7 +82,7 @@ class DFT:
        =
        \sum_{n=0}^{N-1} \bbx[n] \ee^{-\cj \frac{2\pi}{N} nk},
 
-    where :math:`\bbx \in \bC^{N}`, and :math:`k = \{0, \ldots, N-1}`.
+    where :math:`\bbx \in \bC^{N}`, and :math:`k \in \discreteRange{0}{N-1}`.
 
     A D-dimensional DFT corresponds to taking a 1D DFT along each transform axis.
 
@@ -104,15 +103,17 @@ class DFT:
 
     def apply(self, x: NDArray) -> NDArray:
         r"""
+        Compute :math:`\bby = F \bbx`.
+
         Parameters
         ----------
         x: NDArray[float/complex]
-            (..., N1,...,ND) inputs :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
         y: NDArray[complex]
-            (..., N1,...,ND) outputs :math:`\bby = (F \, \bbx) \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) output :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = x.__array_namespace__()
         y = xp.fft.fftn(x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
@@ -120,15 +121,17 @@ class DFT:
 
     def adjoint(self, y: NDArray) -> NDArray:
         r"""
+        Compute :math:`\bbx = F^{\adj} \bby`.
+
         Parameters
         ----------
         y: NDArray[float/complex]
-            (..., N1,...,ND) outputs :math:`\bby = (F \, \bbx) \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) input :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
         x: NDArray[complex]
-            (..., N1,...,ND) inputs :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = y.__array_namespace__()
         x = xp.fft.ifftn(y, axes=tuple(range(-self.cfg.D, 0)), norm="forward")
@@ -136,17 +139,17 @@ class DFT:
 
     def inverse(self, y: NDArray) -> NDArray:
         r"""
-        Inverse transform.
+        Inverse transform :math:`\bbx = F^{-1} \bby`.
 
         Parameters
         ----------
         y: NDArray[float/complex]
-            (..., N1,...,ND) outputs :math:`\bby = (F \, \bbx) \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) input :math:`\bby = \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
         x: NDArray[complex]
-            (..., N1,...,ND) inputs :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         xp = y.__array_namespace__()
         x = xp.fft.ifftn(y, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
@@ -168,11 +171,11 @@ class CZT:
        =
        \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nk},
 
-    where :math:`\bbx \in \bC^{N}`, :math:`A, W \in \bC`, and :math:`k = \{0, \ldots, M-1\}`.
+    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`k \in \discreteRange{0}{M-1}`.
 
     A D-dimensional CZT corresponds to taking a 1D CZT along each transform axis.
 
-    For stability reasons, this implementation assumes :math:`|A| = |W| = 1`.
+    For stability reasons, this implementation assumes :math:`\abs{A} = \abs{W} = 1`.
     """
 
     def __init__(
@@ -188,7 +191,7 @@ class CZT:
         N: tuple[int]
             (N1,...,ND) dimensions of the input :math:`\bbx`.
         M: tuple[int]
-            (M1,...,MD) dimensions of the output :math:`(C \, \bbx)`.
+            (M1,...,MD) dimensions of the output :math:`\bby = (C \, \bbx)`.
         A: tuple[complex]
             (D,) circular offsets.
         W: tuple[complex]
@@ -215,15 +218,17 @@ class CZT:
 
     def apply(self, x: NDArray) -> NDArray:
         r"""
+        Compute :math:`\bby = C \bbx`.
+
         Parameters
         ----------
         x: NDArray[float/complex]
-            (..., N1,...,ND) inputs :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
         -------
         y: NDArray[complex]
-            (..., M1,...,MD) outputs :math:`\bby = (C \, \bbx) \in \bC^{M_{1} \times\cdots\times M_{D}}`.
+            (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
         """
         AWk2, FWk2, Wk2, extract = self._mod_params_apply(x)
         pad_width = [(0, 0)] * (x.ndim - self.cfg.D)  # stack dimensions
@@ -242,15 +247,17 @@ class CZT:
 
     def adjoint(self, y: NDArray) -> NDArray:
         r"""
+        Compute :math:`\bbx = C^{\adj} \bby`.
+
         Parameters
         ----------
         y: NDArray[float/complex]
-            (..., M1,...,MD) outputs :math:`\bby = (C \, \bbx) \in \bC^{M_{1} \times\cdots\times M_{D}}`.
+            (..., M1,...,MD) input :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
 
         Returns
         -------
         x: NDArray[complex]
-            (..., N1,...,ND) inputs :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
         """
         # CZT^{\adjoint}(y,M,A,W)[n] = CZT(y,N,A=1,W=W*)[n] * A^{n}
         czt = CZT(
@@ -346,15 +353,25 @@ class CZT:
 
 
 class U2U:
-    # OO-API of u2u()
-    #
-    # The functional API is probably more useful to end-users. U2U() is nevertheless relevant for those who want to compute the forward and adjoint transforms.
+    r"""
+    Object-oriented interface to a :math:`\tuu` transform.
+
+    The functional-equivalent :py:func:`~fourier_toolkit.u2u` is probably more useful to end-users. :py:class:`~fourier_toolkit.U2U` is nevertheless relevant for those who want to compute both forward and adjoint transforms.
+    """
 
     def __init__(
         self,
         x_spec: ftku.UniformSpec,
         v_spec: ftku.UniformSpec,
     ):
+        r"""
+        Parameters
+        ----------
+        x_spec: UniformSpec
+            :math:`\bbx_{m}` lattice.
+        v_spec: UniformSpec
+            :math:`\bbv_{n}` lattice.
+        """
         assert x_spec.ndim == v_spec.ndim
         D = x_spec.ndim
 
@@ -381,6 +398,19 @@ class U2U:
         )
 
     def apply(self, w: NDArray) -> NDArray:
+        r"""
+        Compute :math:`\bbz = U \bbw`.
+
+        Parameters
+        ----------
+        w: NDArray[float/complex]
+            (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
+
+        Returns
+        -------
+        z: NDArray[complex]
+            (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
+        """
         _w = w
 
         # Processing FFT axes
@@ -404,6 +434,19 @@ class U2U:
         return z
 
     def adjoint(self, z: NDArray) -> NDArray:
+        r"""
+        Compute :math:`\bbw = U^{\adj} \bbz`.
+
+        Parameters
+        ----------
+        z: NDArray[float/complex]
+            (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
+
+        Returns
+        -------
+        w: NDArray[complex]
+            (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
+        """
         _z = z
 
         # Processing FFT axes

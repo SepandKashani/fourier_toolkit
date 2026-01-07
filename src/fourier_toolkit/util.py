@@ -138,14 +138,13 @@ class UniformSpec:
     r"""
     Multi-dimensional uniform mesh specifier.
 
-    Defines points :math:`\bbx_{m} \in \bR^{D}` where each point lies on the
-    regular lattice
+    Defines points :math:`\bbx_{m} \in \bR^{D}` where each point lies on the regular lattice
 
     .. math::
 
        \bbx_{\bbm} = \bbx_{0} + \Delta_{\bbx} \odot \bbm,
        \qquad
-       [\bbm]_{d} \in \{0,\ldots,M_{d}-1\}
+       [\bbm]_{d} \in \discreteRange{0}{M_{d}-1}
 
     """
 
@@ -163,14 +162,14 @@ class UniformSpec:
         span=None,
     ):
         r"""
-        Initialize mesh spec from (start,step,num) or (center,span,num).
+        Initialize mesh spec from (`start`, `step`, `num`) or (`center`, `span`, `num`).
 
         Parameters (option 1)
         ---------------------
         start: tuple[float]
-            \bbx_{0} \in \bR^{D}
+            :math:`\bbx_{0} \in \bR^{D}`
         step: tuple[float]
-            \Delta_{\bbx} \in \bR_{+}^{D}
+            :math:`\Delta_{\bbx} \in \bR_{+}^{D}`
         num: tuple[int]
             (M1,...,MD) lattice size
 
@@ -233,12 +232,16 @@ class UniformSpec:
     def __neg__(self) -> "UniformSpec":
         """
         Negate all mesh coordinates.
+
+        This is useful if you want to implicitly flip the sign of the exponent in a Fourier transform.
         """
         neg_x0 = tuple(-(x0 + dx * (nx - 1)) for (x0, dx, nx) in self)
         return UniformSpec(start=neg_x0, step=self.step, num=self.num)
 
     def meshgrid(self, xp, sparse: bool = False) -> tuple[NDArray]:
         """
+        Equivalent of :py:func:`numpy.meshgrid`.
+
         Returns
         -------
         mesh: tuple[NDArray]
@@ -253,7 +256,7 @@ class UniformSpec:
         Returns
         -------
         x: NDArray
-            (M1,...,MD,D) mesh coordinates
+            (M1,...,MD, D) mesh coordinates
         """
         x = xp.stack(self.meshgrid(xp), axis=-1)
         return x
