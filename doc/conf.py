@@ -29,6 +29,7 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 intersphinx_mapping = {
+    "cupy": ("https://docs.cupy.dev/en/latest/", None),
     "finufft": ("https://finufft.readthedocs.io/en/latest/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "python": ("https://docs.python.org/3", None),
