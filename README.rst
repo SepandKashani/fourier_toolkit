@@ -54,3 +54,6 @@ Setup
    # build HTML docs
    cd fourier_toolkit/doc/
    uv run make html
+
+   # creating a release
+   uv run dev/create_release.py <version>
