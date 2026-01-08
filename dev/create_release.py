@@ -105,6 +105,9 @@ if __name__ == "__main__":
         clear_directory(repo_root, KEEP_FILES)
         shutil.copytree(td, repo_root, dirs_exist_ok=True)
 
+    # force correct HTML rendering on GitHub Pages
+    (repo_root / ".nojekyll").touch()
+
     # tag current HEAD as <version>-doc
     version_doc = f"{version}-doc"
     run(["git", "add", "-A"])
