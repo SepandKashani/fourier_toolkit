@@ -45,3 +45,6 @@ Helpers
 
 .. autoclass:: fourier_toolkit.UniformSpec
    :members:
+
+.. autoclass:: fourier_toolkit.Interval
+   :members:
