@@ -1,0 +1,150 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Fourier Toolkit &#8212; Fourier Toolkit 0.1.dev107 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=5283bb3d" />
+    
+    <script src="_static/documentation_options.js?v=17697da8"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script>window.MathJax = {"tex": {"macros": {"bba": "{\\bf{a}}", "bbA": "{\\bf{A}}", "bbb": "{\\bf{b}}", "bbB": "{\\bf{B}}", "bbc": "{\\bf{c}}", "bbC": "{\\bf{C}}", "bbd": "{\\bf{d}}", "bbD": "{\\bf{D}}", "bbe": "{\\bf{e}}", "bbE": "{\\bf{E}}", "bbf": "{\\bf{f}}", "bbF": "{\\bf{F}}", "bbg": "{\\bf{g}}", "bbG": "{\\bf{G}}", "bbh": "{\\bf{h}}", "bbH": "{\\bf{H}}", "bbi": "{\\bf{i}}", "bbI": "{\\bf{I}}", "bbj": "{\\bf{j}}", "bbJ": "{\\bf{J}}", "bbk": "{\\bf{k}}", "bbK": "{\\bf{K}}", "bbl": "{\\bf{l}}", "bbL": "{\\bf{L}}", "bbm": "{\\bf{m}}", "bbM": "{\\bf{M}}", "bbn": "{\\bf{n}}", "bbN": "{\\bf{N}}", "bbo": "{\\bf{o}}", "bbO": "{\\bf{O}}", "bbp": "{\\bf{p}}", "bbP": "{\\bf{P}}", "bbq": "{\\bf{q}}", "bbQ": "{\\bf{Q}}", "bbr": "{\\bf{r}}", "bbR": "{\\bf{R}}", "bbs": "{\\bf{s}}", "bbS": "{\\bf{S}}", "bbt": "{\\bf{t}}", "bbT": "{\\bf{T}}", "bbu": "{\\bf{u}}", "bbU": "{\\bf{U}}", "bbv": "{\\bf{v}}", "bbV": "{\\bf{V}}", "bbw": "{\\bf{w}}", "bbW": "{\\bf{W}}", "bbx": "{\\bf{x}}", "bbX": "{\\bf{X}}", "bby": "{\\bf{y}}", "bbY": "{\\bf{Y}}", "bbz": "{\\bf{z}}", "bbZ": "{\\bf{Z}}", "bbZero": "{\\bf{0}}", "bbOne": "{\\bf{1}}", "bC": "{\\mathbb{C}}", "bE": "{\\mathbb{E}}", "bN": "{\\mathbb{N}}", "bQ": "{\\mathbb{Q}}", "bR": "{\\mathbb{R}}", "bS": "{\\mathbb{S}}", "bZ": "{\\mathbb{Z}}", "cA": "{\\mathcal{A}}", "cB": "{\\mathcal{B}}", "cC": "{\\mathcal{C}}", "cD": "{\\mathcal{D}}", "cE": "{\\mathcal{E}}", "cF": "{\\mathcal{F}}", "cG": "{\\mathcal{G}}", "cH": "{\\mathcal{H}}", "cI": "{\\mathcal{I}}", "cJ": "{\\mathcal{J}}", "cK": "{\\mathcal{K}}", "cL": "{\\mathcal{L}}", "cM": "{\\mathcal{M}}", "cN": "{\\mathcal{N}}", "cO": "{\\mathcal{O}}", "cP": "{\\mathcal{P}}", "cQ": "{\\mathcal{Q}}", "cR": "{\\mathcal{R}}", "cS": "{\\mathcal{S}}", "cT": "{\\mathcal{T}}", "cU": "{\\mathcal{U}}", "cV": "{\\mathcal{V}}", "cW": "{\\mathcal{W}}", "cX": "{\\mathcal{X}}", "cY": "{\\mathcal{Y}}", "cZ": "{\\mathcal{Z}}", "cj": "{j}", "ee": "{e}", "bigBrack": ["\\left[ #1 \\right]", 1], "bigCurly": ["\\left\\{ #1 \\right\\}", 1], "bigParen": ["\\left( #1 \\right)", 1], "innerProduct": ["\\langle #1, #2 \\rangle", 2], "norm": ["\\left\\| #1 \\right\\|_{#2}", 2], "real": ["\\Re \\bigCurly{#1}", 1], "imag": ["\\Im \\bigCurly{#1}", 1], "abs": ["\\left| #1 \\right|", 1], "ceil": ["\\left\\lceil #1 \\right\\rceil", 1], "floor": ["\\left\\lfloor #1 \\right\\rfloor", 1], "kron": "{\\otimes}", "krao": "{\\circ}", "range": ["\\bigBrack{ #1, #2 }", 2], "discreteRange": ["\\lbrack\\!\\lbrack #1, #2 \\rbrack\\!\\rbrack", 2], "argmin": "\\operatorname*{arg\\,min}", "diag": "\\operatorname*{diag}", "vecOp": "\\operatorname*{vec}", "matOp": "\\operatorname*{mat}", "adj": "\\operatorname*{\\ast}", "hermitian": "\\operatorname*{H}", "transpose": "\\operatorname*{T}", "prox": "\\operatorname*{prox}", "sinc": "\\operatorname*{sinc}", "relu": "\\operatorname*{ReLu}", "tr": "\\operatorname*{tr}", "grad": "\\operatorname*{\\nabla}", "dft": "\\operatorname*{\\texttt{DFT}}", "fft": "\\operatorname*{\\texttt{FFT}}", "czt": "\\operatorname*{\\texttt{CZT}}", "dtft": "\\operatorname*{\\texttt{DTFT}}", "fs": "\\operatorname*{\\texttt{FS}}", "ctft": "\\operatorname*{\\texttt{F}}", "tuu": "{\\texttt{U} \\to \\texttt{U}}", "tnuu": "{\\texttt{NU} \\to \\texttt{U}}", "tunu": "{\\texttt{U} \\to \\texttt{NU}}", "tnunu": "{\\texttt{NU} \\to \\texttt{NU}}", "circconv": "\\operatorname*{\\circledast}", "conv": "\\operatorname*{\\ast}", "epsBandwidth": ["\\cB_{ #1 }", 1]}}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API Reference"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Fourier Toolkit 0.1.dev107 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Fourier Toolkit</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="fourier-toolkit">
+<h1>Fourier Toolkit<a class="headerlink" href="#fourier-toolkit" title="Link to this heading">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<p>Fourier Toolkit (FTK) is a collection of utilities to compute Fourier sums.</p>
+<section id="rationale">
+<h2>Rationale<a class="headerlink" href="#rationale" title="Link to this heading">¶</a></h2>
+<p>Fourier operators are pervasive in science and engineering as waves are the main vector of information transfer in physical systems.
+Casting wave problems in discrete form leads to the evaluation of sums of the form</p>
+<div class="math notranslate nohighlight" id="equation-dirac-sum-ft">
+<span class="eqno">(1)<a class="headerlink" href="#equation-dirac-sum-ft" title="Link to this equation">¶</a></span>\[\bbz_{n} = \sum_{m=0}^{M-1} w_{m} \ee^{-\cj 2 \pi \innerProduct{\bbx_{m}}{\bbv_{n}}},
+\qquad n \in \{0,\ldots,N-1\},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\{\bbx_{m} \in \bR^{D}\}\)</span> and <span class="math notranslate nohighlight">\(\{\bbv_{n} \in \bR^{D}\}\)</span> are known constants refered to as <em>knots</em>.
+This equation computes Fourier Transform samples of the Dirac stream <span class="math notranslate nohighlight">\(f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m})\)</span> at frequencies <span class="math notranslate nohighlight">\(\bbv_{n}\)</span>.</p>
+<p>Naive evaluation of <a class="reference internal" href="#equation-dirac-sum-ft">(1)</a> costs <span class="math notranslate nohighlight">\(\cO(M N)\)</span> operations which is intractable at scale.
+There is a rich literature on low-complexity methods to compute the latter more efficiently depending on the distribution of spatial/spectral knots <span id="id1">[<a class="reference internal" href="references.html#id10" title="Alexander H Barnett, Jeremy Magland, and Ludvig af Klinteberg. A parallel nonuniform fast fourier transform library based on an &quot;exponential of semicircle&quot; kernel. SIAM Journal on Scientific Computing, 41(5):C479–C504, 2019.">1</a>, <a class="reference internal" href="references.html#id3" title="Alok Dutt and Vladimir Rokhlin. Fast fourier transforms for nonequispaced data. SIAM Journal on Scientific computing, 14(6):1368–1393, 1993.">2</a>, <a class="reference internal" href="references.html#id4" title="Alok Dutt and Vladimir Rokhlin. Fast fourier transforms for nonequispaced data, ii. Applied and Computational Harmonic Analysis, 2(1):85–100, 1995.">3</a>, <a class="reference internal" href="references.html#id6" title="Karsten Fourmont. Schnelle fourier-transformation bei nichtäquidistanten gittern und tomographische anwendungen. PhD thesis, 1999.">4</a>, <a class="reference internal" href="references.html#id7" title="Karsten Fourmont. Non-equispaced fast fourier transforms with applications to tomography. Journal of Fourier Analysis and Applications, 9:431–450, 2003.">5</a>, <a class="reference internal" href="references.html#id8" title="Mathews Jacob. Optimized least-square nonuniform fast fourier transform. IEEE Transactions on Signal Processing, 57(6):2165–2177, 2009.">6</a>, <a class="reference internal" href="references.html#id9" title="Gerlind Plonka, Daniel Potts, Gabriele Steidl, and Manfred Tasche. Numerical Fourier Analysis. Springer, 2018.">7</a>, <a class="reference internal" href="references.html#id2" title="L Rabiner, R W Schafer, and C Rader. The chirp z-transform algorithm. IEEE transactions on audio and electroacoustics, 17(2):86–92, 1969.">8</a>, <a class="reference internal" href="references.html#id5" title="Gabriele Steidl. A note on fast fourier transforms for nonequispaced grids. Advances in computational mathematics, 9:337–352, 1998.">9</a>]</span>.
+At their core, they all leverage the <em>Fast Fourier Transform</em> algorithm (FFT) in some form to perform the bulk of the work:</p>
+<ul class="simple">
+<li><p>When the <span class="math notranslate nohighlight">\((\bbx_{m}, \bbv_{n})\)</span> knots lie on uniform grids, we talk of <em>uniform-to-uniform</em> methods: one or two FFTs suffice to evaluate <a class="reference internal" href="#equation-dirac-sum-ft">(1)</a>.</p></li>
+<li><p>When either <span class="math notranslate nohighlight">\((\bbx_{m}, \bbv_{n})\)</span> are non-uniform, we talk of <em>Non-uniform FFTs</em>: the latter combine the FFT with convolution/interpolation steps to compute <a class="reference internal" href="#equation-dirac-sum-ft">(1)</a> within a chosen relative error <span class="math notranslate nohighlight">\(\epsilon \ll 1\)</span>.</p></li>
+</ul>
+<p>FTK is thus a toolbox to evaluate Fourier sums efficiently by building on mature libraries.</p>
+</section>
+<section id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Link to this heading">¶</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># user install</span>
+pip<span class="w"> </span>install<span class="w"> </span>fourier_toolkit@git+https://github.com/SepandKashani/fourier_toolkit.git
+
+<span class="c1"># developer install</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/SepandKashani/fourier_toolkit.git
+<span class="nb">cd</span><span class="w"> </span>fourier_toolkit/
+uv<span class="w"> </span>sync<span class="w"> </span>--group<span class="w"> </span>dev
+uv<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
+
+<span class="c1"># run test suite</span>
+uv<span class="w"> </span>run<span class="w"> </span>pytest
+
+<span class="c1"># build HTML docs</span>
+<span class="nb">cd</span><span class="w"> </span>fourier_toolkit/doc/
+uv<span class="w"> </span>run<span class="w"> </span>make<span class="w"> </span>html
+
+<span class="c1"># creating a release</span>
+uv<span class="w"> </span>run<span class="w"> </span>dev/create_release.py<span class="w"> </span>&lt;version&gt;
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="#">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="references.html">References</a></li>
+</ul>
+
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="api.html"
+                          title="next chapter">API Reference</a></p>
+  </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API Reference"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Fourier Toolkit 0.1.dev107 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Fourier Toolkit</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2026, Sepand KASHANI &lt;sepand@kashani.ch&gt;.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>

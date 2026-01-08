@@ -1,0 +1,466 @@
+
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.1.dev107 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
+    
+    <script src="../../_static/documentation_options.js?v=17697da8"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <!--[if lt IE 9]>
+    <script src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.dev107 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for fourier_toolkit.nufft</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">finufft</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftkt</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;nu2nu&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nu2u&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;u2nu&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_eps_default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+
+<div class="viewcode-block" id="nu2nu">
+<a class="viewcode-back" href="../../api.html#fourier_toolkit.nu2nu">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nu2nu</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)</span>
+
+<span class="sd">    Given the Dirac stream</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
+
+<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+
+<span class="sd">    where :math:`(\bbx_{m}, \bbv_{n}) \in \bR^{D}`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x: ArrayR</span>
+<span class="sd">        (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.</span>
+<span class="sd">    v: ArrayR</span>
+<span class="sd">        (N, D) frequencies :math:`\bbv_{n} \in \bR^{D}`.</span>
+<span class="sd">    w: ArrayRC</span>
+<span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
+<span class="sd">    eps: float</span>
+<span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
+<span class="sd">    kwargs: dict</span>
+<span class="sd">        Extra parameters for :py:class:`finufft.Plan`.</span>
+<span class="sd">        (For advanced users only.)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    z: ArrayC</span>
+<span class="sd">        (..., N) weights :math:`z_{n} \in \bC`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    (x,v,w) must have the same numerical precision:</span>
+
+<span class="sd">    - (x,v) float32, (w,) complex64</span>
+<span class="sd">    - (x,v) float64, (w,) complex128</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>  <span class="c1"># common backend</span>
+    <span class="k">assert</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span>  <span class="c1"># common precision</span>
+    <span class="n">M</span><span class="p">,</span> <span class="n">Dx</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">Dv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">D</span> <span class="o">:=</span> <span class="n">Dx</span><span class="p">)</span> <span class="o">==</span> <span class="n">Dv</span>
+    <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
+
+    <span class="n">w</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_canonicalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">M</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">type</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>  <span class="c1"># common backend</span>
+    <span class="n">fdtype</span> <span class="o">=</span> <span class="n">ftku</span><span class="o">.</span><span class="n">TranslateDType</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">to_float</span><span class="p">()</span>
+    <span class="k">assert</span> <span class="n">fdtype</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>  <span class="c1"># common precision</span>
+
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">_create_plan</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span></div>
+
+
+
+<div class="viewcode-block" id="nu2u">
+<a class="viewcode-back" href="../../api.html#fourier_toolkit.nu2u">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nu2u</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">v_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)</span>
+
+<span class="sd">    Given the Dirac stream</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
+
+<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+
+<span class="sd">    where :math:`\bbx_{m} \in \bR^{D}`, and :math:`\bbv_{n}` lies on the regular lattice</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \bbv_{\bbn} = \bbv_{0} + \Delta_{\bbv} \odot \bbn,</span>
+<span class="sd">       \qquad</span>
+<span class="sd">       [\bbn]_{d} \in \discreteRange{0}{N_{d}-1},</span>
+
+<span class="sd">    with :math:`N = \prod_{d} N_{d}`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x: ArrayR</span>
+<span class="sd">        (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.</span>
+<span class="sd">    v_spec: UniformSpec</span>
+<span class="sd">        :math:`\bbv_{n}` lattice specifier.</span>
+<span class="sd">    w: ArrayRC</span>
+<span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
+<span class="sd">    eps: float</span>
+<span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
+<span class="sd">    kwargs: dict</span>
+<span class="sd">        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.</span>
+<span class="sd">        (For advanced users only.)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    z: ArrayC</span>
+<span class="sd">        (..., N1,...,ND) weights :math:`z_{n} \in \bC`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    * (x,w) must have the same numerical precision:</span>
+
+<span class="sd">      - (x,) float32, (w,) complex64</span>
+<span class="sd">      - (x,) float64, (w,) complex128</span>
+
+<span class="sd">    * This implementation is a thin shell around an :math:`\tnunu` transform.</span>
+<span class="sd">      This is because type-1 NUFFTs impose limits on domain(x, v_spec) that are a hindrance in practice.</span>
+<span class="sd">      The price of relying on an :math:`\tnunu` transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.</span>
+<span class="sd">      Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">M</span><span class="p">,</span> <span class="n">Dx</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">Dv</span> <span class="o">=</span> <span class="n">v_spec</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="n">v_spec</span><span class="o">.</span><span class="n">ndim</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">D</span> <span class="o">:=</span> <span class="n">Dx</span><span class="p">)</span> <span class="o">==</span> <span class="n">Dv</span>
+    <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
+
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">nu2nu</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+        <span class="n">v</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="n">v_spec</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()),</span>
+                <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">N</span><span class="p">),</span> <span class="n">D</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">like</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+        <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="o">*</span><span class="n">N</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span></div>
+
+
+
+<div class="viewcode-block" id="u2nu">
+<a class="viewcode-back" href="../../api.html#fourier_toolkit.u2nu">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">u2nu</span><span class="p">(</span>
+    <span class="n">x_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)</span>
+
+<span class="sd">    Given the Dirac stream</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
+
+<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+
+<span class="sd">    where :math:`\bbv_{n} \in \bR^{D}`, and :math:`\bbx_{m}` lies on the regular lattice</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">       \bbx_{\bbm} = \bbx_{0} + \Delta_{\bbx} \odot \bbm,</span>
+<span class="sd">       \qquad</span>
+<span class="sd">       [\bbm]_{d} \in \discreteRange{0}{M_{d}-1},</span>
+
+<span class="sd">    with :math:`M = \prod_{d} M_{d}`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x_spec: UniformSpec</span>
+<span class="sd">        :math:`\bbx_{m}` lattice specifier.</span>
+<span class="sd">    v: ArrayR</span>
+<span class="sd">        (N, D) support points :math:`\bbv_{n} \in \bR^{D}`.</span>
+<span class="sd">    w: ArrayRC</span>
+<span class="sd">        (..., M1,...,MD) weights :math:`w_{m} \in \bC`.</span>
+<span class="sd">    eps: float</span>
+<span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
+<span class="sd">    kwargs: dict</span>
+<span class="sd">        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.</span>
+<span class="sd">        (For advanced users only.)</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    z: ArrayC</span>
+<span class="sd">        (..., N) weights :math:`z_{n} \in \bC`.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    * (v,w) must have the same numerical precision:</span>
+
+<span class="sd">      - (v,) float32, (w,) complex64</span>
+<span class="sd">      - (v,) float64, (w,) complex128</span>
+
+<span class="sd">    * This implementation is a thin shell around an :math:`\tnunu` transform.</span>
+<span class="sd">      This is because type-2 NUFFTs impose limits on domain(x_spec, v) that are a hindrance in practice.</span>
+<span class="sd">      The price of relying on an :math:`\tnunu` transform is an extra interpolation step before the FFT, but its runtime is rarely the bottleneck.</span>
+<span class="sd">      Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">M</span><span class="p">,</span> <span class="n">Dx</span> <span class="o">=</span> <span class="n">x_spec</span><span class="o">.</span><span class="n">num</span><span class="p">,</span> <span class="n">x_spec</span><span class="o">.</span><span class="n">ndim</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">N</span><span class="p">,</span> <span class="n">Dv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">D</span> <span class="o">:=</span> <span class="n">Dx</span><span class="p">)</span> <span class="o">==</span> <span class="n">Dv</span>
+    <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
+
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="n">D</span><span class="p">]</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">nu2nu</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="n">x_spec</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()),</span>
+                <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">M</span><span class="p">),</span> <span class="n">D</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="n">like</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
+        <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">M</span><span class="p">))),</span>
+        <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">z</span></div>
+
+
+
+<span class="c1"># Helper routines (internal) ---------------------------------------------------</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonicalize_knots</span><span class="p">(</span><span class="n">xv</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform (x, v) knots to canonical form:</span>
+<span class="sd">    - shape (M|N, D)</span>
+<span class="sd">    - real-valued</span>
+<span class="sd">    - F-ordered</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xv: ArrayR</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    xv_c: ArrayR</span>
+<span class="sd">        Canonical form of `xv`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">xv</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xv</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">xv</span> <span class="o">=</span> <span class="n">xv</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">xv</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">translate</span> <span class="o">=</span> <span class="n">ftku</span><span class="o">.</span><span class="n">TranslateDType</span><span class="p">(</span><span class="n">xv</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">fdtype</span> <span class="o">=</span> <span class="n">translate</span><span class="o">.</span><span class="n">to_float</span><span class="p">()</span>
+
+    <span class="n">xv_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">xv</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">xv</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">xv_c</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_canonicalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span> <span class="n">M</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform (w,) weights to canonical form:</span>
+<span class="sd">    - shape (n_trans, M)</span>
+<span class="sd">    - complex-valued</span>
+<span class="sd">    - C-ordered</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    w: ArrayRC</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    w_c: ArrayC</span>
+<span class="sd">        Canonical form of `w`.</span>
+<span class="sd">    sh: tuple[int]</span>
+<span class="sd">        Shape to transform the output of `plan.execute()` to.</span>
+<span class="sd">        This is to respect the input&#39;s stack shape (...).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">Mw</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">sh_flat</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">sh</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">Mw</span> <span class="o">==</span> <span class="n">M</span>
+
+    <span class="n">translate</span> <span class="o">=</span> <span class="n">ftku</span><span class="o">.</span><span class="n">TranslateDType</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">cdtype</span> <span class="o">=</span> <span class="n">translate</span><span class="o">.</span><span class="n">to_complex</span><span class="p">()</span>
+
+    <span class="n">w_c</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cdtype</span><span class="p">,</span> <span class="s2">&quot;C&quot;</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">w_c</span> <span class="o">=</span> <span class="n">w_c</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">sh_flat</span><span class="p">,</span> <span class="n">M</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">w_c</span><span class="p">,</span> <span class="n">sh</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_create_plan</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">finufft</span><span class="o">.</span><span class="n">Plan</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x: ArrayR</span>
+<span class="sd">        (M, D)</span>
+<span class="sd">    v: ArrayR</span>
+<span class="sd">        (N, D)</span>
+<span class="sd">    w: ArrayC</span>
+<span class="sd">        (n_trans, M)</span>
+<span class="sd">    eps: ]0, 1[</span>
+<span class="sd">    kwargs: dict</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    plan: finufft.Plan</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">n_trans</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">finufft</span><span class="o">.</span><span class="n">Plan</span><span class="p">(</span>
+        <span class="n">nufft_type</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">n_modes_or_dim</span><span class="o">=</span><span class="n">D</span><span class="p">,</span>
+        <span class="n">isign</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+        <span class="n">n_trans</span><span class="o">=</span><span class="n">n_trans</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>  <span class="c1"># let FINUFFT parse them for correctness</span>
+    <span class="p">)</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">setpts_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="nb">zip</span><span class="p">(</span>
+            <span class="s2">&quot;xyz&quot;</span><span class="p">[:</span><span class="n">D</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;stu&quot;</span><span class="p">[:</span><span class="n">D</span><span class="p">],</span>
+            <span class="p">[</span><span class="o">*</span><span class="p">(</span><span class="n">scale</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="o">*</span><span class="p">(</span><span class="n">scale</span> <span class="o">*</span> <span class="n">v</span><span class="o">.</span><span class="n">T</span><span class="p">)],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">plan</span><span class="o">.</span><span class="n">setpts</span><span class="p">(</span><span class="o">**</span><span class="n">setpts_kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">plan</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+</ul>
+
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.dev107 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2026, Sepand KASHANI &lt;sepand@kashani.ch&gt;.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    </div>
+  </body>
+</html>
