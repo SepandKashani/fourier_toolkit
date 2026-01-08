@@ -279,9 +279,9 @@ class Interval:
         Parameters
         ----------
         center: tuple[float]
-            \bbx_{c} \in \bR^{D}
+            :math:`\bbx_{c} \in \bR^{D}`
         span: tuple[float]
-            \Delta_{\bbx} \in \bR_{+}^{D}
+            :math:`\Delta_{\bbx} \in \bR_{+}^{D}`
         """
         # parameter validation
         uspec = UniformSpec(center=center, span=span, num=2)
