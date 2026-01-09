@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.2.dev0 documentation</title>
+    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.1.2.dev5 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=b420214a"></script>
+    <script src="../../_static/documentation_options.js?v=2ba21dfb"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.2.dev0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.2.dev5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
@@ -50,8 +50,10 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;u2u&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CZT&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DFT&quot;</span><span class="p">,</span>
     <span class="s2">&quot;U2U&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;u2u&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -398,8 +400,6 @@
         <span class="k">return</span> <span class="n">An</span>
 
 
-<div class="viewcode-block" id="U2U">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.U2U">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">U2U</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Object-oriented interface to a :math:`\tuu` transform.</span>
@@ -407,8 +407,6 @@
 <span class="sd">    The functional-equivalent :py:func:`~fourier_toolkit.u2u` is probably more useful to end-users. :py:class:`~fourier_toolkit.U2U` is nevertheless relevant for those who want to compute both forward and adjoint transforms.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="U2U.__init__">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.U2U.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">x_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
@@ -445,11 +443,8 @@
             <span class="n">v_spec</span><span class="o">=</span><span class="n">v_spec</span><span class="p">,</span>
             <span class="n">fft_axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">fft_axes</span><span class="p">),</span>
             <span class="n">czt_axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">czt_axes</span><span class="p">),</span>
-        <span class="p">)</span></div>
+        <span class="p">)</span>
 
-
-<div class="viewcode-block" id="U2U.apply">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.U2U.apply">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute :math:`\bbz = U \bbw`.</span>
@@ -484,11 +479,8 @@
             <span class="n">_w</span> <span class="o">=</span> <span class="n">_w</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ax_iczt</span><span class="p">)</span>
 
         <span class="n">z</span> <span class="o">=</span> <span class="n">_w</span>
-        <span class="k">return</span> <span class="n">z</span></div>
+        <span class="k">return</span> <span class="n">z</span>
 
-
-<div class="viewcode-block" id="U2U.adjoint">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.U2U.adjoint">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">z</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute :math:`\bbw = U^{\adj} \bbz`.</span>
@@ -526,8 +518,7 @@
             <span class="n">_z</span> <span class="o">=</span> <span class="n">_z</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">ax_iczt</span><span class="p">)</span>
 
         <span class="n">w</span> <span class="o">=</span> <span class="n">_z</span>
-        <span class="k">return</span> <span class="n">w</span></div>
-
+        <span class="k">return</span> <span class="n">w</span>
 
     <span class="c1"># Helper routines (internal) ----------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_fft_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">):</span>
@@ -651,8 +642,7 @@
 
             <span class="n">B</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">_B</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">cdtype</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">ax_czt</span><span class="p">,</span> <span class="n">czt</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">ax_iczt</span></div>
-
+        <span class="k">return</span> <span class="n">ax_czt</span><span class="p">,</span> <span class="n">czt</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">ax_iczt</span>
 </pre></div>
 
             <div class="clearer"></div>
@@ -690,7 +680,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.2.dev0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.2.dev5 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
