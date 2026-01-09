@@ -66,8 +66,7 @@ Setup
    uv run pytest
 
    # build HTML docs
-   cd fourier_toolkit/doc/
-   uv run make html
+   uv run make -C doc/ html
 
    # creating a release
    uv run dev/create_release.py <version>
