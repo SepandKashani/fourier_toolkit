@@ -59,6 +59,18 @@ def clear_directory(folder: Path, whitelist: list[str]):
             p.unlink(missing_ok=True)
 
 
+def next_steps(repo_root: Path, tags: list[str]):
+    # Info message for user with next steps
+    for t in tags:
+        print(f"- created git tag {t}")
+
+    dist_dir = repo_root / "dist"
+    print(f"- created Python packages under {dist_dir}")
+
+    msg = f"- to update GitHub:  `git push origin master gh-pages {' '.join(tags)}`"
+    print(msg)
+
+
 if __name__ == "__main__":
     repo_root = Path(__file__).parents[1].resolve()
 
@@ -120,14 +132,4 @@ if __name__ == "__main__":
     # (re-)build Python package
     run(["uv", "build"], cwd=repo_root)
 
-    # info msg for user
-    dist_dir = repo_root / "dist"
-    print(
-        "\n".join(
-            [
-                f"- created git tag {version}",
-                f"- created git tag {version_doc}",
-                f"- created {version} packages under {dist_dir}",
-            ]
-        )
-    )
+    next_steps(repo_root, [version, version_doc])
