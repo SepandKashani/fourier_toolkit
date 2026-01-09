@@ -30,9 +30,6 @@ Computing Fourier Sums
 
 .. autofunction:: fourier_toolkit.u2u
 
-.. autoclass:: fourier_toolkit.U2U
-   :members:
-
 .. autofunction:: fourier_toolkit.nu2nu
 
 .. autofunction:: fourier_toolkit.nu2u
