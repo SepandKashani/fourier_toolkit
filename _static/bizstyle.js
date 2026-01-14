@@ -17,7 +17,7 @@ const initialiseBizStyle = () => {
 }
 
 window.addEventListener("resize",
-  () => (document.querySelector("li.nav-item-0 a").innerText = (window.innerWidth <= 776) ? "Top" : "Fourier Toolkit 0.1.2.dev5 documentation")
+  () => (document.querySelector("li.nav-item-0 a").innerText = (window.innerWidth <= 776) ? "Top" : "Fourier Toolkit 0.1.3.dev0 documentation")
 )
 
 if (document.readyState !== "loading") initialiseBizStyle()

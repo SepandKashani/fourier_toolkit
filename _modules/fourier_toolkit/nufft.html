@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.1.2.dev5 documentation</title>
+    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.1.3.dev0 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=2ba21dfb"></script>
+    <script src="../../_static/documentation_options.js?v=ece917df"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.2.dev5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.3.dev0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
@@ -41,11 +41,14 @@
           <div class="body" role="main">
             
   <h1>Source code for fourier_toolkit.nufft</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">finufft</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">finufft</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftkt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;nu2nu&quot;</span><span class="p">,</span>
@@ -54,6 +57,7 @@
 <span class="p">]</span>
 
 <span class="n">_eps_default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="n">ExponentSign</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="nu2nu">
@@ -62,23 +66,18 @@
     <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)</span>
 
-<span class="sd">    Given the Dirac stream</span>
+<span class="sd">    Computes the Fourier sum</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
-
-<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+<span class="sd">       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
 
 <span class="sd">    where :math:`(\bbx_{m}, \bbv_{n}) \in \bR^{D}`.</span>
 
@@ -90,6 +89,8 @@
 <span class="sd">        (N, D) frequencies :math:`\bbv_{n} \in \bR^{D}`.</span>
 <span class="sd">    w: ArrayRC</span>
 <span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
+<span class="sd">    isign: +1, -1</span>
+<span class="sd">        Exponent sign.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
 <span class="sd">    kwargs: dict</span>
@@ -123,7 +124,8 @@
     <span class="k">assert</span> <span class="n">fdtype</span> <span class="o">==</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>  <span class="c1"># common precision</span>
 
     <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span>
-    <span class="n">plan</span> <span class="o">=</span> <span class="n">_create_plan</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">_create_plan</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="n">z</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">z</span></div>
@@ -136,23 +138,18 @@
     <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">v_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)</span>
 
-<span class="sd">    Given the Dirac stream</span>
+<span class="sd">    Computes the Fourier sum</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
-
-<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+<span class="sd">       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
 
 <span class="sd">    where :math:`\bbx_{m} \in \bR^{D}`, and :math:`\bbv_{n}` lies on the regular lattice</span>
 
@@ -172,6 +169,8 @@
 <span class="sd">        :math:`\bbv_{n}` lattice specifier.</span>
 <span class="sd">    w: ArrayRC</span>
 <span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
+<span class="sd">    isign: +1, -1</span>
+<span class="sd">        Exponent sign.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
 <span class="sd">    kwargs: dict</span>
@@ -213,6 +212,7 @@
             <span class="n">like</span><span class="o">=</span><span class="n">x</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="p">,</span>
+        <span class="n">isign</span><span class="o">=</span><span class="n">isign</span><span class="p">,</span>
         <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="o">*</span><span class="n">N</span><span class="p">))</span>
@@ -226,23 +226,18 @@
     <span class="n">x_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)</span>
 
-<span class="sd">    Given the Dirac stream</span>
+<span class="sd">    Computes the Fourier sum</span>
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),</span>
-
-<span class="sd">    computes samples of :math:`f^{\ctft}`, i.e.,</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
+<span class="sd">       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },</span>
 
 <span class="sd">    where :math:`\bbv_{n} \in \bR^{D}`, and :math:`\bbx_{m}` lies on the regular lattice</span>
 
@@ -264,6 +259,8 @@
 <span class="sd">        (..., M1,...,MD) weights :math:`w_{m} \in \bC`.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
+<span class="sd">    isign: +1, -1</span>
+<span class="sd">        Exponent sign.</span>
 <span class="sd">    kwargs: dict</span>
 <span class="sd">        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.</span>
 <span class="sd">        (For advanced users only.)</span>
@@ -303,6 +300,7 @@
         <span class="p">),</span>
         <span class="n">v</span><span class="o">=</span><span class="n">v</span><span class="p">,</span>
         <span class="n">w</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">M</span><span class="p">))),</span>
+        <span class="n">isign</span><span class="o">=</span><span class="n">isign</span><span class="p">,</span>
         <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span>
@@ -374,6 +372,7 @@
     <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
+    <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">finufft</span><span class="o">.</span><span class="n">Plan</span><span class="p">:</span>
@@ -386,6 +385,7 @@
 <span class="sd">        (N, D)</span>
 <span class="sd">    w: ArrayC</span>
 <span class="sd">        (n_trans, M)</span>
+<span class="sd">    isign: +1, -1</span>
 <span class="sd">    eps: ]0, 1[</span>
 <span class="sd">    kwargs: dict</span>
 
@@ -399,7 +399,7 @@
     <span class="n">plan</span> <span class="o">=</span> <span class="n">finufft</span><span class="o">.</span><span class="n">Plan</span><span class="p">(</span>
         <span class="n">nufft_type</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
         <span class="n">n_modes_or_dim</span><span class="o">=</span><span class="n">D</span><span class="p">,</span>
-        <span class="n">isign</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">isign</span><span class="o">=</span><span class="n">isign</span><span class="p">,</span>
         <span class="n">eps</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
         <span class="n">dtype</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
         <span class="n">n_trans</span><span class="o">=</span><span class="n">n_trans</span><span class="p">,</span>
@@ -453,7 +453,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.2.dev5 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.3.dev0 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
