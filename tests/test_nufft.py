@@ -10,7 +10,17 @@ from . import conftest as ct
 class TestNU2NU:
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
-    def test_value_apply(self, x_m, v_n, eps, finufft_kwargs, dtype, real, stack_shape):
+    def test_value_apply(
+        self,
+        x_m,
+        v_n,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
+    ):
         # output value matches ground truth.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
@@ -30,7 +40,7 @@ class TestNU2NU:
         # Generate nu2nu() output ground-truth
         N, _ = v_n.shape
         z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
-        A = self._generate_A(x_m, v_n)  # (N, M)
+        A = self._generate_A(x_m, v_n, isign)  # (N, M)
         for idx in np.ndindex(stack_shape):
             z_gt[idx] = ct.inner_product(w[idx], A, 1)  # (N,)
 
@@ -39,6 +49,7 @@ class TestNU2NU:
             x=x_m.astype(fdtype),
             v=v_n.astype(fdtype),
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -46,7 +57,7 @@ class TestNU2NU:
         assert ct.rel_error(z, z_gt, D=1).mean() <= eps * 10
 
     @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_m, v_n, eps, finufft_kwargs, dtype, real):
+    def test_prec(self, x_m, v_n, isign, eps, finufft_kwargs, dtype, real):
         # output precision (not dtype!) matches input precision.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
@@ -66,6 +77,7 @@ class TestNU2NU:
             x=x_m.astype(fdtype),
             v=v_n.astype(fdtype),
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -92,6 +104,10 @@ class TestNU2NU:
         v *= rng.uniform(size=space_dim)  # to have different spreads in each direction
         return v
 
+    @pytest.fixture(params=[+1, -1])
+    def isign(self, request) -> int:
+        return request.param
+
     @pytest.fixture
     def eps(self) -> float:
         # This order-of-magnitude rel-error should be attainable by both (FP32,FP64) if `upsampfac=2`.
@@ -116,10 +132,10 @@ class TestNU2NU:
 
     # Helper functions --------------------------------------------------------
     @staticmethod
-    def _generate_A(x_m, v_n) -> np.ndarray:
+    def _generate_A(x_m, v_n, isign) -> np.ndarray:
         # (N, M) tensor which, when inner-produced with `w(M,)`, gives `z(N,)`.
         phase = np.tensordot(v_n, x_m, axes=[[-1], [-1]])  # (N, M)
-        A = np.exp(+1j * 2 * np.pi * phase)
+        A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
 
 
@@ -127,7 +143,15 @@ class TestNU2U:
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
     def test_value_apply(
-        self, x_m, v_spec, eps, finufft_kwargs, dtype, real, stack_shape
+        self,
+        x_m,
+        v_spec,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
     ):
         # output value matches ground truth.
         translate = ftku.TranslateDType(dtype)
@@ -148,7 +172,7 @@ class TestNU2U:
         # Generate nu2u() output ground-truth
         N = v_spec.num
         z_gt = np.zeros((*stack_shape, *N), dtype=cdtype)
-        A = self._generate_A(x_m, v_spec)  # (N1,...,ND, M)
+        A = self._generate_A(x_m, v_spec, isign)  # (N1,...,ND, M)
         for idx in np.ndindex(stack_shape):
             z_gt[idx] = ct.inner_product(w[idx], A, 1)  # (N1,...,ND)
 
@@ -157,6 +181,7 @@ class TestNU2U:
             x=x_m.astype(fdtype),
             v_spec=v_spec,
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -164,7 +189,7 @@ class TestNU2U:
         assert ct.rel_error(z, z_gt, D=v_spec.ndim).mean() <= eps * 10
 
     @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_m, v_spec, eps, finufft_kwargs, dtype, real):
+    def test_prec(self, x_m, v_spec, isign, eps, finufft_kwargs, dtype, real):
         # output precision (not dtype!) matches input precision.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
@@ -184,6 +209,7 @@ class TestNU2U:
             x=x_m.astype(fdtype),
             v_spec=v_spec,
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -210,6 +236,10 @@ class TestNU2U:
         N = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=v0, step=dv, num=N)
 
+    @pytest.fixture(params=[+1, -1])
+    def isign(self, request) -> int:
+        return request.param
+
     @pytest.fixture
     def eps(self) -> float:
         # This order-of-magnitude rel-error should be attainable by both (FP32,FP64) if `upsampfac=2`.
@@ -234,10 +264,10 @@ class TestNU2U:
 
     # Helper functions --------------------------------------------------------
     @staticmethod
-    def _generate_A(x_m, v_spec) -> np.ndarray:
+    def _generate_A(x_m, v_spec, isign) -> np.ndarray:
         # (N1,...,ND, M) tensor which, when inner-produced with `w(M,)`, gives `z(N1,...,ND)`.
         phase = np.tensordot(v_spec.knots(np), x_m, axes=[[-1], [-1]])  # (N1,...,ND, M)
-        A = np.exp(+1j * 2 * np.pi * phase)
+        A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
 
 
@@ -245,7 +275,15 @@ class TestU2NU:
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
     def test_value_apply(
-        self, x_spec, v_n, eps, finufft_kwargs, dtype, real, stack_shape
+        self,
+        x_spec,
+        v_n,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
     ):
         # output value matches ground truth.
         translate = ftku.TranslateDType(dtype)
@@ -266,7 +304,7 @@ class TestU2NU:
         # Generate u2nu() output ground-truth
         N, D = v_n.shape
         z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
-        A = self._generate_A(x_spec, v_n)  # (N, M1,...,MD)
+        A = self._generate_A(x_spec, v_n, isign)  # (N, M1,...,MD)
         for idx in np.ndindex(stack_shape):
             z_gt[idx] = ct.inner_product(w[idx], A, D)  # (N,)
 
@@ -275,6 +313,7 @@ class TestU2NU:
             x_spec=x_spec,
             v=v_n.astype(fdtype),
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -282,7 +321,7 @@ class TestU2NU:
         assert ct.rel_error(z, z_gt, D=1).mean() <= eps * 10
 
     @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_spec, v_n, eps, finufft_kwargs, dtype, real):
+    def test_prec(self, x_spec, v_n, isign, eps, finufft_kwargs, dtype, real):
         # output precision (not dtype!) matches input precision.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
@@ -302,6 +341,7 @@ class TestU2NU:
             x_spec=x_spec,
             v=v_n.astype(fdtype),
             w=w,
+            isign=isign,
             eps=eps,
             **finufft_kwargs,
         )
@@ -328,6 +368,10 @@ class TestU2NU:
         v *= rng.uniform(size=space_dim)  # to have different spreads in each direction
         return v
 
+    @pytest.fixture(params=[+1, -1])
+    def isign(self, request) -> int:
+        return request.param
+
     @pytest.fixture
     def eps(self) -> float:
         # This order-of-magnitude rel-error should be attainable by both (FP32,FP64) if `upsampfac=2`.
@@ -352,8 +396,8 @@ class TestU2NU:
 
     # Helper functions --------------------------------------------------------
     @staticmethod
-    def _generate_A(x_spec, v_n) -> np.ndarray:
+    def _generate_A(x_spec, v_n, isign) -> np.ndarray:
         # (N, M1,...,MD) tensor which, when inner-produced with `w(M1,...,MD)`, gives `z(N,)`.
         phase = np.tensordot(v_n, x_spec.knots(np), axes=[[-1], [-1]])  # (N, M1,...,MD)
-        A = np.exp(+1j * 2 * np.pi * phase)
+        A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A

@@ -1,4 +1,5 @@
 import math
+from typing import Literal
 
 import finufft
 import numpy as np
@@ -13,29 +14,25 @@ __all__ = [
 ]
 
 _eps_default: float = 1e-6
+ExponentSign = Literal[-1, +1]
 
 
 def nu2nu(
     x: ftkt.ArrayR,
     v: ftkt.ArrayR,
     w: ftkt.ArrayRC,
+    isign: ExponentSign,
     eps: float = _eps_default,
     **kwargs,
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)
 
-    Given the Dirac stream
+    Computes the Fourier sum
 
     .. math::
 
-       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
-
-    computes samples of :math:`f^{\ctft}`, i.e.,
-
-    .. math::
-
-       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n}) \in \bR^{D}`.
 
@@ -47,6 +44,8 @@ def nu2nu(
         (N, D) frequencies :math:`\bbv_{n} \in \bR^{D}`.
     w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
+    isign: +1, -1
+        Exponent sign.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
@@ -80,7 +79,8 @@ def nu2nu(
     assert fdtype == x.dtype  # common precision
 
     assert 0 < (eps := float(eps)) < 1
-    plan = _create_plan(x, v, w, eps, **kwargs)
+    assert (isign := int(isign)) in (-1, +1)
+    plan = _create_plan(x, v, w, isign, eps, **kwargs)
 
     z = plan.execute(w).reshape((*sh, N))
     return z
@@ -90,23 +90,18 @@ def nu2u(
     x: ftkt.ArrayR,
     v_spec: ftku.UniformSpec,
     w: ftkt.ArrayRC,
+    isign: ExponentSign,
     eps: float = _eps_default,
     **kwargs,
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)
 
-    Given the Dirac stream
+    Computes the Fourier sum
 
     .. math::
 
-       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
-
-    computes samples of :math:`f^{\ctft}`, i.e.,
-
-    .. math::
-
-       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbx_{m} \in \bR^{D}`, and :math:`\bbv_{n}` lies on the regular lattice
 
@@ -126,6 +121,8 @@ def nu2u(
         :math:`\bbv_{n}` lattice specifier.
     w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
+    isign: +1, -1
+        Exponent sign.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
@@ -167,6 +164,7 @@ def nu2u(
             like=x,
         ),
         w=w,
+        isign=isign,
         eps=eps,
         **kwargs,
     ).reshape((*sh, *N))
@@ -177,23 +175,18 @@ def u2nu(
     x_spec: ftku.UniformSpec,
     v: ftkt.ArrayR,
     w: ftkt.ArrayRC,
+    isign: ExponentSign,
     eps: float = _eps_default,
     **kwargs,
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)
 
-    Given the Dirac stream
+    Computes the Fourier sum
 
     .. math::
 
-       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
-
-    computes samples of :math:`f^{\ctft}`, i.e.,
-
-    .. math::
-
-       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbv_{n} \in \bR^{D}`, and :math:`\bbx_{m}` lies on the regular lattice
 
@@ -215,6 +208,8 @@ def u2nu(
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
+    isign: +1, -1
+        Exponent sign.
     kwargs: dict
         Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.
         (For advanced users only.)
@@ -254,6 +249,7 @@ def u2nu(
         ),
         v=v,
         w=w.reshape((*sh, math.prod(M))),
+        isign=isign,
         eps=eps,
         **kwargs,
     ).reshape((*sh, N))
@@ -324,6 +320,7 @@ def _create_plan(
     x: ftkt.ArrayR,
     v: ftkt.ArrayR,
     w: ftkt.ArrayC,
+    isign: ExponentSign,
     eps: float,
     **kwargs,
 ) -> finufft.Plan:
@@ -336,6 +333,7 @@ def _create_plan(
         (N, D)
     w: ArrayC
         (n_trans, M)
+    isign: +1, -1
     eps: ]0, 1[
     kwargs: dict
 
@@ -349,7 +347,7 @@ def _create_plan(
     plan = finufft.Plan(
         nufft_type=3,
         n_modes_or_dim=D,
-        isign=-1,
+        isign=isign,
         eps=eps,
         dtype=w.dtype,
         n_trans=n_trans,
