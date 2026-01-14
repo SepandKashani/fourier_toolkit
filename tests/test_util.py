@@ -240,16 +240,6 @@ class TestUniformSpec:
         assert knots.shape == knots_gt.shape == (9, 8, 2)
         assert np.allclose(knots, knots_gt)
 
-    def test_neg(self):
-        uspec = ftku.UniformSpec(1, (2, 0.5), (3, 4))
-        mesh = uspec.meshgrid(np)
-
-        neg_uspec = -uspec
-        neg_mesh = neg_uspec.meshgrid(np)
-
-        assert np.allclose(-mesh[0][::-1, ::-1], neg_mesh[0])
-        assert np.allclose(-mesh[1][::-1, ::-1], neg_mesh[1])
-
 
 class TestInterval:
     def test_positive_span(self):

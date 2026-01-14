@@ -230,15 +230,6 @@ class UniformSpec:
     def center(self) -> tuple[float]:
         return tuple(x0 + 0.5 * dx * (nx - 1) for (x0, dx, nx) in self)
 
-    def __neg__(self) -> "UniformSpec":
-        """
-        Negate all mesh coordinates.
-
-        This is useful if you want to implicitly flip the sign of the exponent in a Fourier transform.
-        """
-        neg_x0 = tuple(-(x0 + dx * (nx - 1)) for (x0, dx, nx) in self)
-        return UniformSpec(start=neg_x0, step=self.step, num=self.num)
-
     def meshgrid(self, xp, sparse: bool = False) -> tuple[ftkt.ArrayR]:
         """
         Equivalent of :py:func:`numpy.meshgrid`.
