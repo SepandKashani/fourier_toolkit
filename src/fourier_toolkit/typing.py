@@ -1,6 +1,7 @@
 # This module defines array types used throughout the codebase.
 
 import typing
+
 import numpy as np
 import numpy.typing as npt
 

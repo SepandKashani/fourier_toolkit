@@ -2,8 +2,9 @@ import numpy as np
 import pytest
 import scipy.signal as sps
 
-from fourier_toolkit.ufft import DFT, CZT, U2U
 import fourier_toolkit.util as ftku
+from fourier_toolkit.ufft import CZT, DFT, U2U
+
 from . import conftest as ct
 
 

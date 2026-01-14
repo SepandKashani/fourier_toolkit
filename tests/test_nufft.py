@@ -1,9 +1,10 @@
-from . import conftest as ct
 import numpy as np
 import pytest
 
-from fourier_toolkit import nu2nu, nu2u, u2nu  # test as exposed to user
 import fourier_toolkit.util as ftku
+from fourier_toolkit import nu2nu, nu2u, u2nu  # test as exposed to user
+
+from . import conftest as ct
 
 
 class TestNU2NU:

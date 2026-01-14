@@ -1,9 +1,10 @@
-import fourier_toolkit.typing as ftkt
-import numpy as np
-import math
 import cmath
+import math
+
+import numpy as np
 
 import fourier_toolkit.linalg as ftkl
+import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 __all__ = [

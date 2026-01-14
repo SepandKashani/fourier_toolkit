@@ -1,5 +1,6 @@
-import fourier_toolkit.typing as ftkt
 import opt_einsum as oe
+
+import fourier_toolkit.typing as ftkt
 
 __all__ = [
     "hadamard_outer",

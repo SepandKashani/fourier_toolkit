@@ -1,12 +1,14 @@
-import fourier_toolkit.typing as ftkt
 import importlib.resources as ir
 import warnings
-from dataclasses import dataclass
-from typing import Optional, NamedTuple
-from collections.abc import Iterable, Callable, Iterator
 from collections import namedtuple
-from numpy.typing import DTypeLike
+from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
+from typing import NamedTuple, Optional
+
 import numpy as np
+from numpy.typing import DTypeLike
+
+import fourier_toolkit.typing as ftkt
 
 __all__ = [
     "as_namedtuple",

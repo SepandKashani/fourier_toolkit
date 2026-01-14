@@ -1,10 +1,11 @@
-from numpy.typing import NDArray
 import functools
 
 import numpy as np
 import pytest
+from numpy.typing import NDArray
 
 import fourier_toolkit.linalg as ftkl
+
 from . import conftest as ct
 
 

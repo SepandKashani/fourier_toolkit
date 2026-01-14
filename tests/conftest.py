@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.typing import DTypeLike, NDArray
 import opt_einsum as oe
+from numpy.typing import DTypeLike, NDArray
 
 import fourier_toolkit.util as ftku
 

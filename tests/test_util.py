@@ -1,7 +1,9 @@
-import pytest
-import numpy as np
-from numpy.typing import DTypeLike, NDArray
 import warnings
+
+import numpy as np
+import pytest
+from numpy.typing import DTypeLike, NDArray
+
 import fourier_toolkit.util as ftku
 
 
