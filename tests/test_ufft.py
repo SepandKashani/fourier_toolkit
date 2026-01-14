@@ -3,7 +3,8 @@ import pytest
 import scipy.signal as sps
 
 import fourier_toolkit.util as ftku
-from fourier_toolkit.ufft import CZT, DFT, U2U
+from fourier_toolkit import u2u  # test as exposed to user
+from fourier_toolkit.ufft import CZT, DFT
 
 from . import conftest as ct
 
@@ -261,76 +262,51 @@ class TestU2U:
 
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
-    def test_value_apply(self, op, dtype, real, stack_shape):
+    def test_value_apply(self, x_spec, v_spec, isign, dtype, real, stack_shape):
         # output value matches ground truth.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
-        # Generate U2U input
+        # Generate u2u() input
         rng = np.random.default_rng()
         if real:
-            w = rng.standard_normal((*stack_shape, *op.cfg.x_spec.num))
+            w = rng.standard_normal((*stack_shape, *x_spec.num))
             w = w.astype(fdtype)
         else:
-            w = 1j * rng.standard_normal((*stack_shape, *op.cfg.x_spec.num))
-            w += rng.standard_normal((*stack_shape, *op.cfg.x_spec.num))
+            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+            w += rng.standard_normal((*stack_shape, *x_spec.num))
             w = w.astype(cdtype)
 
-        # Generate U2U output ground-truth
-        z_gt = np.zeros((*stack_shape, *op.cfg.v_spec.num), dtype=cdtype)
-        A = self._generate_A(  # (N1,...,ND,M1,...,MD)
-            op.cfg.x_spec,
-            op.cfg.v_spec,
-        )
+        # Generate u2u() output ground-truth
+        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
+        A = self._generate_A(x_spec, v_spec, isign)  # (N1,...,ND,M1,...,MD)
         for idx in np.ndindex(stack_shape):
-            z_gt[idx] = ct.inner_product(w[idx], A, op.cfg.D)  # (N1,...,ND)
+            z_gt[idx] = ct.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
 
-        # Test U2U compliance
-        z = op.apply(w)
+        # Test u2u() compliance
+        z = u2u(x_spec, v_spec, w, isign)
         assert z.shape == z_gt.shape
         assert ct.allclose(z, z_gt, fdtype)
 
     @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("direction", ["apply", "adjoint"])
-    def test_prec(self, op, dtype, real, direction):
+    def test_prec(self, x_spec, v_spec, isign, dtype, real):
         # output precision (not dtype!) matches input precision.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         rng = np.random.default_rng()
-        size = op.cfg.x_spec.num if (direction == "apply") else op.cfg.v_spec.num
         if real:
-            x = rng.standard_normal(size)
-            x = x.astype(fdtype)
+            w = rng.standard_normal(x_spec.num)
+            w = w.astype(fdtype)
         else:
-            x = 1j * rng.standard_normal(size)
-            x += rng.standard_normal(size)
-            x = x.astype(cdtype)
+            w = 1j * rng.standard_normal(x_spec.num)
+            w += rng.standard_normal(x_spec.num)
+            w = w.astype(cdtype)
 
-        f = getattr(op, direction)
-        y = f(x)
-        assert y.dtype == cdtype
-
-    def test_math_adjoint(self, op, dtype):
-        # <A x, y> == <x, A^H y>
-        translate = ftku.TranslateDType(dtype)
-        cdtype = translate.to_complex()
-
-        sh = (5, 3, 4)
-        rng = np.random.default_rng()
-        x = 1j * rng.standard_normal((*sh, *op.cfg.x_spec.num))
-        x += rng.standard_normal((*sh, *op.cfg.x_spec.num))
-        x = x.astype(cdtype)
-        y = 1j * rng.standard_normal((*sh, *op.cfg.v_spec.num))
-        y += rng.standard_normal((*sh, *op.cfg.v_spec.num))
-        y = y.astype(cdtype)
-
-        lhs = ct.inner_product(op.apply(x), y, op.cfg.D)
-        rhs = ct.inner_product(x, op.adjoint(y), op.cfg.D)
-        # apply/adjoint use different code paths, so comparing wrt rel-error
-        assert ct.relclose(lhs, rhs, len(sh), 1e-5)
+        z = u2u(x_spec, v_spec, w, isign)
+        assert z.dtype == cdtype
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -353,6 +329,10 @@ class TestU2U:
         N = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=v0, step=dv, num=N)
 
+    @pytest.fixture(params=[+1, -1])
+    def isign(self, request) -> int:
+        return request.param
+
     @pytest.fixture(
         params=[
             np.float32,
@@ -364,18 +344,14 @@ class TestU2U:
         # This is NOT the dtype of inputs, just sets the precision.
         return np.dtype(request.param)
 
-    @pytest.fixture
-    def op(self, x_spec, v_spec) -> U2U:
-        return U2U(x_spec, v_spec)
-
     # Helper functions --------------------------------------------------------
     @staticmethod
-    def _generate_A(x_spec, v_spec) -> np.ndarray:
+    def _generate_A(x_spec, v_spec, isign) -> np.ndarray:
         # (N1,...,ND,M1,...,MD) tensor which, when inner-product-ed with `w(M1,...,MD)`, gives `z(N1,...,ND)`.
         x_m = x_spec.knots(np)  # (M1,...,MD,D)
         v_n = v_spec.knots(np)  # (N1,...,ND,D)
         phase = np.tensordot(v_n, x_m, axes=[[-1], [-1]])  # (N1,...,ND,M1,...,MD)
-        A = np.exp(1j * 2 * np.pi * phase)
+        A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
 
 

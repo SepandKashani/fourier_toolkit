@@ -1,5 +1,6 @@
 import cmath
 import math
+from typing import Literal
 
 import numpy as np
 
@@ -10,30 +11,27 @@ import fourier_toolkit.util as ftku
 __all__ = [
     "CZT",
     "DFT",
-    "U2U",
     "u2u",
 ]
+
+
+ExponentSign = Literal[-1, +1]
 
 
 def u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
     w: ftkt.ArrayRC,
+    isign: ExponentSign,
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional Uniform-to-Uniform Fourier Transform. (:math:`\tuu`)
 
-    Given the Dirac stream
+    Computes the Fourier sum
 
     .. math::
 
-       f(\bbx) = \sum_{m} w_{m} \delta(\bbx - \bbx_{m}),
-
-    computes samples of :math:`f^{\ctft}`, i.e.,
-
-    .. math::
-
-       f^{\ctft}(\bbv_{n}) = \bbz_{n} = \sum_{m} w_{m} \ee^{ -\cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n})` lie on the regular lattice
 
@@ -50,6 +48,8 @@ def u2u(
         :math:`\bbx_{m}` lattice.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice.
+    isign: +1, -1
+        Exponent sign.
     w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
 
@@ -63,8 +63,13 @@ def u2u(
     :math:`\tuu` transforms for arbitrary (x_spec,v_spec) can be implemented using the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
     This implementation chooses the (FFT, CZT) per axis to maximize efficiency.
     """
-    op = U2U(x_spec=x_spec, v_spec=v_spec)
-    z = op.apply(w)
+    assert (isign := int(isign)) in (-1, +1)
+
+    op = _U2U(x_spec=x_spec, v_spec=v_spec)
+    if isign == -1:
+        z = op.apply(w)
+    else:
+        z = op.apply(w.conj()).conj()
     return z
 
 
@@ -355,11 +360,11 @@ class CZT:
         return An
 
 
-class U2U:
+class _U2U:
     r"""
-    Object-oriented interface to a :math:`\tuu` transform.
+    Object-oriented interface to a :math:`\tuu` transform, with exponent sign set to :math:`-1`.
 
-    The functional-equivalent :py:func:`~fourier_toolkit.u2u` is probably more useful to end-users. :py:class:`~fourier_toolkit.U2U` is nevertheless relevant for those who want to compute both forward and adjoint transforms.
+    For internal use only.
     """
 
     def __init__(
@@ -435,45 +440,6 @@ class U2U:
 
         z = _w
         return z
-
-    def adjoint(self, z: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Compute :math:`\bbw = U^{\adj} \bbz`.
-
-        Parameters
-        ----------
-        z: ArrayRC
-            (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
-
-        Returns
-        -------
-        w: ArrayC
-            (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
-        """
-        _z = z
-
-        # Processing FFT axes
-        if self.cfg.fft_axes:
-            (ax_fft, Cp, fft, Bp, ax_ifft) = self._fft_params(z)
-            Cp = [cp.conj() for cp in Cp]
-            Bp = [bp.conj() for bp in Bp]
-            _z = _z.transpose(ax_fft)
-            _z = ftkl.hadamard_outer(_z, *Bp)
-            _z = fft.adjoint(_z)
-            _z = ftkl.hadamard_outer(_z, *Cp)
-            _z = _z.transpose(ax_ifft)
-
-        # Processing CZT axes
-        if self.cfg.czt_axes:
-            (ax_czt, czt, B, ax_iczt) = self._czt_params(z)
-            B = [b.conj() for b in B]
-            _z = _z.transpose(ax_czt)
-            _z = ftkl.hadamard_outer(_z, *B)
-            _z = czt.adjoint(_z)
-            _z = _z.transpose(ax_iczt)
-
-        w = _z
-        return w
 
     # Helper routines (internal) ----------------------------------------------
     def _fft_params(self, y: ftkt.ArrayRC):
