@@ -1,4 +1,5 @@
 import importlib.resources as ir
+import math
 import warnings
 from collections import namedtuple
 from collections.abc import Callable, Iterable, Iterator
@@ -171,7 +172,7 @@ class UniformSpec:
         start: tuple[float]
             :math:`\bbx_{0} \in \bR^{D}`
         step: tuple[float]
-            :math:`\Delta_{\bbx} \in \bR_{+}^{D}`
+            :math:`\Delta_{\bbx} \in \bR^{D}` (signed)
         num: tuple[int]
             (M1,...,MD) lattice size
 
@@ -191,7 +192,7 @@ class UniformSpec:
         if all(map(provided, (start, step, num))):
             start = broadcast_seq(start, None, float)
             step = broadcast_seq(step, None, float)
-            assert all(s > 0 for s in step)
+            assert not any(math.isclose(s, 0) for s in step)
             num = broadcast_seq(num, None, int)
             assert all(n >= 1 for n in num)
 
@@ -225,7 +226,7 @@ class UniformSpec:
 
     @property
     def span(self) -> tuple[float]:
-        return tuple(dx * (nx - 1) for (_, dx, nx) in self)
+        return tuple(abs(dx) * (nx - 1) for (_, dx, nx) in self)
 
     @property
     def center(self) -> tuple[float]:

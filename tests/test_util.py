@@ -165,17 +165,21 @@ class TestTranslateDType:
 
 
 class TestUniformSpec:
-    def test_scalar_input(self):
-        uspec_1 = ftku.UniformSpec(1, 0.5, 5)
-        uspec_2 = ftku.UniformSpec((1,), 0.5, (5,))
+    parametrize_step_sign = pytest.mark.parametrize("step_sign", [+1, -1])
+
+    @parametrize_step_sign
+    def test_scalar_input(self, step_sign):
+        uspec_1 = ftku.UniformSpec(1, step_sign * 0.5, 5)
+        uspec_2 = ftku.UniformSpec((1,), step_sign * 0.5, (5,))
         assert uspec_1 == uspec_2
 
-        uspec_3 = ftku.UniformSpec(1, (0.5, 0.25), 3)
+        uspec_3 = ftku.UniformSpec(1, (0.5, step_sign * 0.25), 3)
         assert uspec_3.start == (1, 1)
-        assert uspec_3.step == (0.5, 0.25)
+        assert uspec_3.step == (0.5, step_sign * 0.25)
         assert uspec_3.num == (3, 3)
 
-    def test_center_span_initialization(self):
+    @parametrize_step_sign
+    def test_center_span_initialization(self, step_sign):
         uspec_1 = ftku.UniformSpec(center=1, span=2, num=5)
         uspec_2 = ftku.UniformSpec(start=0, step=0.5, num=5)
         assert uspec_1 == uspec_2
@@ -195,27 +199,35 @@ class TestUniformSpec:
         assert uspec_1.center == (1,)
         assert uspec_1.span == (2,)
 
-        uspec_2 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, 0.75), num=5)
-        assert uspec_2.ndim == 2
-        assert uspec_2.center == (1, 1)
-        assert uspec_2.span == (2, 3)
+        uspec_2 = ftku.UniformSpec(start=0, step=-0.5, num=5)
+        assert uspec_2.ndim == 1
+        assert uspec_2.center == (-1,)
+        assert uspec_2.span == (2,)
 
+        uspec_3 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, -0.75), num=5)
+        assert uspec_3.ndim == 2
+        assert uspec_3.center == (1, -2)
+        assert uspec_3.span == (2, 3)
+
+    @parametrize_step_sign
     @pytest.mark.parametrize("sparse", [True, False])
-    def test_meshgrid(self, sparse):
+    def test_meshgrid(self, step_sign, sparse):
         # 1D case
-        uspec_1 = ftku.UniformSpec(start=1, step=0.1, num=9)
+        step = step_sign * 0.1
+        uspec_1 = ftku.UniformSpec(start=1, step=step, num=9)
         mesh_1 = uspec_1.meshgrid(sparse)
-        mesh_1_gt = (1 + 0.1 * np.arange(9),)
+        mesh_1_gt = (1 + step * np.arange(9),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
         assert np.allclose(mesh_1[0], mesh_1_gt[0])
 
         # multi-dimensional case
-        uspec_2 = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=9)
+        step_1, step_2 = step_sign * 0.1, 0.2
+        uspec_2 = ftku.UniformSpec(start=1, step=(step_1, step_2), num=9)
         mesh_2 = uspec_2.meshgrid(sparse)
         mesh_2_gt = np.meshgrid(
             *(
-                1 + 0.1 * np.arange(9),
-                1 + 0.2 * np.arange(9),
+                1 + step_1 * np.arange(9),
+                1 + step_2 * np.arange(9),
             ),
             indexing="ij",
             sparse=sparse,
