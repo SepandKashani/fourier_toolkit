@@ -10,12 +10,6 @@ from .nufft import (
     u2nu as u2nu,
 )
 
-from .typing import (
-    ArrayR as ArrayR,
-    ArrayC as ArrayC,
-    ArrayRC as ArrayRC,
-)
-
 from .ufft import (
     u2u as u2u,
 )
