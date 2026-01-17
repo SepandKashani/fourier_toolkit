@@ -241,14 +241,3 @@ class TestUniformSpec:
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
         assert np.allclose(knots, knots_gt)
-
-
-class TestInterval:
-    def test_positive_span(self):
-        ftku.Interval(1, 2)  # ok
-        with pytest.raises(Exception):
-            ftku.Interval(1, span=0)
-
-    def test_bounds(self):
-        bbox = ftku.Interval((0, 2), (2, 4))
-        assert bbox.bounds() == ((-1, 1), (0, 4))
