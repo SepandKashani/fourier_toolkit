@@ -392,7 +392,7 @@ class _U2U:
             M = x_spec.num[d]
             N = v_spec.num[d]
 
-            if (M == N) and math.isclose(dx * dv * N, 1):
+            if (M == N) and math.isclose(abs(dx * dv) * N, 1):
                 fft_axes.append(d)
             else:
                 czt_axes.append(d)
@@ -426,7 +426,7 @@ class _U2U:
             (ax_fft, Cp, fft, Bp, ax_ifft) = self._fft_params(w)
             _w = _w.transpose(ax_fft)
             _w = ftkl.hadamard_outer(_w, *Cp)
-            _w = fft.apply(_w)
+            _w = fft(_w)
             _w = ftkl.hadamard_outer(_w, *Bp)
             _w = _w.transpose(ax_ifft)
 
@@ -454,8 +454,8 @@ class _U2U:
             Permutation tuple to move FFT axes to end of `y`.
         Cp: ArrayC
             (N1,),...,(ND,) pre-FFT modulation vectors.
-        fft: FFT
-            FFT() instance.
+        fft: callable
+            FFT() instance; computes fft/ifft along required axes.
         Bp: ArrayC
             (N1,),...,(ND,) post-FFT modulation vectors.
         ax_ifft: tuple[int]
@@ -474,7 +474,24 @@ class _U2U:
 
         # Build FFT operator
         D_fft = len(self.cfg.fft_axes)
-        fft = DFT(D_fft)
+        neg_axes = []  # '-' exponent axes
+        pos_axes = []  # '+' exponent axes
+        for d in range(D_fft):
+            ax = self.cfg.fft_axes
+            dx = self.cfg.x_spec.step
+            dv = self.cfg.v_spec.step
+
+            if dx[ax[d]] * dv[ax[d]] > 0:
+                neg_axes.append(-D_fft + d)
+            else:
+                pos_axes.append(-D_fft + d)
+
+        def fft(x: ftkt.ArrayRC) -> ftkt.ArrayC:
+            # basically DFT.apply(), but with `axes` modified.
+            xp = x.__array_namespace__()
+            y = xp.fft.fftn(x, axes=neg_axes, norm="backward")
+            y = xp.fft.ifftn(y, axes=pos_axes, norm="forward")
+            return y
 
         # Build modulation vectors (Cp, Bp)
         Cp = [None] * D_fft
