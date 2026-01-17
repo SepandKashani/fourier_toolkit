@@ -317,7 +317,7 @@ class TestU2U:
     def x_spec(self, space_dim) -> ftku.UniformSpec:
         rng = np.random.default_rng()
         x0 = rng.standard_normal(space_dim)
-        dx = rng.uniform(1e-3, 2, space_dim)
+        dx = rng.standard_normal(space_dim)
         M = rng.integers(1, 7, space_dim)
         return ftku.UniformSpec(start=x0, step=dx, num=M)
 
@@ -325,7 +325,7 @@ class TestU2U:
     def v_spec(self, space_dim) -> ftku.UniformSpec:
         rng = np.random.default_rng()
         v0 = rng.standard_normal(space_dim)
-        dv = rng.uniform(1e-2, 5, space_dim)
+        dv = rng.standard_normal(space_dim)
         N = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=v0, step=dv, num=N)
 
@@ -367,6 +367,8 @@ class TestU2USpecialCase(TestU2U):
         N = M.copy()
         dx = rng.uniform(1e-3, 2, space_dim)
         dv = 1 / (N * dx)
+        dx *= rng.choice([-1, +1], space_dim)
+        dv *= rng.choice([-1, +1], space_dim)
 
         x_spec = ftku.UniformSpec(x0, dx, M)
         v_spec = ftku.UniformSpec(v0, dv, N)
@@ -395,6 +397,8 @@ class TestU2UMixCase(TestU2U):
         N = M.copy()
         dx = rng.uniform(1e-3, 2, space_dim)
         dv = 1 / (N * dx)
+        dx *= rng.choice([-1, +1], space_dim)
+        dv *= rng.choice([-1, +1], space_dim)
 
         # now replace some axes (dv,N) at random to use CZT
         axes = rng.integers(space_dim, size=max(1, space_dim - 1))
