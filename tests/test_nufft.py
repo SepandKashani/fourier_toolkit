@@ -233,6 +233,7 @@ class TestNU2U:
         rng = np.random.default_rng()
         v0 = rng.uniform(-3, -2, space_dim)
         dv = rng.uniform(1e-2, 1.5, space_dim)
+        dv *= rng.choice([-1, +1], space_dim)
         N = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=v0, step=dv, num=N)
 
@@ -357,6 +358,7 @@ class TestU2NU:
         rng = np.random.default_rng()
         x0 = rng.uniform(-3, -2, space_dim)
         dx = rng.uniform(1e-2, 1.5, space_dim)
+        dx *= rng.choice([-1, +1], space_dim)
         M = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=x0, step=dx, num=M)
 
