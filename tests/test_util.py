@@ -204,14 +204,14 @@ class TestUniformSpec:
     def test_meshgrid(self, sparse):
         # 1D case
         uspec_1 = ftku.UniformSpec(start=1, step=0.1, num=9)
-        mesh_1 = uspec_1.meshgrid(np, sparse)
+        mesh_1 = uspec_1.meshgrid(sparse)
         mesh_1_gt = (1 + 0.1 * np.arange(9),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
         assert np.allclose(mesh_1[0], mesh_1_gt[0])
 
         # multi-dimensional case
         uspec_2 = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=9)
-        mesh_2 = uspec_2.meshgrid(np, sparse)
+        mesh_2 = uspec_2.meshgrid(sparse)
         mesh_2_gt = np.meshgrid(
             *(
                 1 + 0.1 * np.arange(9),
@@ -227,7 +227,7 @@ class TestUniformSpec:
 
     def test_knots(self):
         uspec = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=(9, 8))
-        knots = uspec.knots(np)
+        knots = uspec.knots()
         knots_gt = np.stack(
             np.meshgrid(
                 *(

@@ -156,10 +156,7 @@ def nu2u(
     z = nu2nu(
         x=x,
         v=np.require(
-            a=np.reshape(
-                v_spec.knots(x.__array_namespace__()),
-                (math.prod(N), D),
-            ),
+            a=v_spec.knots(x).reshape(math.prod(N), D),
             dtype=x.dtype,
             like=x,
         ),
@@ -240,10 +237,7 @@ def u2nu(
     sh = w.shape[:-D]
     z = nu2nu(
         x=np.require(
-            a=np.reshape(
-                x_spec.knots(v.__array_namespace__()),
-                (math.prod(M), D),
-            ),
+            a=x_spec.knots(v).reshape(math.prod(M), D),
             dtype=v.dtype,
             like=v,
         ),

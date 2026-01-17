@@ -231,25 +231,54 @@ class UniformSpec:
     def center(self) -> tuple[float]:
         return tuple(x0 + 0.5 * dx * (nx - 1) for (x0, dx, nx) in self)
 
-    def meshgrid(self, xp, sparse: bool = False) -> tuple[ftkt.ArrayR]:
+    def meshgrid(
+        self,
+        sparse: bool = False,
+        like: ftkt.ArrayRC = None,
+    ) -> tuple[ftkt.ArrayR]:
         """
         Equivalent of :py:func:`numpy.meshgrid`.
+
+        Parameters
+        ----------
+        like: ArrayRC
+            Reference object to allow the creation of arrays which are not NumPy arrays.
+            If an array-like passed in as `like` supports the ``__array_function__`` protocol, the result will be defined by it.
+            In this case, it ensures the creation of an array object compatible with that passed in via this argument.
 
         Returns
         -------
         mesh: tuple[ArrayR]
             (D,) axial knot coordinates
         """
-        mesh_1D = tuple(x0 + dx * xp.arange(nx) for (x0, dx, nx) in self)
-        mesh = xp.meshgrid(*mesh_1D, indexing="ij", sparse=sparse)
+        mesh_1D = [None] * self.ndim
+        for d in range(self.ndim):
+            x0 = self.start[d]
+            dx = self.step[d]
+            nx = self.num[d]
+
+            mesh_1D[d] = x0 + dx * np.arange(nx, like=like)
+
+        mesh = np.meshgrid(
+            *mesh_1D,
+            indexing="ij",
+            sparse=sparse,
+        )
         return mesh
 
-    def knots(self, xp) -> ftkt.ArrayR:
+    def knots(self, like: ftkt.ArrayRC = None) -> ftkt.ArrayR:
         """
+        Parameters
+        ----------
+        like: ArrayRC
+            Reference object to allow the creation of arrays which are not NumPy arrays.
+            If an array-like passed in as `like` supports the ``__array_function__`` protocol, the result will be defined by it.
+            In this case, it ensures the creation of an array object compatible with that passed in via this argument.
+
         Returns
         -------
         x: ArrayR
             (M1,...,MD, D) mesh coordinates
         """
-        x = xp.stack(self.meshgrid(xp), axis=-1)
+        x = np.stack(self.meshgrid(like=like), axis=-1)
         return x

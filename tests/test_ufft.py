@@ -348,8 +348,8 @@ class TestU2U:
     @staticmethod
     def _generate_A(x_spec, v_spec, isign) -> np.ndarray:
         # (N1,...,ND,M1,...,MD) tensor which, when inner-product-ed with `w(M1,...,MD)`, gives `z(N1,...,ND)`.
-        x_m = x_spec.knots(np)  # (M1,...,MD,D)
-        v_n = v_spec.knots(np)  # (N1,...,ND,D)
+        x_m = x_spec.knots()  # (M1,...,MD,D)
+        v_n = v_spec.knots()  # (N1,...,ND,D)
         phase = np.tensordot(v_n, x_m, axes=[[-1], [-1]])  # (N1,...,ND,M1,...,MD)
         A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
