@@ -1,4 +1,4 @@
-- Add GPU support
+- Move to JAX inputs
   Modules are already written to work transparently with (NumPy, CuPy) arrays, but there are probably bugs to iron out.
 
   1. Test suite: explicitly test CuPy inputs.
