@@ -319,6 +319,8 @@ def _create_plan(
     **kwargs,
 ) -> finufft.Plan:
     r"""
+    Plan a type-3 NUFFT.
+
     Parameters
     ----------
     x: ArrayR
