@@ -2,7 +2,7 @@ import importlib.resources as ir
 import math
 import warnings
 from collections import namedtuple
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import NamedTuple, Optional
 
@@ -220,17 +220,26 @@ class UniformSpec:
     def ndim(self) -> int:
         return len(self.start)
 
-    def __iter__(self) -> Iterator:
-        for d in range(self.ndim):
-            yield (self.start[d], self.step[d], self.num[d])
-
     @property
     def span(self) -> tuple[float]:
-        return tuple(abs(dx) * (nx - 1) for (_, dx, nx) in self)
+        _span = [None] * self.ndim
+        for d in range(self.ndim):
+            dx = self.step[d]
+            nx = self.num[d]
+
+            _span[d] = abs(dx) * (nx - 1)
+        return tuple(_span)
 
     @property
     def center(self) -> tuple[float]:
-        return tuple(x0 + 0.5 * dx * (nx - 1) for (x0, dx, nx) in self)
+        _center = [None] * self.ndim
+        for d in range(self.ndim):
+            x0 = self.start[d]
+            dx = self.step[d]
+            nx = self.num[d]
+
+            _center[d] = x0 + 0.5 * dx * (nx - 1)
+        return tuple(_center)
 
     def meshgrid(
         self,
