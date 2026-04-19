@@ -42,3 +42,4 @@ Helpers
 
 .. autoclass:: fourier_toolkit.UniformSpec
    :members:
+   :special-members: __getitem__
