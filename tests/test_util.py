@@ -253,3 +253,19 @@ class TestUniformSpec:
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
         assert np.allclose(knots, knots_gt)
+
+    def test_getitem(self):
+        uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)
+        assert uspec_1[0] == (0,)
+        assert uspec_1[0,] == (0,)
+        assert uspec_1[4] == (2,)
+        assert uspec_1[4,] == (2,)
+        assert uspec_1[-1] == (2,)
+        assert uspec_1[-1,] == (2,)
+
+        uspec_2 = ftku.UniformSpec(start=(0, -0.5), step=(0.5, -0.75), num=5)
+        with pytest.raises(Exception):
+            uspec_2[0]  # insufficient indices provided
+        assert uspec_2[0, 0] == (0, -0.5)
+        assert uspec_2[-1, -2] == (2, -2.75)
+        assert uspec_2[-2, 3] == (1.5, -2.75)

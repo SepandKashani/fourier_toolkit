@@ -292,3 +292,34 @@ class UniformSpec:
         """
         x = np.stack(self.meshgrid(like=like), axis=-1)
         return x
+
+    def __getitem__(self, idx: tuple[int]) -> tuple[float]:
+        """
+        Extract a mesh coordinate from its index.
+
+        Parameters
+        ----------
+         idx: tuple[int]
+
+        Returns
+        -------
+        m: tuple[float]
+            Mesh coordinate at `idx`.
+
+        Notes
+        -----
+        Similar to Python sequences, negative indices can be used to index from the end of an axis.
+        """
+        idx = broadcast_seq(idx, None, int)
+        assert len(idx) == self.ndim
+
+        m = [None] * self.ndim
+        for d in range(self.ndim):
+            x0 = self.start[d]
+            dx = self.step[d]
+            nx = self.num[d]
+            assert -nx <= idx[d] < nx
+
+            _idx = idx[d] % nx
+            m[d] = x0 + _idx * dx
+        return tuple(m)
