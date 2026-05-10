@@ -24,13 +24,13 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pre-commit>=4.5.1",
-    "pytest>=9.0.2",
-    "ruff>=0.14.10",
-    "scipy>=1.16.3",
+    "pre-commit>=4.6",
+    "pytest>=9.0",
+    "ruff>=0.15",
+    "scipy>=1.17",
     "sphinx>=9.1",
     "sphinxcontrib-bibtex>=2.7",
-    "ty>=0.0.8",
+    "ty>=0.0.30",
 ]
 
 [tool.hatch.version]
