@@ -83,13 +83,13 @@ class _CZT:
 
     .. math::
 
-       \bby[k]
+       \bby[m]
        =
-       (C \, \bbx)[k]
+       (C \, \bbx)[m]
        =
-       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nk},
+       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nm},
 
-    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`k \in \discreteRange{0}{M-1}`.
+    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`m \in \discreteRange{0}{M-1}`.
 
     A D-dimensional CZT corresponds to taking a 1D CZT along each transform axis.
 
