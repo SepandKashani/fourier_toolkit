@@ -238,7 +238,7 @@ class CZT:
         y: ArrayC
             (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
         """
-        AWk2, FWk2, Wk2, extract = self._mod_params_apply(x)
+        AWk2, FWk2, Wk2, extract = self._mod_params(x)
         pad_width = [(0, 0)] * (x.ndim - self.cfg.D)  # stack dimensions
         pad_width += [  # core dimensions
             (0, l - n)
@@ -253,35 +253,8 @@ class CZT:
         y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
         return y
 
-    def adjoint(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Compute :math:`\bbx = C^{\adj} \bby`.
-
-        Parameters
-        ----------
-        y: ArrayRC
-            (..., M1,...,MD) input :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
-
-        Returns
-        -------
-        x: ArrayC
-            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-        """
-        # CZT^{\adjoint}(y,M,A,W)[n] = CZT(y,N,A=1,W=W*)[n] * A^{n}
-        czt = CZT(
-            N=self.cfg.M,
-            M=self.cfg.N,
-            A=1,
-            W=tuple(w.conjugate() for w in self.cfg.W),
-        )
-        An = self._mod_params_adjoint(y)
-
-        _y = czt.apply(y)
-        x = ftkl.hadamard_outer(_y, *An)
-        return x
-
     # Helper routines (internal) ----------------------------------------------
-    def _mod_params_apply(self, x: ftkt.ArrayRC):
+    def _mod_params(self, x: ftkt.ArrayRC):
         """
         Parameters
         ----------
@@ -334,30 +307,6 @@ class CZT:
             extract[d] = slice(N - 1, N + M - 1)
 
         return AWk2, FWk2, Wk2, extract
-
-    def _mod_params_adjoint(self, y: ftkt.ArrayRC):
-        """
-        Parameters
-        ----------
-        y: ArrayRC
-
-        Returns
-        -------
-        An: ArrayC
-            (N1,),...,(ND,) vectors.
-        """
-        translate = ftku.TranslateDType(y.dtype)
-        cdtype = translate.to_complex()
-
-        An = [None] * self.cfg.D
-        for d in range(self.cfg.D):
-            _A = self.cfg.A[d]
-            _N = self.cfg.N[d]
-            _An = _A ** np.arange(_N, dtype=int, like=y)
-
-            An[d] = _An.astype(cdtype)
-
-        return An
 
 
 class _U2U:

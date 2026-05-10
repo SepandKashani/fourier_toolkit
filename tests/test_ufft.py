@@ -160,45 +160,23 @@ class TestCZT:
         assert ct.allclose(y, y_gt, fdtype)
 
     @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("direction", ["apply", "adjoint"])
-    def test_prec(self, op, dtype, real, direction):
+    def test_prec(self, op, dtype, real):
         # output precision (not dtype!) matches input precision.
         translate = ftku.TranslateDType(dtype)
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         rng = np.random.default_rng()
-        size = op.cfg.N if (direction == "apply") else op.cfg.M
         if real:
-            x = rng.standard_normal(size)
+            x = rng.standard_normal(op.cfg.N)
             x = x.astype(fdtype)
         else:
-            x = 1j * rng.standard_normal(size)
-            x += rng.standard_normal(size)
+            x = 1j * rng.standard_normal(op.cfg.N)
+            x += rng.standard_normal(op.cfg.N)
             x = x.astype(cdtype)
 
-        f = getattr(op, direction)
-        y = f(x)
+        y = op.apply(x)
         assert y.dtype == cdtype
-
-    def test_math_adjoint(self, op, dtype):
-        # <A x, y> == <x, A^H y>
-        translate = ftku.TranslateDType(dtype)
-        cdtype = translate.to_complex()
-
-        sh = (5, 3, 4)
-        rng = np.random.default_rng()
-        x = 1j * rng.standard_normal((*sh, *op.cfg.N))
-        x += rng.standard_normal((*sh, *op.cfg.N))
-        x = x.astype(cdtype)
-        y = 1j * rng.standard_normal((*sh, *op.cfg.M))
-        y += rng.standard_normal((*sh, *op.cfg.M))
-        y = y.astype(cdtype)
-
-        lhs = ct.inner_product(op.apply(x), y, op.cfg.D)
-        rhs = ct.inner_product(x, op.adjoint(y), op.cfg.D)
-        # apply/adjoint use different code paths, so comparing wrt rel-error
-        assert ct.relclose(lhs, rhs, len(sh), 1e-5)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
