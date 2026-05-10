@@ -347,10 +347,8 @@ class _U2U:
                 pos_axes.append(-D_fft + d)
 
         def fft(x: ftkt.ArrayRC) -> ftkt.ArrayC:
-            # basically DFT.apply(), but with `axes` modified.
-            xp = x.__array_namespace__()
-            y = xp.fft.fftn(x, axes=neg_axes, norm="backward")
-            y = xp.fft.ifftn(y, axes=pos_axes, norm="forward")
+            y = np.fft.fftn(x, axes=neg_axes, norm="backward")
+            y = np.fft.ifftn(y, axes=pos_axes, norm="forward")
             return y
 
         # Build modulation vectors (Cp, Bp)
