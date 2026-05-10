@@ -9,7 +9,6 @@ import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 __all__ = [
-    "CZT",
     "u2u",
 ]
 
@@ -75,7 +74,7 @@ def u2u(
 # Helper routines (internal) ---------------------------------------------------
 
 
-class CZT:
+class _CZT:
     r"""
     Multi-dimensional Chirp Z-Transform (CZT) :math:`C: \bC^{N_{1} \times\cdots\times N_{D}} \to
     \bC^{M_{1} \times\cdots\times M_{D}}`.
@@ -421,7 +420,7 @@ class _U2U:
             M[d] = nv[ax[d]]
             A[d] = cmath.exp(+1j * 2 * math.pi * dx[ax[d]] * v0[ax[d]])
             W[d] = cmath.exp(-1j * 2 * math.pi * dx[ax[d]] * dv[ax[d]])
-        czt = CZT(N, M, A, W)
+        czt = _CZT(N, M, A, W)
 
         # Build modulation vector (B,)
         B = [None] * D_czt

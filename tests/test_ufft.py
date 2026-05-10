@@ -4,7 +4,7 @@ import scipy.signal as sps
 
 import fourier_toolkit.util as ftku
 from fourier_toolkit import u2u  # test as exposed to user
-from fourier_toolkit.ufft import CZT
+from fourier_toolkit.ufft import _CZT
 
 from . import conftest as ct
 
@@ -114,8 +114,8 @@ class TestCZT:
         return np.dtype(request.param)
 
     @pytest.fixture
-    def op(self, N, M, A, W) -> CZT:
-        return CZT(N, M, A, W)
+    def op(self, N, M, A, W) -> _CZT:
+        return _CZT(N, M, A, W)
 
     # Helper functions --------------------------------------------------------
 
