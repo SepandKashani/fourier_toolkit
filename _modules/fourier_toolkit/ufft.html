@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.1.6.dev0 documentation</title>
+    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.1.6.dev11 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=6332dbee"></script>
+    <script src="../../_static/documentation_options.js?v=fc58e1a4"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.6.dev0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.6.dev11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
@@ -52,8 +52,6 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;CZT&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;DFT&quot;</span><span class="p">,</span>
     <span class="s2">&quot;u2u&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -122,95 +120,7 @@
 <span class="c1"># Helper routines (internal) ---------------------------------------------------</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">DFT</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Multi-dimensional Discrete Fourier Transform (DFT) :math:`F: \bC^{N_{1} \times\cdots\times N_{D}} \to \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-
-<span class="sd">    The 1D DFT is defined as:</span>
-
-<span class="sd">    .. math::</span>
-
-<span class="sd">       \bby[k]</span>
-<span class="sd">       =</span>
-<span class="sd">       (F \, \bbx)[k]</span>
-<span class="sd">       =</span>
-<span class="sd">       \sum_{n=0}^{N-1} \bbx[n] \ee^{-\cj \frac{2\pi}{N} nk},</span>
-
-<span class="sd">    where :math:`\bbx \in \bC^{N}`, and :math:`k \in \discreteRange{0}{N-1}`.</span>
-
-<span class="sd">    A D-dimensional DFT corresponds to taking a 1D DFT along each transform axis.</span>
-
-<span class="sd">    This implementation is a thin shell around the FFT algorithm intended to simplify multi-backend (CPU, GPU) use.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        D: int</span>
-<span class="sd">            Dimension of the transform.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="n">D</span> <span class="o">&gt;=</span> <span class="mi">1</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span> <span class="o">=</span> <span class="n">ftku</span><span class="o">.</span><span class="n">as_namedtuple</span><span class="p">(</span>
-            <span class="n">D</span><span class="o">=</span><span class="n">D</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute :math:`\bby = F \bbx`.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        x: ArrayRC</span>
-<span class="sd">            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        y: ArrayC</span>
-<span class="sd">            (..., N1,...,ND) output :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">xp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">y</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute :math:`\bbx = F^{\adj} \bby`.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        y: ArrayRC</span>
-<span class="sd">            (..., N1,...,ND) input :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        x: ArrayC</span>
-<span class="sd">            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">xp</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftn</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;forward&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Inverse transform :math:`\bbx = F^{-1} \bby`.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        y: ArrayRC</span>
-<span class="sd">            (..., N1,...,ND) input :math:`\bby = \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        x: ArrayC</span>
-<span class="sd">            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">xp</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftn</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">CZT</span><span class="p">:</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">_CZT</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional Chirp Z-Transform (CZT) :math:`C: \bC^{N_{1} \times\cdots\times N_{D}} \to</span>
 <span class="sd">    \bC^{M_{1} \times\cdots\times M_{D}}`.</span>
@@ -219,13 +129,13 @@
 
 <span class="sd">    .. math::</span>
 
-<span class="sd">       \bby[k]</span>
+<span class="sd">       \bby[m]</span>
 <span class="sd">       =</span>
-<span class="sd">       (C \, \bbx)[k]</span>
+<span class="sd">       (C \, \bbx)[m]</span>
 <span class="sd">       =</span>
-<span class="sd">       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nk},</span>
+<span class="sd">       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nm},</span>
 
-<span class="sd">    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`k \in \discreteRange{0}{M-1}`.</span>
+<span class="sd">    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`m \in \discreteRange{0}{M-1}`.</span>
 
 <span class="sd">    A D-dimensional CZT corresponds to taking a 1D CZT along each transform axis.</span>
 
@@ -284,7 +194,7 @@
 <span class="sd">        y: ArrayC</span>
 <span class="sd">            (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">AWk2</span><span class="p">,</span> <span class="n">FWk2</span><span class="p">,</span> <span class="n">Wk2</span><span class="p">,</span> <span class="n">extract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mod_params_apply</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">AWk2</span><span class="p">,</span> <span class="n">FWk2</span><span class="p">,</span> <span class="n">Wk2</span><span class="p">,</span> <span class="n">extract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mod_params</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">pad_width</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span>  <span class="c1"># stack dimensions</span>
         <span class="n">pad_width</span> <span class="o">+=</span> <span class="p">[</span>  <span class="c1"># core dimensions</span>
             <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">l</span> <span class="o">-</span> <span class="n">n</span><span class="p">)</span>
@@ -293,41 +203,14 @@
 
         <span class="n">_x</span> <span class="o">=</span> <span class="n">ftkl</span><span class="o">.</span><span class="n">hadamard_outer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">*</span><span class="n">AWk2</span><span class="p">)</span>
         <span class="n">_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">_x</span><span class="p">,</span> <span class="n">pad_width</span><span class="p">)</span>
-        <span class="n">_x</span> <span class="o">=</span> <span class="n">DFT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_x</span><span class="p">)</span>
+        <span class="n">_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftn</span><span class="p">(</span><span class="n">_x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
         <span class="n">_x</span> <span class="o">=</span> <span class="n">ftkl</span><span class="o">.</span><span class="n">hadamard_outer</span><span class="p">(</span><span class="n">_x</span><span class="p">,</span> <span class="o">*</span><span class="n">FWk2</span><span class="p">)</span>
-        <span class="n">_x</span> <span class="o">=</span> <span class="n">DFT</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">)</span><span class="o">.</span><span class="n">inverse</span><span class="p">(</span><span class="n">_x</span><span class="p">)</span>
+        <span class="n">_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftn</span><span class="p">(</span><span class="n">_x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
         <span class="n">y</span> <span class="o">=</span> <span class="n">ftkl</span><span class="o">.</span><span class="n">hadamard_outer</span><span class="p">(</span><span class="n">_x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">*</span><span class="n">extract</span><span class="p">],</span> <span class="o">*</span><span class="n">Wk2</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Compute :math:`\bbx = C^{\adj} \bby`.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        y: ArrayRC</span>
-<span class="sd">            (..., M1,...,MD) input :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        x: ArrayC</span>
-<span class="sd">            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># CZT^{\adjoint}(y,M,A,W)[n] = CZT(y,N,A=1,W=W*)[n] * A^{n}</span>
-        <span class="n">czt</span> <span class="o">=</span> <span class="n">CZT</span><span class="p">(</span>
-            <span class="n">N</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">M</span><span class="p">,</span>
-            <span class="n">M</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">N</span><span class="p">,</span>
-            <span class="n">A</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">W</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">W</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">An</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mod_params_adjoint</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-
-        <span class="n">_y</span> <span class="o">=</span> <span class="n">czt</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">ftkl</span><span class="o">.</span><span class="n">hadamard_outer</span><span class="p">(</span><span class="n">_y</span><span class="p">,</span> <span class="o">*</span><span class="n">An</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">x</span>
-
     <span class="c1"># Helper routines (internal) ----------------------------------------------</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_mod_params_apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mod_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -380,30 +263,6 @@
             <span class="n">extract</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">N</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">N</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">AWk2</span><span class="p">,</span> <span class="n">FWk2</span><span class="p">,</span> <span class="n">Wk2</span><span class="p">,</span> <span class="n">extract</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_mod_params_adjoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        y: ArrayRC</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        An: ArrayC</span>
-<span class="sd">            (N1,),...,(ND,) vectors.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">translate</span> <span class="o">=</span> <span class="n">ftku</span><span class="o">.</span><span class="n">TranslateDType</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="n">cdtype</span> <span class="o">=</span> <span class="n">translate</span><span class="o">.</span><span class="n">to_complex</span><span class="p">()</span>
-
-        <span class="n">An</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span>
-        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">D</span><span class="p">):</span>
-            <span class="n">_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
-            <span class="n">_N</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cfg</span><span class="o">.</span><span class="n">N</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
-            <span class="n">_An</span> <span class="o">=</span> <span class="n">_A</span> <span class="o">**</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">_N</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">like</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
-
-            <span class="n">An</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">_An</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">cdtype</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">An</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_U2U</span><span class="p">:</span>
@@ -533,10 +392,8 @@
                 <span class="n">pos_axes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">D_fft</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">fft</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-            <span class="c1"># basically DFT.apply(), but with `axes` modified.</span>
-            <span class="n">xp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">__array_namespace__</span><span class="p">()</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">neg_axes</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftn</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">pos_axes</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;forward&quot;</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">neg_axes</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;backward&quot;</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">ifftn</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">pos_axes</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;forward&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">y</span>
 
         <span class="c1"># Build modulation vectors (Cp, Bp)</span>
@@ -609,7 +466,7 @@
             <span class="n">M</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">nv</span><span class="p">[</span><span class="n">ax</span><span class="p">[</span><span class="n">d</span><span class="p">]]</span>
             <span class="n">A</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmath</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">dx</span><span class="p">[</span><span class="n">ax</span><span class="p">[</span><span class="n">d</span><span class="p">]]</span> <span class="o">*</span> <span class="n">v0</span><span class="p">[</span><span class="n">ax</span><span class="p">[</span><span class="n">d</span><span class="p">]])</span>
             <span class="n">W</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmath</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">dx</span><span class="p">[</span><span class="n">ax</span><span class="p">[</span><span class="n">d</span><span class="p">]]</span> <span class="o">*</span> <span class="n">dv</span><span class="p">[</span><span class="n">ax</span><span class="p">[</span><span class="n">d</span><span class="p">]])</span>
-        <span class="n">czt</span> <span class="o">=</span> <span class="n">CZT</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
+        <span class="n">czt</span> <span class="o">=</span> <span class="n">_CZT</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">M</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">W</span><span class="p">)</span>
 
         <span class="c1"># Build modulation vector (B,)</span>
         <span class="n">B</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">D_czt</span>
@@ -664,7 +521,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.6.dev0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.1.6.dev11 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
