@@ -12,7 +12,7 @@ license = "MIT"
 dependencies = [
     "finufft>=2.2.0",
     "numpy>=2.0.0",
-    "opt-einsum>=3.3.0",
+    "opt-einsum>=3.4.0",
 ]
 
 [build-system]
