@@ -1,14 +1,38 @@
-- Add CuPy Support
-  1. Test suite: explicitly test CuPy inputs.
-  2. Iron out bugs, in this order:
-     - util.py
-     - linalg.py
-     - ufft.py
-     - nufft.py
+- Add CuPy Support [no need ctk extension: container has it working by default]
+
+  0. add to dev dependencies
+     do not load CP anywhere though
+
+  1. test_util.py
+     Ensure UniformSpec.meshrgid(like) works:
+     - respect backend;
+     - respect GPU choice.
+
+  2. test_ufft.py
+     Modify TestCZT().test_[value_apply, prec]() to
+     - respect backend;
+     - respect GPU choice;
+
+     Ensure ct.xxx() calls have all inputs on same device.
+
+  3. test_ufft.py
+     Modify TestU2U().test_[value_apply, prec]() to
+     - respect backend;
+     - respect GPU choice;
+
+    Ensure ct.xxx() calls have all inputs on same device.
+
+  4. Tag as v0.2
+
+  5. test_nufft.py
+     Adding GPU support needs more thought/work
+
 
 - Add JAX Support via buffer_callback()
   + background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
   + buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
+
+  Tag as v0.3
 
 - Add MATLAB interface
   Must work with CPU/GPU arrays.
