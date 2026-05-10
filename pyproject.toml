@@ -7,7 +7,7 @@ authors = [
     { name = "Sepand KASHANI", email = "sepand@kashani.ch" }
 ]
 urls.download = "https://github.com/SepandKashani/fourier_toolkit"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
     "finufft>=2.2.0",
@@ -28,8 +28,8 @@ dev = [
     "pytest>=9.0.2",
     "ruff>=0.14.10",
     "scipy>=1.16.3",
-    "sphinx>=9.0.4",
-    "sphinxcontrib-bibtex>=2.6.5",
+    "sphinx>=9.1",
+    "sphinxcontrib-bibtex>=2.7",
     "ty>=0.0.8",
 ]
 
