@@ -10,7 +10,6 @@ import fourier_toolkit.util as ftku
 
 __all__ = [
     "CZT",
-    "DFT",
     "u2u",
 ]
 
@@ -74,94 +73,6 @@ def u2u(
 
 
 # Helper routines (internal) ---------------------------------------------------
-
-
-class DFT:
-    r"""
-    Multi-dimensional Discrete Fourier Transform (DFT) :math:`F: \bC^{N_{1} \times\cdots\times N_{D}} \to \bC^{N_{1} \times\cdots\times N_{D}}`.
-
-    The 1D DFT is defined as:
-
-    .. math::
-
-       \bby[k]
-       =
-       (F \, \bbx)[k]
-       =
-       \sum_{n=0}^{N-1} \bbx[n] \ee^{-\cj \frac{2\pi}{N} nk},
-
-    where :math:`\bbx \in \bC^{N}`, and :math:`k \in \discreteRange{0}{N-1}`.
-
-    A D-dimensional DFT corresponds to taking a 1D DFT along each transform axis.
-
-    This implementation is a thin shell around the FFT algorithm intended to simplify multi-backend (CPU, GPU) use.
-    """
-
-    def __init__(self, D: int):
-        """
-        Parameters
-        ----------
-        D: int
-            Dimension of the transform.
-        """
-        assert D >= 1
-        self.cfg = ftku.as_namedtuple(
-            D=D,
-        )
-
-    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Compute :math:`\bby = F \bbx`.
-
-        Parameters
-        ----------
-        x: ArrayRC
-            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-
-        Returns
-        -------
-        y: ArrayC
-            (..., N1,...,ND) output :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-        """
-        xp = x.__array_namespace__()
-        y = xp.fft.fftn(x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
-        return y
-
-    def adjoint(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Compute :math:`\bbx = F^{\adj} \bby`.
-
-        Parameters
-        ----------
-        y: ArrayRC
-            (..., N1,...,ND) input :math:`\bby \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-
-        Returns
-        -------
-        x: ArrayC
-            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-        """
-        xp = y.__array_namespace__()
-        x = xp.fft.ifftn(y, axes=tuple(range(-self.cfg.D, 0)), norm="forward")
-        return x
-
-    def inverse(self, y: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Inverse transform :math:`\bbx = F^{-1} \bby`.
-
-        Parameters
-        ----------
-        y: ArrayRC
-            (..., N1,...,ND) input :math:`\bby = \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-
-        Returns
-        -------
-        x: ArrayC
-            (..., N1,...,ND) output :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-        """
-        xp = y.__array_namespace__()
-        x = xp.fft.ifftn(y, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
-        return x
 
 
 class CZT:
@@ -247,9 +158,9 @@ class CZT:
 
         _x = ftkl.hadamard_outer(x, *AWk2)
         _x = np.pad(_x, pad_width)
-        _x = DFT(self.cfg.D).apply(_x)
+        _x = np.fft.fftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
         _x = ftkl.hadamard_outer(_x, *FWk2)
-        _x = DFT(self.cfg.D).inverse(_x)
+        _x = np.fft.ifftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
         y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
         return y
 
