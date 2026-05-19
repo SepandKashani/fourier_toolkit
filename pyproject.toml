@@ -10,6 +10,7 @@ urls.download = "https://github.com/SepandKashani/fourier_toolkit"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
+    "array-api-compat>=1.9,<2",
     "finufft>=2.2.0,<3",
     "numpy>=2.0.0,<3",
     "opt-einsum>=3.4.0,<4",
