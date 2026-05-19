@@ -10,9 +10,9 @@ urls.download = "https://github.com/SepandKashani/fourier_toolkit"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
-    "finufft>=2.2.0",
-    "numpy>=2.0.0",
-    "opt-einsum>=3.4.0",
+    "finufft>=2.2.0,<3",
+    "numpy>=2.0.0,<3",
+    "opt-einsum>=3.4.0,<4",
 ]
 
 [build-system]
@@ -26,13 +26,13 @@ build-backend = "hatchling.build"
 dev = [
     "cupy-cuda13x",
     "ipython",
-    "pre-commit>=4.6",
-    "pytest>=9.0",
-    "ruff>=0.15",
-    "scipy>=1.17",
-    "sphinx>=9.1",
-    "sphinxcontrib-bibtex>=2.7",
-    "ty>=0.0.30",
+    "pre-commit>=4.6,<5",
+    "pytest>=9.0,<10",
+    "ruff>=0.15,<1",
+    "scipy>=1.17,<2",
+    "sphinx>=9.1,<10",
+    "sphinxcontrib-bibtex>=2.7,<3",
+    "ty>=0.0.30,<1",
 ]
 
 [tool.hatch.version]
