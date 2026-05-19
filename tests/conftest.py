@@ -116,3 +116,17 @@ def inner_product(x: NDArray, y: NDArray, D: int) -> NDArray:
         z_ind,
     )
     return z
+
+
+def same_backend(x: NDArray, y: NDArray) -> bool:
+    """
+    Verify that (x,y) lie on same device.
+    """
+    return x.device == y.device
+
+
+def same_dtype(x: NDArray, y: NDArray) -> bool:
+    """
+    Verify that (x,y) have the same dtype.
+    """
+    return x.dtype == y.dtype
