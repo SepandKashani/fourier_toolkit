@@ -1,10 +1,13 @@
 import warnings
 
+import cupy as cp
 import numpy as np
 import pytest
 from numpy.typing import DTypeLike, NDArray
 
 import fourier_toolkit.util as ftku
+
+from . import conftest as ct
 
 
 class TestAsNamedTuple:
@@ -166,6 +169,20 @@ class TestTranslateDType:
 
 class TestUniformSpec:
     parametrize_step_sign = pytest.mark.parametrize("step_sign", [+1, -1])
+    parametrize_fdtype = pytest.mark.parametrize("fdtype", [np.single, np.double])
+    parametrize_array_namespace = pytest.mark.parametrize(
+        "array_namespace",
+        [
+            np,
+            pytest.param(
+                cp,
+                marks=pytest.mark.skipif(
+                    not cp.is_available(),
+                    reason="CUDA backend not available",
+                ),
+            ),
+        ],
+    )
 
     @parametrize_step_sign
     def test_scalar_input(self, step_sign):
@@ -211,23 +228,30 @@ class TestUniformSpec:
 
     @parametrize_step_sign
     @pytest.mark.parametrize("sparse", [True, False])
-    def test_meshgrid(self, step_sign, sparse):
+    @parametrize_fdtype
+    @parametrize_array_namespace
+    def test_meshgrid(self, step_sign, sparse, fdtype, array_namespace):
+        xp = array_namespace  # shorthand
+        like = xp.arange(5).astype(fdtype)
+
         # 1D case
         step = step_sign * 0.1
         uspec_1 = ftku.UniformSpec(start=1, step=step, num=9)
-        mesh_1 = uspec_1.meshgrid(sparse)
-        mesh_1_gt = (1 + step * np.arange(9),)
+        mesh_1 = uspec_1.meshgrid(sparse, like)
+        mesh_1_gt = (1 + step * xp.arange(9, dtype=fdtype),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
-        assert np.allclose(mesh_1[0], mesh_1_gt[0])
+        assert ct.same_backend(mesh_1[0], mesh_1_gt[0])
+        assert ct.same_dtype(mesh_1[0], mesh_1_gt[0])
+        assert ct.allclose(mesh_1[0], mesh_1_gt[0], dtype=fdtype)
 
         # multi-dimensional case
         step_1, step_2 = step_sign * 0.1, 0.2
         uspec_2 = ftku.UniformSpec(start=1, step=(step_1, step_2), num=9)
-        mesh_2 = uspec_2.meshgrid(sparse)
-        mesh_2_gt = np.meshgrid(
+        mesh_2 = uspec_2.meshgrid(sparse, like)
+        mesh_2_gt = xp.meshgrid(
             *(
-                1 + step_1 * np.arange(9),
-                1 + step_2 * np.arange(9),
+                1 + step_1 * xp.arange(9, dtype=fdtype),
+                1 + step_2 * xp.arange(9, dtype=fdtype),
             ),
             indexing="ij",
             sparse=sparse,
@@ -235,16 +259,23 @@ class TestUniformSpec:
         assert len(mesh_2) == len(mesh_2_gt) == 2
         for m2, m2gt in zip(mesh_2, mesh_2_gt):
             assert m2.shape == m2gt.shape
-            assert np.allclose(m2, m2gt)
+            assert ct.same_backend(m2, m2gt)
+            assert ct.same_dtype(m2, m2gt)
+            assert ct.allclose(m2, m2gt, fdtype)
 
-    def test_knots(self):
+    @parametrize_fdtype
+    @parametrize_array_namespace
+    def test_knots(self, fdtype, array_namespace):
+        xp = array_namespace  # shorthand
+        like = xp.arange(5).astype(fdtype)
+
         uspec = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=(9, 8))
-        knots = uspec.knots()
-        knots_gt = np.stack(
-            np.meshgrid(
+        knots = uspec.knots(like)
+        knots_gt = xp.stack(
+            xp.meshgrid(
                 *(
-                    1 + 0.1 * np.arange(9),
-                    1 + 0.2 * np.arange(8),
+                    1 + 0.1 * xp.arange(9, dtype=fdtype),
+                    1 + 0.2 * xp.arange(8, dtype=fdtype),
                 ),
                 indexing="ij",
             ),
@@ -252,7 +283,9 @@ class TestUniformSpec:
         )
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
-        assert np.allclose(knots, knots_gt)
+        assert ct.same_backend(knots, knots_gt)
+        assert ct.same_dtype(knots, knots_gt)
+        assert ct.allclose(knots, knots_gt, fdtype)
 
     def test_getitem(self):
         uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)
