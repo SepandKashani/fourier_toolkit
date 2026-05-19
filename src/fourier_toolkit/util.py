@@ -261,13 +261,21 @@ class UniformSpec:
         mesh: tuple[ArrayR]
             (D,) axial knot coordinates
         """
+        if like is None:
+            kwargs = dict()
+        else:
+            kwargs = dict(
+                like=like,
+                dtype=TranslateDType(like.dtype).to_float(),
+            )
+
         mesh_1D = [None] * self.ndim
         for d in range(self.ndim):
             x0 = self.start[d]
             dx = self.step[d]
             nx = self.num[d]
 
-            mesh_1D[d] = x0 + dx * np.arange(nx, like=like)
+            mesh_1D[d] = x0 + dx * np.arange(nx, **kwargs)
 
         mesh = np.meshgrid(
             *mesh_1D,
