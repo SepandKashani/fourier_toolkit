@@ -1,12 +1,4 @@
-- Add CuPy Support [no need ctk extension: container has it working by default]
-
-  0. add to dev dependencies
-     do not load CP anywhere though
-
-  1. test_util.py
-     Ensure UniformSpec.meshrgid(like) works:
-     - respect backend;
-     - respect GPU choice.
+- Add CuPy Support
 
   2. test_ufft.py
      Modify TestCZT().test_[value_apply, prec]() to
