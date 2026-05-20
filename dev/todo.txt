@@ -1,4 +1,27 @@
-- Add CuPy Support
+- util.py :: move fully to array api standard
+
+  import array_api_compat as aac
+  xp = aac.array_namespace(x)
+  info = xp.__array_namespace_info__()
+
+  info.dtypes()[dtype:str] -> dtype object
+  or
+  xp.[float32|64,complex64|128,int32|64]
+
+  if hasattr(xp, 'fft')
+     can use module to perform FFTs
+
+  if hasattr(xp, 'linalg')
+     can use module for standard linalg operators.
+
+
+  rethink test suite accordingly
+
+- ufft:: move to array_api standard
+  fft codes: accept camp in/out only to abide by array api
+
+
+- Add CuPy Support [superseded by array_api usage]
 
   2. test_ufft.py
      Modify TestCZT().test_[value_apply, prec]() to
