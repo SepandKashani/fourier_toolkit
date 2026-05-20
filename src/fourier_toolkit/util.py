@@ -244,7 +244,7 @@ class UniformSpec:
     def meshgrid(
         self,
         sparse: bool = False,
-        like: ftkt.ArrayRC = None,
+        like: Optional[ftkt.ArrayRC] = None,
     ) -> tuple[ftkt.ArrayR]:
         """
         Equivalent of :py:func:`numpy.meshgrid`.
@@ -284,7 +284,7 @@ class UniformSpec:
         )
         return mesh
 
-    def knots(self, like: ftkt.ArrayRC = None) -> ftkt.ArrayR:
+    def knots(self, like: Optional[ftkt.ArrayRC] = None) -> ftkt.ArrayR:
         """
         Parameters
         ----------
