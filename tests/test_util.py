@@ -60,7 +60,7 @@ class TestCastWarn:
         x = rng.standard_normal(size=(3, 4))
         return x.astype(dtype)
 
-    dtypes = pytest.mark.parametrize(
+    parametrize_dtypes = pytest.mark.parametrize(
         "dtype",
         [
             np.float32,
@@ -74,7 +74,7 @@ class TestCastWarn:
         ],
     )
 
-    @dtypes
+    @parametrize_dtypes
     def test_no_op(self, dtype):
         dtype = np.dtype(dtype)
         x = self.random_array(dtype)
@@ -87,7 +87,7 @@ class TestCastWarn:
 
         assert y is x
 
-    @dtypes
+    @parametrize_dtypes
     def test_warns(self, dtype):
         in_dtype = np.dtype(dtype)
         out_dtype = np.dtype(np.float16)
