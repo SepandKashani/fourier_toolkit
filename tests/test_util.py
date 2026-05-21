@@ -43,6 +43,9 @@ class TestBroadcastSeq:
         assert ftku.broadcast_seq(x=1, N=2) == (1, 1)
         assert ftku.broadcast_seq(x=1, N=3) == (1, 1, 1)
 
+        assert ftku.broadcast_seq(x=(1,), N=3) == (1, 1, 1)
+        assert ftku.broadcast_seq(x=[1], N=3) == (1, 1, 1)
+
         with pytest.raises(Exception):
             ftku.broadcast_seq(x=(1, 2), N=3)
 
