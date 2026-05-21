@@ -1,9 +1,10 @@
 # This module defines array types used throughout the codebase.
 
-import typing
+from types import ModuleType
+from typing import Union
 
 import numpy as np
-import numpy.typing as npt
+from array_api_typing import Array
 
 __all__ = [
     "ArrayR",
@@ -11,29 +12,26 @@ __all__ = [
     "ArrayRC",
 ]
 
-# real-valued ndarrays
-ArrayR = typing.Union[
-    npt.NDArray[np.float32],
-    npt.NDArray[np.float64],
+ArrayR = Union[
+    Array[np.float32, ModuleType],
+    Array[np.float64, ModuleType],
 ]
 """
-A (NumPy, CuPy) array of dtype float[32,64].
+Array-API-compatible array of dtype float[32,64].
 """
 
-# complex-valued ndarrays
-ArrayC = typing.Union[
-    npt.NDArray[np.complex64],
-    npt.NDArray[np.complex128],
+ArrayC = Union[
+    Array[np.complex64, ModuleType],
+    Array[np.complex128, ModuleType],
 ]
 """
-A (NumPy, CuPy) array of dtype complex[64,128].
+Array-API-compatible array of dtype complex[64,128].
 """
 
-# (real,complex)-valued ndarrays
-ArrayRC = typing.Union[
+ArrayRC = Union[
     ArrayR,
     ArrayC,
 ]
 """
-A (NumPy, CuPy) array of dtype (float[32,64], complex[64,128]).
+Array-API-compatible array of dtype (float[32,64], complex[64,128]).
 """
