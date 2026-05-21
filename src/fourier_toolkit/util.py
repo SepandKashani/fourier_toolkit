@@ -324,7 +324,7 @@ class UniformSpec:
 
         Parameters
         ----------
-         idx: tuple[int]
+        idx: tuple[int]
 
         Returns
         -------
