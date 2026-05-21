@@ -136,7 +136,8 @@ class TestTranslateDType:
         ],
     )
     def test_to_int(self, in_dtype, out_dtype):
-        dtype = ftku.TranslateDType(in_dtype).to_int()
+        x = np.array([], dtype=in_dtype)
+        dtype = ftku.TranslateDType(x).to_int()
         assert dtype == out_dtype
 
     @pytest.mark.parametrize(
@@ -151,7 +152,8 @@ class TestTranslateDType:
         ],
     )
     def test_to_float(self, in_dtype, out_dtype):
-        dtype = ftku.TranslateDType(in_dtype).to_float()
+        x = np.array([], dtype=in_dtype)
+        dtype = ftku.TranslateDType(x).to_float()
         assert dtype == out_dtype
 
     @pytest.mark.parametrize(
@@ -166,7 +168,8 @@ class TestTranslateDType:
         ],
     )
     def test_to_complex(self, in_dtype, out_dtype):
-        dtype = ftku.TranslateDType(in_dtype).to_complex()
+        x = np.array([], dtype=in_dtype)
+        dtype = ftku.TranslateDType(x).to_complex()
         assert dtype == out_dtype
 
 

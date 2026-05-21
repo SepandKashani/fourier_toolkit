@@ -107,35 +107,50 @@ class TranslateDType:
     """
 
     map_to_float = {
-        np.dtype(np.int32): np.dtype(np.float32),
-        np.dtype(np.int64): np.dtype(np.float64),
-        np.dtype(np.float32): np.dtype(np.float32),
-        np.dtype(np.float64): np.dtype(np.float64),
-        np.dtype(np.complex64): np.dtype(np.float32),
-        np.dtype(np.complex128): np.dtype(np.float64),
+        "int32": "float32",
+        "int64": "float64",
+        "float32": "float32",
+        "float64": "float64",
+        "complex64": "float32",
+        "complex128": "float64",
     }
     map_from_float = {
-        (np.dtype(np.float32), "i"): np.dtype(np.int32),
-        (np.dtype(np.float64), "i"): np.dtype(np.int64),
-        (np.dtype(np.float32), "f"): np.dtype(np.float32),
-        (np.dtype(np.float64), "f"): np.dtype(np.float64),
-        (np.dtype(np.float32), "c"): np.dtype(np.complex64),
-        (np.dtype(np.float64), "c"): np.dtype(np.complex128),
+        ("float32", "i"): "int32",
+        ("float64", "i"): "int64",
+        ("float32", "f"): "float32",
+        ("float64", "f"): "float64",
+        ("float32", "c"): "complex64",
+        ("float64", "c"): "complex128",
     }
 
-    def __init__(self, dtype: DTypeLike):
-        dtype = np.dtype(dtype)
-        assert dtype in self.map_to_float
-        self._fdtype = self.map_to_float[dtype]
+    def __init__(self, x: ftkt.ArrayRC):
+        # Find float-equivalent name of `x.dtype`
+        xp = aac.array_namespace(x)
+        info = xp.__array_namespace_info__()
+        dtypes = info.dtypes()
 
-    def to_int(self) -> np.dtype:
-        return self.map_from_float[(self._fdtype, "i")]
+        found = False
+        for name, dtype in dtypes.items():
+            if x.dtype == dtype:
+                fdtype = self.map_to_float[name]
+                found = True
+        assert found, f"Un-recognized input dtype '{x.dtype}'."
 
-    def to_float(self) -> np.dtype:
-        return self.map_from_float[(self._fdtype, "f")]
+        # Store (float-equivalent name, backend name->dtype mapping)
+        self._fdtype = fdtype
+        self._name2dtype = dtypes
 
-    def to_complex(self) -> np.dtype:
-        return self.map_from_float[(self._fdtype, "c")]
+    def to_int(self) -> DTypeLike:
+        name = self.map_from_float[(self._fdtype, "i")]
+        return self._name2dtype[name]
+
+    def to_float(self) -> DTypeLike:
+        name = self.map_from_float[(self._fdtype, "f")]
+        return self._name2dtype[name]
+
+    def to_complex(self) -> DTypeLike:
+        name = self.map_from_float[(self._fdtype, "c")]
+        return self._name2dtype[name]
 
 
 @dataclass
