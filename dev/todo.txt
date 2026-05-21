@@ -1,21 +1,24 @@
 - util.py :: move fully to array api standard
+  uniformspec left, rest ok
+  test suite except uniformspec also updated
+  start w/ conftest.py since useful for uniformspec
+  function to transform inputs to specific backend?
 
-  import array_api_compat as aac
-  xp = aac.array_namespace(x)
-  info = xp.__array_namespace_info__()
+  .. code
+     import array_api_compat as aac
+     xp = aac.array_namespace(x)
+     info = xp.__array_namespace_info__()
 
-  info.dtypes()[dtype:str] -> dtype object
-  or
-  xp.[float32|64,complex64|128,int32|64]
+     info.dtypes()[dtype:str] -> dtype object
+     or
+     xp.[float32|64,complex64|128,int32|64]
 
-  if hasattr(xp, 'fft')
-     can use module to perform FFTs
+     if hasattr(xp, 'fft')
+       can use module to perform FFTs
 
-  if hasattr(xp, 'linalg')
-     can use module for standard linalg operators.
+     if hasattr(xp, 'linalg')
+       can use module for standard linalg operators.
 
-
-  rethink test suite accordingly
 
 - ufft:: move to array_api standard
   fft codes: accept camp in/out only to abide by array api
