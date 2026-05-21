@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import NamedTuple, Optional
 
+import array_api_compat as aac
 import numpy as np
 from numpy.typing import DTypeLike
 
@@ -62,7 +63,8 @@ def cast_warn(x: ftkt.ArrayRC, dtype: DTypeLike) -> ftkt.ArrayRC:
 
     Emit warning when cast occurs.
     """
-    y = x.astype(dtype, copy=False)
+    xp = aac.array_namespace(x)
+    y = xp.astype(x, dtype, copy=False)
     if x.dtype != y.dtype:
         msg = f"{x.shape}: {x.dtype} -> {y.dtype} cast performed."
         warnings.warn(msg)
