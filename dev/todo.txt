@@ -1,3 +1,8 @@
+just created fixtures + committed
+unsure if skip will fail if jax missing but torch not for example: try it out
+need to move to runpod now; can't pull deps as fast locally.
+
+
 - util.py :: move fully to array api standard
   uniformspec left, rest ok
   test suite except uniformspec also updated
