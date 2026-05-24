@@ -1,132 +1,74 @@
-import numpy as np
-import opt_einsum as oe
-from numpy.typing import DTypeLike, NDArray
+import importlib
+from dataclasses import dataclass
 
-import fourier_toolkit.util as ftku
+import array_api_compat as aac
+import pytest
 
-
-def allclose(a: NDArray, b: NDArray, dtype: DTypeLike) -> bool:
-    dtype = ftku.TranslateDType(dtype).to_float()
-    atol = {
-        np.dtype(np.float32): 1e-5,
-        np.dtype(np.float64): 1e-10,
-    }[dtype]
-
-    match = np.allclose(a, b, atol=atol)
-    return match
+import fourier_toolkit.typing as ftkt
 
 
-def rel_error(a: NDArray, b: NDArray, D: int) -> NDArray:
-    r"""
-    Relative L2-distance between 2 vectors.
-
-    Parameters
-    ----------
-    a: NDArray[float/complex]
-        (..., N1,...,ND)
-    b: NDArray[float/complex]
-        (..., N1,...,ND)
-    D: int
-
-    Returns
-    -------
-    rel: NDArray[float]
-        (...,)  \norm{a-b}{2} / \norm{b}{2}
-    """
-    axes = tuple(range(-D, 0))
-    num = np.sum((a - b) * (a - b).conj(), axis=axes).real
-    den = np.sum(b * b.conj(), axis=axes).real
-    rel = np.sqrt(num / den)
-    return rel
+@dataclass(frozen=True)
+class ArrayBackend:
+    name: str
+    xp: ftkt.ArrayNameSpace
+    device: object | None
 
 
-def max_error(a: NDArray, b: NDArray, D: int) -> NDArray:
-    r"""
-    Relative Linf-distance between 2 vectors.
-
-    Parameters
-    ----------
-    a: NDArray[float/complex]
-        (..., N1,...,ND)
-    b: NDArray[float/complex]
-        (..., N1,...,ND)
-    D: int
-
-    Returns
-    -------
-    rel: NDArray[float]
-        (...,)  \norm{a-b}{\inf} / \norm{b}{\inf}
-    """
-    axes = tuple(range(-D, 0))
-    num = np.max(abs(a - b), axis=axes)
-    den = np.max(abs(b), axis=axes)
-    rel = num / den
-    return rel
-
-
-def relclose(a: NDArray, b: NDArray, D: int, eps: float) -> bool:
-    r"""
-    Are `a` and `b` close up to a prescribed relative error?
-
-    Parameters
-    ----------
-    a: NDArray[float/complex]
-        (..., N1,...,ND)
-    b: NDArray[float/complex]
-        (..., N1,...,ND)
-    D: int
-    eps: float
-        [0, 1[ tolerance.
-
-    Returns
-    -------
-    close: bool
-        \norm{a - b}{2} <= eps * \norm{b}{2}
-    """
-    assert 0 <= eps < 1
-    r_err = rel_error(a, b, D)
-    close = np.all(r_err <= eps)
-    return close
-
-
-def inner_product(x: NDArray, y: NDArray, D: int) -> NDArray:
-    """
-    Compute stack-wize inner-product.
-
-    Parameters
-    ----------
-    x: NDArray[float/complex]
-        (..., N1,...,ND)
-    y: NDArray[float/complex]
-        (..., N1,...,ND)
-    D: int
-        Rank of inputs.
-
-    Returns
-    -------
-    z: NDArray[float/complex]
-        (...,) inner-products <x,y>.
-    """
-    x_ind = y_ind = (Ellipsis, *range(D))
-    z_ind = (Ellipsis,)
-
-    z = oe.contract(
-        *(x, x_ind),
-        *(y.conj(), y_ind),
-        z_ind,
+def array_backend_cases():
+    # NumPy: CPU only
+    np = pytest.importorskip("numpy")
+    yield pytest.param(
+        ArrayBackend(
+            name="numpy-cpu",
+            xp=aac.array_namespace(np.asarray([0.0])),
+            device="cpu",
+        ),
+        id="numpy-cpu",
     )
-    return z
+
+    # CuPy: GPU only
+    cupy = pytest.importorskip("cupy")
+    if cupy.is_available():
+        yield pytest.param(
+            ArrayBackend(
+                name="cupy-gpu",
+                xp=aac.array_namespace(cupy.asarray([0.0])),
+                device=cupy.cuda.Device(0),
+            ),
+            id="cupy-gpu",
+        )
+
+    # JAX: CPU and GPU if available
+    jax = pytest.importorskip("jax")
+    jnp = importlib.import_module("jax.numpy")
+    for kind in ["cpu", "gpu"]:
+        devices = jax.devices(kind)
+        if devices:
+            yield pytest.param(
+                ArrayBackend(
+                    name=f"jax-{kind}",
+                    xp=aac.array_namespace(jnp.asarray([0.0])),
+                    device=devices[0],
+                ),
+                id=f"jax-{kind}",
+            )
+
+    # PyTorch: CPU and CUDA if available
+    torch = pytest.importorskip("torch")
+    torch_xp = aac.array_namespace(torch.asarray([0.0]))
+
+    yield pytest.param(
+        ArrayBackend("torch-cpu", torch_xp, "cpu"),
+        id="torch-cpu",
+    )
+
+    if torch.cuda.is_available():
+        yield pytest.param(
+            ArrayBackend("torch-cuda", torch_xp, "cuda"),
+            id="torch-cuda",
+        )
 
 
-def same_backend(x: NDArray, y: NDArray) -> bool:
-    """
-    Verify that (x,y) lie on same device.
-    """
-    return x.device == y.device
-
-
-def same_dtype(x: NDArray, y: NDArray) -> bool:
-    """
-    Verify that (x,y) have the same dtype.
-    """
-    return x.dtype == y.dtype
+@pytest.fixture(params=list(array_backend_cases()))
+def array_backend(request) -> ArrayBackend:
+    return request.param
