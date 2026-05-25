@@ -27,7 +27,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 array_backend = [
     "cupy-cuda13x",
-    "jax",
+    "jax[cuda13]",
     "torch",
 ]
 doc = [
