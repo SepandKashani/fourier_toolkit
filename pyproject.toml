@@ -10,11 +10,11 @@ urls.download = "https://github.com/SepandKashani/fourier_toolkit"
 requires-python = ">=3.12"
 license = "MIT"
 dependencies = [
-    "array-api-compat>=1.9,<2",
-    "array-api-extra",
-    "finufft>=2.2.0,<3",
-    "numpy>=2.0.0,<3",
-    "opt-einsum>=3.4.0,<4",
+    "array-api-compat>=1,<2",
+    "array-api-extra>=0,<1",
+    "finufft>=2.2,<3",
+    "numpy>=2,<3",
+    "opt-einsum>=3,<4",
 ]
 
 [build-system]
@@ -26,26 +26,26 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 array_backend = [
-    "cupy-cuda13x",
-    "jax[cuda13]",
-    "torch",
+    "cupy-cuda13x>=13,<15",
+    "jax[cuda13]>=0,<1",
+    "torch>=2,<3",
 ]
 doc = [
-    "sphinx>=9.1,<10",
-    "sphinxcontrib-bibtex>=2.7,<3",
+    "sphinx>=9,<10",
+    "sphinxcontrib-bibtex>=2,<3",
 ]
 test = [
-    "pytest>=9.0,<10",
-    "scipy>=1.17,<2",
+    "pytest>=9,<10",
+    "scipy>=1,<2",
 ]
 dev = [
     { include-group = "array_backend" },
     { include-group = "doc" },
     { include-group = "test" },
     "ipython",
-    "pre-commit>=4.6,<5",
-    "ruff>=0.15,<1",
-    "ty>=0.0.30,<1",
+    "pre-commit>=4,<5",
+    "ruff>=0,<1",
+    "ty>=0,<1",
 ]
 
 [tool.hatch.version]
