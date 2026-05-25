@@ -1,3 +1,4 @@
+import array_api_compat as aac
 import opt_einsum as oe
 
 import fourier_toolkit.typing as ftkt
@@ -33,7 +34,7 @@ def hadamard_outer(x: ftkt.ArrayRC, *args: list[ftkt.ArrayRC]) -> ftkt.ArrayRC:
     """
     D = len(args)
     assert all(A.ndim == 1 for A in args)
-    sh = tuple(A.size for A in args)
+    sh = tuple(aac.size(A) for A in args)
 
     assert x.ndim >= D
     assert x.shape[-D:] == sh

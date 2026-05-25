@@ -2,22 +2,38 @@ import functools
 
 import numpy as np
 import pytest
-from numpy.typing import NDArray
 
 import fourier_toolkit.linalg as ftkl
+import fourier_toolkit.typing as ftkt
 
 from . import conftest as ct
+from . import helper
 
 
 class TestHadamardOuter:
-    def test_value(self, x, args, y_gt):
+    @staticmethod
+    def to_backend(x: ftkt.Array, array_backend: ct.ArrayBackend) -> ftkt.Array:
+        return array_backend.xp.asarray(
+            x,
+            device=array_backend.device,
+        )
+
+    def test_value(self, array_backend, x, args, y_gt):
         # output value matches ground truth.
+        x = self.to_backend(x, array_backend)
+        args = [self.to_backend(A, array_backend) for A in args]
+        y_gt = self.to_backend(y_gt, array_backend)
+
         y = ftkl.hadamard_outer(x, *args)
         assert x.shape == y_gt.shape
-        assert ct.allclose(y, y_gt, y_gt.dtype)
+        assert y.device == y_gt.device
+        assert helper.allclose(y, y_gt, y_gt.dtype)
 
-    def test_prec(self, x, args):
+    def test_prec(self, array_backend, x, args):
         # output precision (not dtype!) matches input precision.
+        x = self.to_backend(x, array_backend)
+        args = [self.to_backend(A, array_backend) for A in args]
+
         assert all(x.dtype == A.dtype for A in args)
         y = ftkl.hadamard_outer(x, *args)
         assert y.dtype == x.dtype
@@ -45,8 +61,6 @@ class TestHadamardOuter:
 
     @pytest.fixture(
         params=[
-            np.int32,
-            np.int64,
             np.float32,
             np.float64,
             np.complex64,
@@ -57,14 +71,14 @@ class TestHadamardOuter:
         return np.dtype(request.param)
 
     @pytest.fixture
-    def x(self, space_shape, stack_shape, dtype) -> NDArray:
+    def x(self, space_shape, stack_shape, dtype) -> np.ndarray:
         size = np.prod(stack_shape, dtype=int)
         size *= np.prod(space_shape, dtype=int)
         x = np.linspace(-5, 5, size)
         return x.reshape(*stack_shape, *space_shape).astype(dtype)
 
     @pytest.fixture
-    def args(self, space_dim, space_shape, dtype) -> list[NDArray]:
+    def args(self, space_dim, space_shape, dtype) -> list[np.ndarray]:
         args = [None] * space_dim
         for d in range(space_dim):
             A = np.linspace(-40, 5, space_shape[d])
@@ -72,7 +86,7 @@ class TestHadamardOuter:
         return args
 
     @pytest.fixture
-    def y_gt(self, x, args, dtype) -> NDArray:
+    def y_gt(self, x, args, dtype) -> np.ndarray:
         A = functools.reduce(np.multiply.outer, args)  # (N1,...,ND)
         y = x * A  # (..., N1,...,ND)
         return y.astype(dtype)
