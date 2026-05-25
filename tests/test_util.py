@@ -1,13 +1,14 @@
 import warnings
 
-import cupy as cp
+import array_api_compat as aac
 import numpy as np
 import pytest
-from numpy.typing import DTypeLike, NDArray
 
+import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 from . import conftest as ct
+from . import helper
 
 
 class TestAsNamedTuple:
@@ -55,44 +56,51 @@ class TestBroadcastSeq:
 
 class TestCastWarn:
     @staticmethod
-    def random_array(dtype: DTypeLike, seed: int = 0) -> NDArray:
-        rng = np.random.default_rng(seed)
+    def random_array(array_backend: ct.ArrayBackend, dtype_name: str) -> ftkt.Array:
+        rng = np.random.default_rng()
         x = rng.standard_normal(size=(3, 4))
-        return x.astype(dtype)
+
+        xp = array_backend.xp
+        info = xp.__array_namespace_info__()
+        dtype = info.dtypes()[dtype_name]
+
+        x = xp.asarray(
+            x,
+            dtype=dtype,
+            device=array_backend.device,
+        )
+        return x
 
     parametrize_dtypes = pytest.mark.parametrize(
-        "dtype",
+        "dtype_name",
         [
-            np.float32,
-            np.float64,
-            np.complex64,
-            np.complex128,
-            np.int32,
-            np.int64,
-            np.uint32,
-            np.uint64,
+            "float32",
+            "float64",
+            "complex64",
+            "complex128",
+            "int32",
+            "int64",
         ],
     )
 
     @parametrize_dtypes
-    def test_no_op(self, dtype):
-        dtype = np.dtype(dtype)
-        x = self.random_array(dtype)
+    def test_no_op(self, array_backend, dtype_name):
+        x = self.random_array(array_backend, dtype_name)
 
         # no warning must be emitted
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            y = ftku.cast_warn(x, dtype)
+            y = ftku.cast_warn(x, x.dtype)
             assert not w
 
         assert y is x
 
     @parametrize_dtypes
-    def test_warns(self, dtype):
-        in_dtype = np.dtype(dtype)
-        out_dtype = np.dtype(np.float16)
+    def test_warns(self, array_backend, dtype_name):
+        x = self.random_array(array_backend, dtype_name)
 
-        x = self.random_array(in_dtype)
+        xp = aac.array_namespace(x)
+        out_dtype = xp.int16  # something not in `dtype_name`
 
         # warning must be emitted
         with warnings.catch_warnings(record=True) as w:
@@ -116,7 +124,7 @@ class TestNextFastLen:
 
     # Fixtures ----------------------------------------------------------------
     @classmethod
-    def _5_smooth(cls) -> NDArray:
+    def _5_smooth(cls) -> np.ndarray:
         exp = np.arange(10 + 1)
         s2, s3, s5 = np.meshgrid(2**exp, 3**exp, 5**exp, indexing="ij", sparse=True)
         s235 = np.sort((s2 * s3 * s5).reshape(-1))
@@ -124,71 +132,74 @@ class TestNextFastLen:
 
 
 class TestTranslateDType:
-    @pytest.mark.parametrize(
-        ["in_dtype", "out_dtype"],
-        [
-            (np.int32, np.int32),
-            (np.int64, np.int64),
-            (np.float32, np.int32),
-            (np.float64, np.int64),
-            (np.complex64, np.int32),
-            (np.complex128, np.int64),
-        ],
-    )
-    def test_to_int(self, in_dtype, out_dtype):
-        x = np.array([], dtype=in_dtype)
-        dtype = ftku.TranslateDType(x).to_int()
-        assert dtype == out_dtype
+    @staticmethod
+    def random_array(array_backend: ct.ArrayBackend, dtype_name: str) -> ftkt.Array:
+        xp = array_backend.xp
+        info = xp.__array_namespace_info__()
+        dtype = info.dtypes()[dtype_name]
+        return xp.asarray([], dtype=dtype, device=array_backend.device)
 
     @pytest.mark.parametrize(
-        ["in_dtype", "out_dtype"],
+        ["in_dtype", "out_dtype_gt"],
         [
-            (np.int32, np.float32),
-            (np.int64, np.float64),
-            (np.float32, np.float32),
-            (np.float64, np.float64),
-            (np.complex64, np.float32),
-            (np.complex128, np.float64),
+            ("int32", "int32"),
+            ("int64", "int64"),
+            ("float32", "int32"),
+            ("float64", "int64"),
+            ("complex64", "int32"),
+            ("complex128", "int64"),
         ],
     )
-    def test_to_float(self, in_dtype, out_dtype):
-        x = np.array([], dtype=in_dtype)
-        dtype = ftku.TranslateDType(x).to_float()
-        assert dtype == out_dtype
+    def test_to_int(self, array_backend, in_dtype, out_dtype_gt):
+        x = self.random_array(array_backend, out_dtype_gt)
+        out_dtype_gt = x.dtype
+
+        x = self.random_array(array_backend, in_dtype)
+        out_dtype = ftku.TranslateDType(x).to_int()
+        assert out_dtype == out_dtype_gt
 
     @pytest.mark.parametrize(
-        ["in_dtype", "out_dtype"],
+        ["in_dtype", "out_dtype_gt"],
         [
-            (np.int32, np.complex64),
-            (np.int64, np.complex128),
-            (np.float32, np.complex64),
-            (np.float64, np.complex128),
-            (np.complex64, np.complex64),
-            (np.complex128, np.complex128),
+            ("int32", "float32"),
+            ("int64", "float64"),
+            ("float32", "float32"),
+            ("float64", "float64"),
+            ("complex64", "float32"),
+            ("complex128", "float64"),
         ],
     )
-    def test_to_complex(self, in_dtype, out_dtype):
-        x = np.array([], dtype=in_dtype)
-        dtype = ftku.TranslateDType(x).to_complex()
-        assert dtype == out_dtype
+    def test_to_float(self, array_backend, in_dtype, out_dtype_gt):
+        x = self.random_array(array_backend, out_dtype_gt)
+        out_dtype_gt = x.dtype
+
+        x = self.random_array(array_backend, in_dtype)
+        out_dtype = ftku.TranslateDType(x).to_float()
+        assert out_dtype == out_dtype_gt
+
+    @pytest.mark.parametrize(
+        ["in_dtype", "out_dtype_gt"],
+        [
+            ("int32", "complex64"),
+            ("int64", "complex128"),
+            ("float32", "complex64"),
+            ("float64", "complex128"),
+            ("complex64", "complex64"),
+            ("complex128", "complex128"),
+        ],
+    )
+    def test_to_complex(self, array_backend, in_dtype, out_dtype_gt):
+        x = self.random_array(array_backend, out_dtype_gt)
+        out_dtype_gt = x.dtype
+
+        x = self.random_array(array_backend, in_dtype)
+        out_dtype = ftku.TranslateDType(x).to_complex()
+        assert out_dtype == out_dtype_gt
 
 
 class TestUniformSpec:
     parametrize_step_sign = pytest.mark.parametrize("step_sign", [+1, -1])
-    parametrize_fdtype = pytest.mark.parametrize("fdtype", [np.single, np.double])
-    parametrize_array_namespace = pytest.mark.parametrize(
-        "array_namespace",
-        [
-            np,
-            pytest.param(
-                cp,
-                marks=pytest.mark.skipif(
-                    not cp.is_available(),
-                    reason="CUDA backend not available",
-                ),
-            ),
-        ],
-    )
+    parametrize_fdtype = pytest.mark.parametrize("fdtype_name", ["float32", "float64"])
 
     @parametrize_step_sign
     def test_scalar_input(self, step_sign):
@@ -235,63 +246,71 @@ class TestUniformSpec:
     @parametrize_step_sign
     @pytest.mark.parametrize("sparse", [True, False])
     @parametrize_fdtype
-    @parametrize_array_namespace
-    def test_meshgrid(self, step_sign, sparse, fdtype, array_namespace):
-        xp = array_namespace  # shorthand
-        like = xp.arange(5).astype(fdtype)
+    def test_meshgrid(self, array_backend, step_sign, sparse, fdtype_name):
+        xp = array_backend.xp
+        device = array_backend.device
+        info = xp.__array_namespace_info__()
+        fdtype = info.dtypes()[fdtype_name]
+        like = xp.asarray([], dtype=fdtype, device=device)
 
         # 1D case
         step = step_sign * 0.1
         uspec_1 = ftku.UniformSpec(start=1, step=step, num=9)
         mesh_1 = uspec_1.meshgrid(sparse, like)
-        mesh_1_gt = (1 + step * xp.arange(9, dtype=fdtype),)
+        mesh_1_gt = (1 + step * xp.arange(9, dtype=fdtype, device=device),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
-        assert ct.same_backend(mesh_1[0], mesh_1_gt[0])
-        assert ct.same_dtype(mesh_1[0], mesh_1_gt[0])
-        assert ct.allclose(mesh_1[0], mesh_1_gt[0], dtype=fdtype)
+        assert aac.array_namespace(mesh_1[0]) == xp
+        assert mesh_1[0].dtype == fdtype
+        assert helper.rel_l2_close(mesh_1[0], mesh_1_gt[0], 1, eps=1e-6)
 
         # multi-dimensional case
         step_1, step_2 = step_sign * 0.1, 0.2
         uspec_2 = ftku.UniformSpec(start=1, step=(step_1, step_2), num=9)
         mesh_2 = uspec_2.meshgrid(sparse, like)
-        mesh_2_gt = xp.meshgrid(
+        mesh_2_gt = np.meshgrid(
             *(
-                1 + step_1 * xp.arange(9, dtype=fdtype),
-                1 + step_2 * xp.arange(9, dtype=fdtype),
+                1 + step_1 * np.arange(9),
+                1 + step_2 * np.arange(9),
             ),
             indexing="ij",
             sparse=sparse,
         )
+        mesh_2_gt = [
+            xp.asarray(m2gt, dtype=fdtype, device=device) for m2gt in mesh_2_gt
+        ]
         assert len(mesh_2) == len(mesh_2_gt) == 2
         for m2, m2gt in zip(mesh_2, mesh_2_gt):
             assert m2.shape == m2gt.shape
-            assert ct.same_backend(m2, m2gt)
-            assert ct.same_dtype(m2, m2gt)
-            assert ct.allclose(m2, m2gt, fdtype)
+            assert aac.array_namespace(m2) == xp
+            assert m2.dtype == fdtype
+            assert helper.rel_l2_close(m2, m2gt, uspec_2.ndim, eps=1e-6)
 
     @parametrize_fdtype
-    @parametrize_array_namespace
-    def test_knots(self, fdtype, array_namespace):
-        xp = array_namespace  # shorthand
-        like = xp.arange(5).astype(fdtype)
+    def test_knots(self, array_backend, fdtype_name):
+        xp = array_backend.xp
+        device = array_backend.device
+        info = xp.__array_namespace_info__()
+        fdtype = info.dtypes()[fdtype_name]
+        like = xp.asarray([], dtype=fdtype, device=device)
 
         uspec = ftku.UniformSpec(start=1, step=(0.1, 0.2), num=(9, 8))
         knots = uspec.knots(like)
-        knots_gt = xp.stack(
-            xp.meshgrid(
+        knots_gt = np.stack(
+            np.meshgrid(
                 *(
-                    1 + 0.1 * xp.arange(9, dtype=fdtype),
-                    1 + 0.2 * xp.arange(8, dtype=fdtype),
+                    1 + 0.1 * np.arange(9),
+                    1 + 0.2 * np.arange(8),
                 ),
                 indexing="ij",
             ),
             axis=-1,
         )
+        knots_gt = xp.asarray(knots_gt, dtype=fdtype, device=device)
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
-        assert ct.same_backend(knots, knots_gt)
-        assert ct.same_dtype(knots, knots_gt)
-        assert ct.allclose(knots, knots_gt, fdtype)
+        assert aac.array_namespace(knots) == xp
+        assert knots.dtype == fdtype
+        assert helper.rel_l2_close(knots, knots_gt, D=1, eps=1e-6)
 
     def test_getitem(self):
         uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)

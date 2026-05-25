@@ -57,7 +57,7 @@ def broadcast_seq(
     return y
 
 
-def cast_warn(x: ftkt.ArrayRC, dtype: DTypeLike) -> ftkt.ArrayRC:
+def cast_warn(x: ftkt.ArrayRC, dtype: ftkt.DType) -> ftkt.ArrayRC:
     """
     Cast `x` to `dtype` if type mis-match.
 
@@ -65,7 +65,7 @@ def cast_warn(x: ftkt.ArrayRC, dtype: DTypeLike) -> ftkt.ArrayRC:
     """
     xp = aac.array_namespace(x)
     y = xp.astype(x, dtype, copy=False)
-    if x.dtype != y.dtype:
+    if y.dtype != x.dtype:
         msg = f"{x.shape}: {x.dtype} -> {y.dtype} cast performed."
         warnings.warn(msg)
     return y
@@ -262,7 +262,7 @@ class UniformSpec:
         self,
         sparse: bool = False,
         like: Optional[ftkt.ArrayRC] = None,
-    ) -> tuple[ftkt.ArrayR]:
+    ) -> tuple[ftkt.ArrayR, ...]:
         """
         Equivalent of :py:func:`numpy.meshgrid`.
 
@@ -270,8 +270,7 @@ class UniformSpec:
         ----------
         like: ArrayRC
             Reference object to allow the creation of arrays which are not NumPy arrays.
-            If an array-like passed in as `like` supports the ``__array_function__`` protocol, the result will be defined by it.
-            In this case, it ensures the creation of an array object compatible with that passed in via this argument.
+            Will inherit the (backend,device,fdtype) of `like`.
 
         Returns
         -------
@@ -279,12 +278,11 @@ class UniformSpec:
             (D,) axial knot coordinates
         """
         if like is None:
-            kwargs = dict()
-        else:
-            kwargs = dict(
-                like=like,
-                dtype=TranslateDType(like.dtype).to_float(),
-            )
+            like = np.asarray([], dtype=np.float64)
+
+        xp = aac.array_namespace(like)
+        fdtype = TranslateDType(like).to_float()
+        device = like.device
 
         mesh_1D = [None] * self.ndim
         for d in range(self.ndim):
@@ -292,13 +290,21 @@ class UniformSpec:
             dx = self.step[d]
             nx = self.num[d]
 
-            mesh_1D[d] = x0 + dx * np.arange(nx, **kwargs)
+            shape = [1] * self.ndim
+            shape[d] = nx
 
-        mesh = np.meshgrid(
-            *mesh_1D,
-            indexing="ij",
-            sparse=sparse,
-        )
+            mesh_1D[d] = xp.reshape(
+                x0 + dx * xp.arange(nx, dtype=fdtype, device=device),
+                shape=shape,
+            )
+
+        if sparse:
+            mesh = mesh_1D
+        else:
+            mesh = [None] * self.ndim
+            for d in range(self.ndim):
+                mesh[d] = xp.broadcast_to(mesh_1D[d], shape=self.num)
+
         return mesh
 
     def knots(self, like: Optional[ftkt.ArrayRC] = None) -> ftkt.ArrayR:
@@ -307,15 +313,16 @@ class UniformSpec:
         ----------
         like: ArrayRC
             Reference object to allow the creation of arrays which are not NumPy arrays.
-            If an array-like passed in as `like` supports the ``__array_function__`` protocol, the result will be defined by it.
-            In this case, it ensures the creation of an array object compatible with that passed in via this argument.
+            Will inherit the (backend,device,fdtype) of `like`.
 
         Returns
         -------
         x: ArrayR
             (M1,...,MD, D) mesh coordinates
         """
-        x = np.stack(self.meshgrid(like=like), axis=-1)
+        mesh = self.meshgrid(like=like)
+        xp = aac.array_namespace(mesh[0])
+        x = xp.stack(mesh, axis=-1)
         return x
 
     def __getitem__(self, idx: tuple[int]) -> tuple[float]:
