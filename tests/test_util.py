@@ -261,7 +261,7 @@ class TestUniformSpec:
         assert len(mesh_1) == len(mesh_1_gt) == 1
         assert aac.array_namespace(mesh_1[0]) == xp
         assert mesh_1[0].dtype == fdtype
-        assert helper.rel_l2_close(mesh_1[0], mesh_1_gt[0], 1, eps=1e-6)
+        assert helper.allclose(mesh_1[0], mesh_1_gt[0], fdtype)
 
         # multi-dimensional case
         step_1, step_2 = step_sign * 0.1, 0.2
@@ -283,7 +283,7 @@ class TestUniformSpec:
             assert m2.shape == m2gt.shape
             assert aac.array_namespace(m2) == xp
             assert m2.dtype == fdtype
-            assert helper.rel_l2_close(m2, m2gt, uspec_2.ndim, eps=1e-6)
+            assert helper.allclose(m2, m2gt, fdtype)
 
     @parametrize_fdtype
     def test_knots(self, array_backend, fdtype_name):
@@ -310,7 +310,7 @@ class TestUniformSpec:
         assert knots.shape == knots_gt.shape == (9, 8, 2)
         assert aac.array_namespace(knots) == xp
         assert knots.dtype == fdtype
-        assert helper.rel_l2_close(knots, knots_gt, D=1, eps=1e-6)
+        assert helper.allclose(knots, knots_gt, fdtype)
 
     def test_getitem(self):
         uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)
