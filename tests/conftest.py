@@ -15,58 +15,73 @@ class ArrayBackend:
 
 
 def array_backend_cases():
-    # NumPy: CPU only
-    np = pytest.importorskip("numpy")
-    yield pytest.param(
-        ArrayBackend(
-            name="numpy-cpu",
-            xp=aac.array_namespace(np.asarray([0.0])),
-            device="cpu",
-        ),
-        id="numpy-cpu",
-    )
-
-    # CuPy: GPU only
-    cupy = pytest.importorskip("cupy")
-    if cupy.is_available():
+    # NumPy: CPU only ----------------------------------------------------------
+    try:
+        np = importlib.import_module("numpy")
         yield pytest.param(
             ArrayBackend(
-                name="cupy-gpu",
-                xp=aac.array_namespace(cupy.asarray([0.0])),
-                device=cupy.cuda.Device(0),
+                name="numpy-cpu",
+                xp=aac.array_namespace(np.asarray([0.0])),
+                device="cpu",
             ),
-            id="cupy-gpu",
+            id="numpy-cpu",
         )
+    except ModuleNotFoundError:
+        pass
 
-    # JAX: CPU and GPU if available
-    jax = pytest.importorskip("jax")
-    jnp = importlib.import_module("jax.numpy")
-    for kind in ["cpu", "gpu"]:
-        devices = jax.devices(kind)
-        if devices:
+    # CuPy: GPU only -----------------------------------------------------------
+    try:
+        cp = importlib.import_module("cupy")
+        if cp.is_available():
             yield pytest.param(
                 ArrayBackend(
-                    name=f"jax-{kind}",
-                    xp=aac.array_namespace(jnp.asarray([0.0])),
-                    device=devices[0],
+                    name="cupy-gpu",
+                    xp=aac.array_namespace(cp.asarray([0.0])),
+                    device=cp.cuda.Device(0),
                 ),
-                id=f"jax-{kind}",
+                id="cupy-gpu",
             )
+    except ModuleNotFoundError:
+        pass
 
-    # PyTorch: CPU and CUDA if available
-    torch = pytest.importorskip("torch")
-    torch_xp = aac.array_namespace(torch.asarray([0.0]))
+    # JAX: CPU + GPU -----------------------------------------------------------
+    try:
+        jax = importlib.import_module("jax")
+        jnp = importlib.import_module("jax.numpy")
+        for kind in ["cpu", "gpu"]:
+            try:
+                devices = jax.devices(kind)
+            except RuntimeError:
+                # occurs if hardware missing
+                devices = []
+            finally:
+                if devices:
+                    yield pytest.param(
+                        ArrayBackend(
+                            name=f"jax-{kind}",
+                            xp=aac.array_namespace(jnp.asarray([0.0])),
+                            device=devices[0],
+                        ),
+                        id=f"jax-{kind}",
+                    )
+    except ModuleNotFoundError:
+        pass
 
-    yield pytest.param(
-        ArrayBackend("torch-cpu", torch_xp, "cpu"),
-        id="torch-cpu",
-    )
-
-    if torch.cuda.is_available():
+    # PyTorch: CPU + GPU -------------------------------------------------------
+    try:
+        torch = importlib.import_module("torch")
+        torch_xp = aac.array_namespace(torch.asarray([0.0]))
         yield pytest.param(
-            ArrayBackend("torch-cuda", torch_xp, "cuda"),
-            id="torch-cuda",
+            ArrayBackend("torch-cpu", torch_xp, "cpu"),
+            id="torch-cpu",
         )
+        if torch.cuda.is_available():
+            yield pytest.param(
+                ArrayBackend("torch-cuda", torch_xp, "cuda"),
+                id="torch-cuda",
+            )
+    except ModuleNotFoundError:
+        pass
 
 
 @pytest.fixture(params=list(array_backend_cases()))
