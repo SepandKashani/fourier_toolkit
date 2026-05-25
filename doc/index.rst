@@ -63,7 +63,7 @@ Setup
    uv run pre-commit install
 
    # run test suite
-   uv run pytest
+   uv run pytest -v
 
    # build HTML docs
    uv run make -C doc/ html
