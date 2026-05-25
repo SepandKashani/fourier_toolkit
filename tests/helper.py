@@ -6,6 +6,16 @@ import fourier_toolkit.util as ftku
 
 
 def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
+    r"""
+    Absolute closeness between 2 arrays.
+
+    Parameters
+    ----------
+    a, b: Array[int,float,complex]
+    dtype: DType
+        Precision at which closeness should be assessed.
+        `dtype` should be transformable into the float32/64 type via :py:class:`fourier_toolkit.util.TranslateDType`.
+    """
     xp = aac.array_namespace(a)
 
     fdtype = ftku.TranslateDType(

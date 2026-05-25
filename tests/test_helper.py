@@ -24,8 +24,12 @@ class TestAllClose:
         b = a.copy()
 
         xp = array_backend.xp
-        a = xp.asarray(a, dtype=getattr(xp, ab_dtype))
-        b = xp.asarray(b, dtype=getattr(xp, ab_dtype))
+        kwargs = dict(
+            dtype=getattr(xp, ab_dtype),
+            device=array_backend.device,
+        )
+        a = xp.asarray(a, **kwargs)
+        b = xp.asarray(b, **kwargs)
 
         helper.allclose(a, b, a.dtype)
 
@@ -49,8 +53,12 @@ class TestAllClose:
         b += rng.uniform(-lrhs, +lrhs, size=b.shape)
 
         xp = array_backend.xp
-        a = xp.asarray(a, dtype=getattr(xp, input_dtype))
-        b = xp.asarray(b, dtype=getattr(xp, input_dtype))
+        kwargs = dict(
+            dtype=getattr(xp, input_dtype),
+            device=array_backend.device,
+        )
+        a = xp.asarray(a, **kwargs)
+        b = xp.asarray(b, **kwargs)
         if precision == "low":
             comparison_dtype = xp.float32
         elif precision == "high":
@@ -66,7 +74,11 @@ class TestAllClose:
         b = np.broadcast_to(a, (6, 5, 3)).copy()
 
         xp = array_backend.xp
-        a = xp.asarray(a, dtype=xp.float64)
-        b = xp.asarray(b, dtype=xp.float64)
+        kwargs = dict(
+            dtype=xp.float64,
+            device=array_backend.device,
+        )
+        a = xp.asarray(a, **kwargs)
+        b = xp.asarray(b, **kwargs)
 
         assert helper.allclose(a, b, a.dtype)
