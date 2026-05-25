@@ -44,6 +44,22 @@ def array_backend_cases():
     except ModuleNotFoundError:
         pass
 
+    # PyTorch: CPU + GPU -------------------------------------------------------
+    try:
+        torch = importlib.import_module("torch")
+        torch_xp = aac.array_namespace(torch.asarray([0.0]))
+        yield pytest.param(
+            ArrayBackend("torch-cpu", torch_xp, "cpu"),
+            id="torch-cpu",
+        )
+        if torch.cuda.is_available():
+            yield pytest.param(
+                ArrayBackend("torch-cuda", torch_xp, "cuda"),
+                id="torch-cuda",
+            )
+    except ModuleNotFoundError:
+        pass
+
     # JAX: CPU + GPU -----------------------------------------------------------
     try:
         jax = importlib.import_module("jax")
@@ -64,22 +80,6 @@ def array_backend_cases():
                         ),
                         id=f"jax-{kind}",
                     )
-    except ModuleNotFoundError:
-        pass
-
-    # PyTorch: CPU + GPU -------------------------------------------------------
-    try:
-        torch = importlib.import_module("torch")
-        torch_xp = aac.array_namespace(torch.asarray([0.0]))
-        yield pytest.param(
-            ArrayBackend("torch-cpu", torch_xp, "cpu"),
-            id="torch-cpu",
-        )
-        if torch.cuda.is_available():
-            yield pytest.param(
-                ArrayBackend("torch-cuda", torch_xp, "cuda"),
-                id="torch-cuda",
-            )
     except ModuleNotFoundError:
         pass
 
