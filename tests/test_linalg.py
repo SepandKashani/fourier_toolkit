@@ -26,7 +26,7 @@ class TestHadamardOuter:
 
         y = ftkl.hadamard_outer(x, *args)
         assert x.shape == y_gt.shape
-        assert y.device == y_gt.device
+        assert helper.similar(y, y_gt)
         assert helper.allclose(y, y_gt, y_gt.dtype)
 
     def test_prec(self, array_backend, x, args):

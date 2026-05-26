@@ -259,8 +259,7 @@ class TestUniformSpec:
         mesh_1 = uspec_1.meshgrid(sparse, like)
         mesh_1_gt = (1 + step * xp.arange(9, dtype=fdtype, device=device),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
-        assert aac.array_namespace(mesh_1[0]) == xp
-        assert mesh_1[0].dtype == fdtype
+        assert helper.similar(mesh_1[0], mesh_1_gt[0])
         assert helper.allclose(mesh_1[0], mesh_1_gt[0], fdtype)
 
         # multi-dimensional case
@@ -281,8 +280,7 @@ class TestUniformSpec:
         assert len(mesh_2) == len(mesh_2_gt) == 2
         for m2, m2gt in zip(mesh_2, mesh_2_gt):
             assert m2.shape == m2gt.shape
-            assert aac.array_namespace(m2) == xp
-            assert m2.dtype == fdtype
+            assert helper.similar(m2, m2gt)
             assert helper.allclose(m2, m2gt, fdtype)
 
     @parametrize_fdtype
@@ -308,8 +306,7 @@ class TestUniformSpec:
         knots_gt = xp.asarray(knots_gt, dtype=fdtype, device=device)
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
-        assert aac.array_namespace(knots) == xp
-        assert knots.dtype == fdtype
+        assert helper.similar(knots, knots_gt)
         assert helper.allclose(knots, knots_gt, fdtype)
 
     def test_getitem(self):
