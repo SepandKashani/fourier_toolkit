@@ -3,8 +3,21 @@ import pytest
 
 import fourier_toolkit.typing as ftkt
 
+from . import conftest as ct
 from . import helper
 
+parametrize_dim = pytest.mark.parametrize("D", [1, 2, 3])
+parametrize_dtype = pytest.mark.parametrize(
+    "ab_dtype",
+    [
+        "int32",
+        "int64",
+        "float32",
+        "float64",
+        "complex64",
+        "complex128",
+    ],
+)
 parametrize_stack = pytest.mark.parametrize(
     "sh_stack",
     [
@@ -14,21 +27,33 @@ parametrize_stack = pytest.mark.parametrize(
         (2, 1),
     ],
 )
-parametrize_dim = pytest.mark.parametrize("D", [1, 2, 3])
+
+
+class TestSimilar:
+    @staticmethod
+    def create_array(array_backend: ct.ArrayBackend, dtype_name: str) -> ftkt.Array:
+        return array_backend.xp.asarray(
+            [],
+            dtype=getattr(array_backend.xp, dtype_name),
+            device=array_backend.device,
+        )
+
+    @parametrize_dtype
+    def test_value(self, array_backend, ab_dtype):
+        a = self.create_array(array_backend, ab_dtype)
+        b = self.create_array(array_backend, ab_dtype)
+        assert helper.similar(a, b)
+
+        # changing any field should fail
+        xp = array_backend.xp
+        b = xp.asarray([], dtype=xp.bool, device=b.device)
+        assert not helper.similar(a, b)
+        b = xp.asarray([1], dtype=xp.bool, device=b.device)
+        assert not helper.similar(a, b)
 
 
 class TestAllClose:
-    @pytest.mark.parametrize(
-        "ab_dtype",
-        [
-            "int32",
-            "int64",
-            "float32",
-            "float64",
-            "complex64",
-            "complex128",
-        ],
-    )
+    @parametrize_dtype
     def test_accepted_numerical_types(self, array_backend, ab_dtype):
         # any `ab_dtype` should be comparable with allclose()
         rng = np.random.default_rng()

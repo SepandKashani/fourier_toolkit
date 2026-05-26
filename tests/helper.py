@@ -5,6 +5,17 @@ import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 
+def similar(a: ftkt.Array, b: ftkt.Array) -> bool:
+    """
+    True if `a` and `b` have the same (backend, dtype, device).
+    """
+    same_backend = aac.array_namespace(a) == aac.array_namespace(b)
+    same_dtype = a.dtype == b.dtype
+    same_device = a.device == b.device
+
+    return all([same_backend, same_dtype, same_device])
+
+
 def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
     r"""
     Absolute closeness between 2 arrays.
