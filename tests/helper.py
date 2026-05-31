@@ -1,6 +1,7 @@
 import array_api_compat as aac
 import array_api_extra as aae
 import opt_einsum as oe
+
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
@@ -33,9 +34,9 @@ def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
         xp.asarray([], dtype=dtype),
     ).to_float()
 
-    if fdtype in (xp.float32, xp.complex64):
+    if fdtype == xp.float32:
         atol = 1e-6
-    elif fdtype in (xp.float64, xp.complex128):
+    elif fdtype == xp.float64:
         atol = 1e-12
     else:
         raise ValueError
@@ -46,7 +47,7 @@ def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
 
 def rel_l2_distance(a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
     r"""
-    Relative L2-distance between 2 vectors.
+    Relative L2 distance between 2 vectors.
 
     Parameters
     ----------
@@ -73,7 +74,7 @@ def rel_l2_distance(a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
 
 def rel_linf_distance(a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
     r"""
-    Relative Linf-distance between 2 vectors.
+    Relative L-infinity distance between 2 vectors.
 
     Parameters
     ----------

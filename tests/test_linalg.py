@@ -25,7 +25,7 @@ class TestHadamardOuter:
         y_gt = self.to_backend(y_gt, array_backend)
 
         y = ftkl.hadamard_outer(x, *args)
-        assert x.shape == y_gt.shape
+        assert y.shape == y_gt.shape
         assert helper.similar(y, y_gt)
         assert helper.allclose(y, y_gt, y_gt.dtype)
 

@@ -110,6 +110,14 @@ class TestAllClose:
 
 
 class DistanceMixin:
+    @classmethod
+    def compute_distance(cls, a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
+        raise NotImplementedError
+
+    @classmethod
+    def compute_distance_gt(cls, a: np.ndarray, b: np.ndarray, D: int) -> np.ndarray:
+        raise NotImplementedError
+
     @parametrize_stack
     @parametrize_dim
     def test_value(self, array_backend, sh_stack, D):
