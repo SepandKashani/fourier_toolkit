@@ -15,6 +15,10 @@ __all__ = [
 
 # Data Types ===================================================================
 class DType:
+    """
+    Data type objects used as `dtype` specifiers in functions and methods.
+    """
+
     pass
 
 
@@ -43,16 +47,13 @@ class complex128(DType):
 
 
 DTypeT = typ.TypeVar("DTypeT", bound=DType)
-"""
-Data type objects used as `dtype` specifiers in functions and methods.
-"""
 
 
 # Array NameSpace ==============================================================
 @typ.runtime_checkable
 class ArrayNameSpace(typ.Protocol):
     """
-    Object that has all the array API functions on it.
+    Object that has all the array API functions in it.
     """
 
     # For typing purposes, we limit ourselves to a subset of the array API.
