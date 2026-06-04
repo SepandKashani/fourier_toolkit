@@ -2,6 +2,8 @@ import cmath
 import math
 from typing import Literal
 
+import array_api_compat as aac
+import array_api_extra as aae
 import numpy as np
 
 import fourier_toolkit.linalg as ftkl
@@ -148,6 +150,8 @@ class _CZT:
         y: ArrayC
             (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
         """
+        xp = aac.array_namespace(x)
+
         AWk2, FWk2, Wk2, extract = self._mod_params(x)
         pad_width = [(0, 0)] * (x.ndim - self.cfg.D)  # stack dimensions
         pad_width += [  # core dimensions
@@ -156,10 +160,10 @@ class _CZT:
         ]
 
         _x = ftkl.hadamard_outer(x, *AWk2)
-        _x = np.pad(_x, pad_width)
-        _x = np.fft.fftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
+        _x = aae.pad(_x, pad_width)
+        _x = xp.fft.fftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
         _x = ftkl.hadamard_outer(_x, *FWk2)
-        _x = np.fft.ifftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
+        _x = xp.fft.ifftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
         y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
         return y
 
@@ -181,7 +185,9 @@ class _CZT:
         extract: list[slice]
             (slice1,...,sliceD) FFT interval to extract.
         """
-        translate = ftku.TranslateDType(x.dtype)
+        xp = aac.array_namespace(x)
+        translate = ftku.TranslateDType(x)
+        idtype = translate.to_int()
         cdtype = translate.to_complex()
 
         # Build modulation vectors (Wk2, AWk2, FWk2).
@@ -195,25 +201,24 @@ class _CZT:
             M = self.cfg.M[d]
             L = self.cfg.L[d]
 
-            k = np.arange(max(M, N), dtype=int, like=x)
+            k = xp.arange(max(M, N), dtype=idtype, device=x.device)
             _Wk2 = W ** ((k**2) / 2)
             _AWk2 = (A ** -k[:N]) * _Wk2[:N]
-            _FWk2 = np.fft.fft(
-                np.concatenate([_Wk2[(N - 1) : 0 : -1], _Wk2[:M]]).conj(),
+            _FWk2 = xp.fft.fft(
+                xp.conj(xp.concat([_Wk2[(N - 1) : 0 : -1], _Wk2[:M]])),
                 n=L,
             )
             _Wk2 = _Wk2[:M]
 
-            Wk2[d] = _Wk2.astype(cdtype)
-            AWk2[d] = _AWk2.astype(cdtype)
-            FWk2[d] = _FWk2.astype(cdtype)
+            Wk2[d] = xp.astype(_Wk2, cdtype)
+            AWk2[d] = xp.astype(_AWk2, cdtype)
+            FWk2[d] = xp.astype(_FWk2, cdtype)
 
         # Build (extract,)
         extract = [slice(None)] * self.cfg.D
         for d in range(self.cfg.D):
             N = self.cfg.N[d]
             M = self.cfg.M[d]
-            L = self.cfg.L[d]
             extract[d] = slice(N - 1, N + M - 1)
 
         return AWk2, FWk2, Wk2, extract
