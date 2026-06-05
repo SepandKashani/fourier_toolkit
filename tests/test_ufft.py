@@ -2,23 +2,32 @@ import numpy as np
 import pytest
 import scipy.signal as sps
 
+import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import u2u  # test as exposed to user
 from fourier_toolkit.ufft import _CZT
 
 from . import conftest as ct
+from . import helper
 
 
 class TestCZT:
+    @staticmethod
+    def to_backend(x: ftkt.Array, array_backend: ct.ArrayBackend) -> ftkt.Array:
+        return array_backend.xp.asarray(
+            x,
+            device=array_backend.device,
+        )
+
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
-    def test_value_apply(self, op, dtype, real, stack_shape):
+    def test_apply(self, array_backend, op, dtype, real, stack_shape):
         # output value matches ground truth.
-        translate = ftku.TranslateDType(dtype)
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
-        # Generate CZT input
+        # Generate _CZT.apply() input
         rng = np.random.default_rng()
         if real:
             x = rng.standard_normal((*stack_shape, *op.cfg.N))
@@ -28,40 +37,32 @@ class TestCZT:
             x += rng.standard_normal((*stack_shape, *op.cfg.N))
             x = x.astype(cdtype)
 
-        # Generate CZT output ground-truth
-        y_gt = x.copy()
-        for d in range(op.cfg.D):
-            y_gt = sps.czt(
-                y_gt,
-                m=op.cfg.M[d],
-                w=op.cfg.W[d],
-                a=op.cfg.A[d],
-                axis=len(stack_shape) + d,
-            )
+        # Generate _CZT.apply() output ground-truth
+        y_gt = np.zeros((*stack_shape, *op.cfg.M), dtype=cdtype)
+        C = self._generate_C(op.cfg.N, op.cfg.M, op.cfg.A, op.cfg.W).astype(cdtype)
+        for idx in np.ndindex(stack_shape):
+            y_gt[idx] = helper.inner_product(x[idx], C, op.cfg.D)  # (M1,...,MD)
 
         # Test CZT compliance
+        x = self.to_backend(x, array_backend)
+        y_gt = self.to_backend(y_gt, array_backend)
         y = op.apply(x)
         assert y.shape == y_gt.shape
-        assert ct.allclose(y, y_gt, fdtype)
-
-    @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, op, dtype, real):
-        # output precision (not dtype!) matches input precision.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        rng = np.random.default_rng()
-        if real:
-            x = rng.standard_normal(op.cfg.N)
-            x = x.astype(fdtype)
-        else:
-            x = 1j * rng.standard_normal(op.cfg.N)
-            x += rng.standard_normal(op.cfg.N)
-            x = x.astype(cdtype)
-
-        y = op.apply(x)
-        assert y.dtype == cdtype
+        assert helper.similar(y, y_gt)
+        try:
+            assert helper.allclose(y, y_gt, y_gt.dtype)
+        except AssertionError:
+            # Why this behaviour?
+            #
+            # Backends use different math libraries, hence results may be approximate at times, especially in the (D>1) case. We therefore use a relaxed criteria as fallback if needed.
+            #
+            # Does this mean the implementation is incorrect?: no, unless all backends fail the same test.
+            # -> Keep an eye on PyTest error logs to assess this.
+            if fdtype == np.float32:
+                eps = 1e-5
+            else:  # np.float64
+                eps = 1e-10
+            assert helper.rel_l2_close(y, y_gt, op.cfg.D, eps)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -118,6 +119,26 @@ class TestCZT:
         return _CZT(N, M, A, W)
 
     # Helper functions --------------------------------------------------------
+    @staticmethod
+    def _generate_C(N, M, A, W) -> np.ndarray:
+        # (M1,...,MD,N1,...,ND) tensor which, when inner-product-ed with `x(N1,...,ND)`, gives `y(M1,...,MD)`.
+        C = np.zeros((*M, *N), dtype=np.cdouble)
+        for n in np.ndindex(N):
+            _C = np.zeros(N)
+            _C[n] = 1
+
+            D = len(N)
+            for d in range(D):
+                _C = sps.czt(
+                    _C,
+                    m=M[d],
+                    w=W[d],
+                    a=A[d],
+                    axis=d,
+                )
+
+            C[..., *n] = _C
+        return C.conj()
 
 
 class TestU2U:
