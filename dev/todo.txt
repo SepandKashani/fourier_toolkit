@@ -1,13 +1,31 @@
-files remaining to review for array API compliance:
-- ufft.py, test_ufft.py
+- ufft.py, test_ufft.py : Array API compliance
+  u2u() remaining
+  also need to test gpu backends
+
+  tag v0.2
+
+
+- jax/torch JIT compilation [ufft only]
+  Specific to jax/torch backends: assess JIT-ability of array-accepting functions.
+  array_api_extra has helpers for this?
+
+  also ensure gradients wrt `w` works.
+
+  tag v0.3
+
+
 - nufft.py, test_nufft.py
+  * make optional dependency.
+  * Array API compliance
+  * Add JAX support via buffer_callback() [or use jax-finufft?]
+    + background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
+    + buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
+  * Add PyTorch support via [built-in feature] or [external package?]
 
-Specific to jax/torch backends: assess JIT-ability of array-accepting functions.
-array_api_extra has helpers for this?
+  derivatives wrt (x/v, w) should work
 
-- Add JAX Support via buffer_callback()
-  + background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
-  + buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
+  tag v0.4 -> v1.0 after extensive use in optikal
+
 
 - Add MATLAB interface
   Must work with CPU/GPU arrays.
