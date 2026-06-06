@@ -52,17 +52,36 @@ class TestCZT:
         try:
             assert helper.allclose(y, y_gt, y_gt.dtype)
         except AssertionError:
-            # Why this behaviour?
-            #
-            # Backends use different math libraries, hence results may be approximate at times, especially in the (D>1) case. We therefore use a relaxed criteria as fallback if needed.
-            #
-            # Does this mean the implementation is incorrect?: no, unless all backends fail the same test.
-            # -> Keep an eye on PyTest error logs to assess this.
-            if fdtype == np.float32:
-                eps = 1e-5
-            else:  # np.float64
-                eps = 1e-10
-            assert helper.rel_l2_close(y, y_gt, op.cfg.D, eps)
+            xp = array_backend.xp
+            info = xp.__array_namespace_info__()
+            dtypes = {v: k for (k, v) in info.dtypes().items()}
+            fdtype_name = dtypes[y_gt.dtype]
+
+            if helper.rel_l2_close(y, y_gt, op.cfg.D, eps=helper.fp_atol[fdtype_name]):
+                assert True
+            else:
+                # fail test, showing statistics
+                diff = xp.abs(y - y_gt)
+                linf = helper.rel_linf_distance(y, y_gt, op.cfg.D)
+                l2 = helper.rel_l2_distance(y, y_gt, op.cfg.D)
+
+                stat_funcs = (xp.min, xp.mean, xp.max, xp.std)
+                stats_diff = [float(f(diff)) for f in stat_funcs]
+                stats_linf = [float(f(linf)) for f in stat_funcs]
+                stats_l2 = [float(f(l2)) for f in stat_funcs]
+
+                diagnostic_msg = "\n".join(
+                    [
+                        "Failed allclose() and rel_l2_distance() test.",
+                        "[min,mean,max,std] statistics (over stack dimensions):",
+                        f"- abs(y - y_gt):              ({', '.join(map(str, stats_diff))})",
+                        f"- rel_linf_distance(y, y_gt): ({', '.join(map(str, stats_linf))})",
+                        f"- rel_l2_distance(y, y_gt):   ({', '.join(map(str, stats_l2))})",
+                        f"- eps(rel_l2_close):           {helper.fp_atol[fdtype_name]}",
+                    ]
+                )
+
+                assert False, diagnostic_msg
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
