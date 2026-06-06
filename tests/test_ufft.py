@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 import scipy.signal as sps
 
-import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import u2u  # test as exposed to user
 from fourier_toolkit.ufft import _CZT
@@ -12,13 +11,6 @@ from . import helper
 
 
 class TestCZT:
-    @staticmethod
-    def to_backend(x: ftkt.Array, array_backend: ct.ArrayBackend) -> ftkt.Array:
-        return array_backend.xp.asarray(
-            x,
-            device=array_backend.device,
-        )
-
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
     def test_apply(self, array_backend, op, dtype, real, stack_shape):
@@ -44,8 +36,8 @@ class TestCZT:
             y_gt[idx] = helper.inner_product(x[idx], C, op.cfg.D)  # (M1,...,MD)
 
         # Test CZT compliance
-        x = self.to_backend(x, array_backend)
-        y_gt = self.to_backend(y_gt, array_backend)
+        x = ct.to_backend(x, array_backend)
+        y_gt = ct.to_backend(y_gt, array_backend)
         y = op.apply(x)
         assert y.shape == y_gt.shape
         assert helper.similar(y, y_gt)

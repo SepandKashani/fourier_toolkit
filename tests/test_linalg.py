@@ -4,25 +4,17 @@ import numpy as np
 import pytest
 
 import fourier_toolkit.linalg as ftkl
-import fourier_toolkit.typing as ftkt
 
 from . import conftest as ct
 from . import helper
 
 
 class TestHadamardOuter:
-    @staticmethod
-    def to_backend(x: ftkt.Array, array_backend: ct.ArrayBackend) -> ftkt.Array:
-        return array_backend.xp.asarray(
-            x,
-            device=array_backend.device,
-        )
-
     def test_value(self, array_backend, x, args, y_gt):
         # output value matches ground truth.
-        x = self.to_backend(x, array_backend)
-        args = [self.to_backend(A, array_backend) for A in args]
-        y_gt = self.to_backend(y_gt, array_backend)
+        x = ct.to_backend(x, array_backend)
+        args = [ct.to_backend(A, array_backend) for A in args]
+        y_gt = ct.to_backend(y_gt, array_backend)
 
         y = ftkl.hadamard_outer(x, *args)
         assert y.shape == y_gt.shape
@@ -31,8 +23,8 @@ class TestHadamardOuter:
 
     def test_prec(self, array_backend, x, args):
         # output precision (not dtype!) matches input precision.
-        x = self.to_backend(x, array_backend)
-        args = [self.to_backend(A, array_backend) for A in args]
+        x = ct.to_backend(x, array_backend)
+        args = [ct.to_backend(A, array_backend) for A in args]
 
         assert all(x.dtype == A.dtype for A in args)
         y = ftkl.hadamard_outer(x, *args)

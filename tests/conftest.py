@@ -87,3 +87,14 @@ def array_backend_cases():
 @pytest.fixture(params=list(array_backend_cases()))
 def array_backend(request) -> ArrayBackend:
     return request.param
+
+
+def to_backend(x: ftkt.Array, array_backend: ArrayBackend) -> ftkt.Array:
+    """
+    Transform `x` to specific (backend,device).
+    Input dtype is preserved.
+    """
+    return array_backend.xp.asarray(
+        x,
+        device=array_backend.device,
+    )
