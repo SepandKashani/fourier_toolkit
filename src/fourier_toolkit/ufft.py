@@ -69,7 +69,8 @@ def u2u(
     if isign == -1:
         z = op.apply(w)
     else:
-        z = op.apply(w.conj()).conj()
+        xp = aac.array_namespace(w)
+        z = xp.conj(op.apply(xp.conj(w)))
     return z
 
 
@@ -283,24 +284,26 @@ class _U2U:
         z: ArrayC
             (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
         """
+        xp = aac.array_namespace(w)
+
         _w = w
 
         # Processing FFT axes
         if self.cfg.fft_axes:
             (ax_fft, Cp, fft, Bp, ax_ifft) = self._fft_params(w)
-            _w = _w.transpose(ax_fft)
+            _w = xp.permute_dims(_w, ax_fft)
             _w = ftkl.hadamard_outer(_w, *Cp)
             _w = fft(_w)
             _w = ftkl.hadamard_outer(_w, *Bp)
-            _w = _w.transpose(ax_ifft)
+            _w = xp.permute_dims(_w, ax_ifft)
 
         # Processing CZT axes
         if self.cfg.czt_axes:
             (ax_czt, czt, B, ax_iczt) = self._czt_params(w)
-            _w = _w.transpose(ax_czt)
+            _w = xp.permute_dims(_w, ax_czt)
             _w = czt.apply(_w)
             _w = ftkl.hadamard_outer(_w, *B)
-            _w = _w.transpose(ax_iczt)
+            _w = xp.permute_dims(_w, ax_iczt)
 
         z = _w
         return z
@@ -319,13 +322,15 @@ class _U2U:
         Cp: ArrayC
             (N1,),...,(ND,) pre-FFT modulation vectors.
         fft: callable
-            FFT() instance; computes fft/ifft along required axes.
+            Computes fft/ifft along required axes.
         Bp: ArrayC
             (N1,),...,(ND,) post-FFT modulation vectors.
         ax_ifft: tuple[int]
             Permutation tuple to undo initial axis transposition.
         """
-        translate = ftku.TranslateDType(y.dtype)
+        xp = aac.array_namespace(y)
+        translate = ftku.TranslateDType(y)
+        idtype = translate.to_int()
         cdtype = translate.to_complex()
 
         # Build (ax_fft, ax_ifft)
@@ -351,8 +356,9 @@ class _U2U:
                 pos_axes.append(-D_fft + d)
 
         def fft(x: ftkt.ArrayRC) -> ftkt.ArrayC:
-            y = np.fft.fftn(x, axes=neg_axes, norm="backward")
-            y = np.fft.ifftn(y, axes=pos_axes, norm="forward")
+            y = x
+            y = xp.fft.fftn(y, axes=neg_axes, norm="backward")
+            y = xp.fft.ifftn(y, axes=pos_axes, norm="forward")
             return y
 
         # Build modulation vectors (Cp, Bp)
@@ -368,14 +374,16 @@ class _U2U:
             nv = self.cfg.v_spec.num
 
             phase_scale_c = -2 * math.pi * dx[ax[d]] * v0[ax[d]]
-            m = np.arange(nx[ax[d]], dtype=int, like=y)
-            _Cp = np.exp(1j * phase_scale_c * m)
-            Cp[d] = _Cp.astype(cdtype)
+            m = xp.arange(nx[ax[d]], dtype=idtype, device=y.device)
+            _Cp = xp.exp(1j * phase_scale_c * m)
+            Cp[d] = xp.astype(_Cp, cdtype)
 
             phase_scale_b = -2 * math.pi * x0[ax[d]]
-            v = v0[ax[d]] + dv[ax[d]] * np.arange(nv[ax[d]], dtype=int, like=y)
-            _Bp = np.exp(1j * phase_scale_b * v)
-            Bp[d] = _Bp.astype(cdtype)
+            v = v0[ax[d]] + dv[ax[d]] * xp.arange(
+                nv[ax[d]], dtype=idtype, device=y.device
+            )
+            _Bp = xp.exp(1j * phase_scale_b * v)
+            Bp[d] = xp.astype(_Bp, cdtype)
 
         return (ax_fft, Cp, fft, Bp, ax_ifft)
 
@@ -396,7 +404,9 @@ class _U2U:
         ax_iczt: tuple[int]
             Permutation tuple to undo initial axis transposition.
         """
-        translate = ftku.TranslateDType(y.dtype)
+        xp = aac.array_namespace(y)
+        translate = ftku.TranslateDType(y)
+        idtype = translate.to_int()
         cdtype = translate.to_complex()
 
         # Build (ax_czt, ax_iczt)
@@ -437,9 +447,11 @@ class _U2U:
             nv = self.cfg.v_spec.num
 
             phase_scale = -2 * math.pi * x0[ax[d]]
-            v = v0[ax[d]] + dv[ax[d]] * np.arange(nv[ax[d]], dtype=int, like=y)
-            _B = np.exp(1j * phase_scale * v)
+            v = v0[ax[d]] + dv[ax[d]] * xp.arange(
+                nv[ax[d]], dtype=idtype, device=y.device
+            )
+            _B = xp.exp(1j * phase_scale * v)
 
-            B[d] = _B.astype(cdtype)
+            B[d] = xp.astype(_B, cdtype)
 
         return ax_czt, czt, B, ax_iczt
