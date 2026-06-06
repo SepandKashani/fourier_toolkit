@@ -1,5 +1,29 @@
 - ufft.py, test_ufft.py : Array API compliance
-  u2u() remaining
+  refactor done, but there are problems
+
+  u2u():
+  + U2USpecialCase works, except
+    often numerical issues w/ torch
+    sometimes w/ jax
+  + U2UMixCase
+    numerical issues on all backends
+
+  -> CZT() imprecision is the cause.
+  What operations in CZT() are problematic?
+  Hypotheses:
+  - xp.flip() indices wrong? -> no, correct
+    so it is a precision problem somewhere below [or beyond]
+  - xp.fft.fft[n]() ?
+  - xp.exp() or **
+
+  focus on special case first: what is causing jax/torch to break? Modulation?
+  modulation can also be at cause in czt()
+
+  if not check FFT accuracy.
+
+
+
+
   also need to test gpu backends
 
   tag v0.2
