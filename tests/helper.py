@@ -5,6 +5,13 @@ import opt_einsum as oe
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
+fp_atol = dict(
+    float32=1e-6,
+    complex64=1e-6,
+    float64=1e-12,
+    complex128=1e-12,
+)
+
 
 def similar(a: ftkt.Array, b: ftkt.Array) -> bool:
     """
@@ -29,19 +36,15 @@ def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
         `dtype` should be transformable into the float32/64 type via :py:class:`fourier_toolkit.util.TranslateDType`.
     """
     xp = aac.array_namespace(a)
+    info = xp.__array_namespace_info__()
+    dtypes = {v: k for (k, v) in info.dtypes().items()}
 
     fdtype = ftku.TranslateDType(
         xp.asarray([], dtype=dtype),
     ).to_float()
+    fdtype_name = dtypes[fdtype]
 
-    if fdtype == xp.float32:
-        atol = 1e-6
-    elif fdtype == xp.float64:
-        atol = 1e-12
-    else:
-        raise ValueError
-
-    match = xp.all(aae.isclose(a, b, atol=atol, equal_nan=True))
+    match = xp.all(aae.isclose(a, b, atol=fp_atol[fdtype_name], equal_nan=True))
     return bool(match)
 
 
