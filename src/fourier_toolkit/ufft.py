@@ -205,7 +205,7 @@ class _CZT:
             _Wk2 = W ** ((k**2) / 2)
             _AWk2 = (A ** -k[:N]) * _Wk2[:N]
             _FWk2 = xp.fft.fft(
-                xp.conj(xp.concat([_Wk2[(N - 1) : 0 : -1], _Wk2[:M]])),
+                xp.conj(xp.concat([xp.flip(_Wk2)[: (N - 1)], _Wk2[:M]])),
                 n=L,
             )
             _Wk2 = _Wk2[:M]
