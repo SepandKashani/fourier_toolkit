@@ -157,9 +157,18 @@ class TestU2U:
 
     @pytest.mark.parametrize("real", [True, False])
     @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
-    def test_value_apply(self, x_spec, v_spec, isign, dtype, real, stack_shape):
+    def test_apply(
+        self,
+        array_backend,
+        x_spec,
+        v_spec,
+        isign,
+        dtype,
+        real,
+        stack_shape,
+    ):
         # output value matches ground truth.
-        translate = ftku.TranslateDType(dtype)
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
         fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
@@ -175,33 +184,17 @@ class TestU2U:
 
         # Generate u2u() output ground-truth
         z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
-        A = self._generate_A(x_spec, v_spec, isign)  # (N1,...,ND,M1,...,MD)
+        A = self._generate_A(x_spec, v_spec, isign).astype(cdtype)
         for idx in np.ndindex(stack_shape):
-            z_gt[idx] = ct.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
+            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
 
         # Test u2u() compliance
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
         z = u2u(x_spec, v_spec, w, isign)
         assert z.shape == z_gt.shape
-        assert ct.allclose(z, z_gt, fdtype)
-
-    @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_spec, v_spec, isign, dtype, real):
-        # output precision (not dtype!) matches input precision.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal(x_spec.num)
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal(x_spec.num)
-            w += rng.standard_normal(x_spec.num)
-            w = w.astype(cdtype)
-
-        z = u2u(x_spec, v_spec, w, isign)
-        assert z.dtype == cdtype
+        assert helper.similar(z, z_gt)
+        assert helper.allclose(z, z_gt, z_gt.dtype)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
