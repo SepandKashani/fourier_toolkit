@@ -339,7 +339,7 @@ class _U2U:
         fft_axes = tuple(ax + len(sh) for ax in self.cfg.fft_axes)
         czt_axes = tuple(ax + len(sh) for ax in self.cfg.czt_axes)
         ax_fft = (*stk_axes, *czt_axes, *fft_axes)
-        ax_ifft = tuple(np.argsort(ax_fft))
+        ax_ifft = tuple(map(int, np.argsort(ax_fft)))
 
         # Build FFT operator
         D_fft = len(self.cfg.fft_axes)
@@ -415,7 +415,7 @@ class _U2U:
         fft_axes = tuple(ax + len(sh) for ax in self.cfg.fft_axes)
         czt_axes = tuple(ax + len(sh) for ax in self.cfg.czt_axes)
         ax_czt = (*stk_axes, *fft_axes, *czt_axes)
-        ax_iczt = tuple(np.argsort(ax_czt))
+        ax_iczt = tuple(map(int, np.argsort(ax_czt)))
 
         # Build CZT operator
         D_czt = len(self.cfg.czt_axes)
