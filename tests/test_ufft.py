@@ -2,6 +2,9 @@ import numpy as np
 import pytest
 import scipy.signal as sps
 
+import array_api_compat as aac
+
+import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import u2u  # test as exposed to user
 from fourier_toolkit.ufft import _CZT
@@ -41,39 +44,7 @@ class TestCZT:
         y = op.apply(x)
         assert y.shape == y_gt.shape
         assert helper.similar(y, y_gt)
-        try:
-            assert helper.allclose(y, y_gt, y_gt.dtype)
-        except AssertionError:
-            xp = array_backend.xp
-            info = xp.__array_namespace_info__()
-            dtypes = {v: k for (k, v) in info.dtypes().items()}
-            fdtype_name = dtypes[y_gt.dtype]
-
-            if helper.rel_l2_close(y, y_gt, op.cfg.D, eps=helper.fp_atol[fdtype_name]):
-                assert True
-            else:
-                # fail test, showing statistics
-                diff = xp.abs(y - y_gt)
-                linf = helper.rel_linf_distance(y, y_gt, op.cfg.D)
-                l2 = helper.rel_l2_distance(y, y_gt, op.cfg.D)
-
-                stat_funcs = (xp.min, xp.mean, xp.max, xp.std)
-                stats_diff = [float(f(diff)) for f in stat_funcs]
-                stats_linf = [float(f(linf)) for f in stat_funcs]
-                stats_l2 = [float(f(l2)) for f in stat_funcs]
-
-                diagnostic_msg = "\n".join(
-                    [
-                        "Failed allclose() and rel_l2_distance() test.",
-                        "[min,mean,max,std] statistics (over stack dimensions):",
-                        f"- abs(y - y_gt):              ({', '.join(map(str, stats_diff))})",
-                        f"- rel_linf_distance(y, y_gt): ({', '.join(map(str, stats_linf))})",
-                        f"- rel_l2_distance(y, y_gt):   ({', '.join(map(str, stats_l2))})",
-                        f"- eps(rel_l2_close):           {helper.fp_atol[fdtype_name]}",
-                    ]
-                )
-
-                assert False, diagnostic_msg
+        assert_areclose(y, y_gt, op.cfg.D)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -194,7 +165,7 @@ class TestU2U:
         z = u2u(x_spec, v_spec, w, isign)
         assert z.shape == z_gt.shape
         assert helper.similar(z, z_gt)
-        assert helper.allclose(z, z_gt, z_gt.dtype)
+        assert_areclose(z, z_gt, x_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -305,3 +276,39 @@ class TestU2UMixCase(TestU2U):
     @pytest.fixture
     def v_spec(self, xv_spec) -> ftku.UniformSpec:
         return xv_spec[1]
+
+
+def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
+    if helper.allclose(VAL, GT, GT.dtype):
+        assert True
+    else:
+        xp = aac.array_namespace(GT)
+        info = xp.__array_namespace_info__()
+        dtypes = {v: k for (k, v) in info.dtypes().items()}
+        fdtype_name = dtypes[GT.dtype]
+
+        if helper.rel_l2_close(VAL, GT, D, eps=helper.fp_atol[fdtype_name]):
+            assert True
+        else:
+            # fail test, showing statistics
+            diff = xp.abs(VAL - GT)
+            linf = helper.rel_linf_distance(VAL, GT, D)
+            l2 = helper.rel_l2_distance(VAL, GT, D)
+
+            stat_funcs = (xp.min, xp.mean, xp.max, xp.std)
+            stats_diff = [float(f(diff)) for f in stat_funcs]
+            stats_linf = [float(f(linf)) for f in stat_funcs]
+            stats_l2 = [float(f(l2)) for f in stat_funcs]
+
+            diagnostic_msg = "\n".join(
+                [
+                    "Failed allclose() and rel_l2_distance() test.",
+                    "[min,mean,max,std] statistics (over stack dimensions):",
+                    f"- abs(VAL - GT):              ({', '.join(map(str, stats_diff))})",
+                    f"- rel_linf_distance(VAL, GT): ({', '.join(map(str, stats_linf))})",
+                    f"- rel_l2_distance(VAL, GT):   ({', '.join(map(str, stats_l2))})",
+                    f"- eps(rel_l2_close):           {helper.fp_atol[fdtype_name]}",
+                ]
+            )
+
+            assert False, diagnostic_msg
