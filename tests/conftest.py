@@ -63,6 +63,7 @@ def array_backend_cases():
     # JAX: CPU + GPU -----------------------------------------------------------
     try:
         jax = importlib.import_module("jax")
+        jax.config.update("jax_enable_x64", True)
         jnp = importlib.import_module("jax.numpy")
         for kind in ["cpu", "gpu"]:
             try:
