@@ -83,11 +83,10 @@ class TestAllClose:
         b = a.copy()
 
         # Add jitter to `b` based on precision.
-        # If changing `atol` thresholds in allclose(), update bounds here accordingly.
         if precision == "low":
-            lrhs = 1e-6
+            lrhs = helper.fp_atol["float32"]
         elif precision == "high":
-            lrhs = 1e-12
+            lrhs = helper.fp_atol["float64"]
         else:
             raise ValueError
         b += rng.uniform(-lrhs, +lrhs, size=b.shape)
