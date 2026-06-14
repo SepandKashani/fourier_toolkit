@@ -10,6 +10,7 @@ import fourier_toolkit.linalg as ftkl
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
+
 __all__ = [
     "u2u",
 ]
@@ -188,7 +189,7 @@ class _CZT:
         """
         xp = aac.array_namespace(x)
         translate = ftku.TranslateDType(x)
-        idtype = translate.to_int()
+        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Build modulation vectors (Wk2, AWk2, FWk2).
@@ -202,7 +203,7 @@ class _CZT:
             M = self.cfg.M[d]
             L = self.cfg.L[d]
 
-            k = xp.arange(max(M, N), dtype=idtype, device=x.device)
+            k = xp.arange(max(M, N), dtype=fdtype, device=x.device)
             _Wk2 = W ** ((k**2) / 2)
             _AWk2 = (A ** -k[:N]) * _Wk2[:N]
             _FWk2 = xp.fft.fft(
@@ -330,7 +331,7 @@ class _U2U:
         """
         xp = aac.array_namespace(y)
         translate = ftku.TranslateDType(y)
-        idtype = translate.to_int()
+        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Build (ax_fft, ax_ifft)
@@ -374,13 +375,13 @@ class _U2U:
             nv = self.cfg.v_spec.num
 
             phase_scale_c = -2 * math.pi * dx[ax[d]] * v0[ax[d]]
-            m = xp.arange(nx[ax[d]], dtype=idtype, device=y.device)
+            m = xp.arange(nx[ax[d]], dtype=fdtype, device=y.device)
             _Cp = xp.exp(1j * phase_scale_c * m)
             Cp[d] = xp.astype(_Cp, cdtype)
 
             phase_scale_b = -2 * math.pi * x0[ax[d]]
             v = v0[ax[d]] + dv[ax[d]] * xp.arange(
-                nv[ax[d]], dtype=idtype, device=y.device
+                nv[ax[d]], dtype=fdtype, device=y.device
             )
             _Bp = xp.exp(1j * phase_scale_b * v)
             Bp[d] = xp.astype(_Bp, cdtype)
@@ -406,7 +407,7 @@ class _U2U:
         """
         xp = aac.array_namespace(y)
         translate = ftku.TranslateDType(y)
-        idtype = translate.to_int()
+        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Build (ax_czt, ax_iczt)
@@ -448,7 +449,7 @@ class _U2U:
 
             phase_scale = -2 * math.pi * x0[ax[d]]
             v = v0[ax[d]] + dv[ax[d]] * xp.arange(
-                nv[ax[d]], dtype=idtype, device=y.device
+                nv[ax[d]], dtype=fdtype, device=y.device
             )
             _B = xp.exp(1j * phase_scale * v)
 
