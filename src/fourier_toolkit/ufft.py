@@ -190,7 +190,6 @@ class _CZT:
         xp = aac.array_namespace(x)
         translate = ftku.TranslateDType(x)
         fdtype = translate.to_float()
-        cdtype = translate.to_complex()
 
         # Build modulation vectors (Wk2, AWk2, FWk2).
         Wk2 = [None] * self.cfg.D
@@ -212,9 +211,9 @@ class _CZT:
             )
             _Wk2 = _Wk2[:M]
 
-            Wk2[d] = xp.astype(_Wk2, cdtype)
-            AWk2[d] = xp.astype(_AWk2, cdtype)
-            FWk2[d] = xp.astype(_FWk2, cdtype)
+            Wk2[d] = _Wk2
+            AWk2[d] = _AWk2
+            FWk2[d] = _FWk2
 
         # Build (extract,)
         extract = [slice(None)] * self.cfg.D
@@ -332,7 +331,6 @@ class _U2U:
         xp = aac.array_namespace(y)
         translate = ftku.TranslateDType(y)
         fdtype = translate.to_float()
-        cdtype = translate.to_complex()
 
         # Build (ax_fft, ax_ifft)
         sh = y.shape[: -self.cfg.D]  # stack dimensions
@@ -377,14 +375,14 @@ class _U2U:
             phase_scale_c = -2 * math.pi * dx[ax[d]] * v0[ax[d]]
             m = xp.arange(nx[ax[d]], dtype=fdtype, device=y.device)
             _Cp = xp.exp(1j * phase_scale_c * m)
-            Cp[d] = xp.astype(_Cp, cdtype)
+            Cp[d] = _Cp
 
             phase_scale_b = -2 * math.pi * x0[ax[d]]
             v = v0[ax[d]] + dv[ax[d]] * xp.arange(
                 nv[ax[d]], dtype=fdtype, device=y.device
             )
             _Bp = xp.exp(1j * phase_scale_b * v)
-            Bp[d] = xp.astype(_Bp, cdtype)
+            Bp[d] = _Bp
 
         return (ax_fft, Cp, fft, Bp, ax_ifft)
 
@@ -408,7 +406,6 @@ class _U2U:
         xp = aac.array_namespace(y)
         translate = ftku.TranslateDType(y)
         fdtype = translate.to_float()
-        cdtype = translate.to_complex()
 
         # Build (ax_czt, ax_iczt)
         sh = y.shape[: -self.cfg.D]  # stack dimensions
@@ -453,6 +450,6 @@ class _U2U:
             )
             _B = xp.exp(1j * phase_scale * v)
 
-            B[d] = xp.astype(_B, cdtype)
+            B[d] = _B
 
         return ax_czt, czt, B, ax_iczt
