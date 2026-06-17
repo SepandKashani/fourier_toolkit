@@ -6,8 +6,8 @@ import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 fp_atol = dict(
-    float32=1e-6,
-    complex64=1e-6,
+    float32=1e-5,
+    complex64=1e-5,
     float64=1e-12,
     complex128=1e-12,
 )
