@@ -6,11 +6,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; Fourier Toolkit 0.1.6.dev11 documentation</title>
+    <title>API Reference &#8212; Fourier Toolkit 0.1.7.dev42 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="_static/documentation_options.js?v=fc58e1a4"></script>
+    <script src="_static/documentation_options.js?v=f764c415"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>window.MathJax = {"tex": {"macros": {"bba": "{\\bf{a}}", "bbA": "{\\bf{A}}", "bbb": "{\\bf{b}}", "bbB": "{\\bf{B}}", "bbc": "{\\bf{c}}", "bbC": "{\\bf{C}}", "bbd": "{\\bf{d}}", "bbD": "{\\bf{D}}", "bbe": "{\\bf{e}}", "bbE": "{\\bf{E}}", "bbf": "{\\bf{f}}", "bbF": "{\\bf{F}}", "bbg": "{\\bf{g}}", "bbG": "{\\bf{G}}", "bbh": "{\\bf{h}}", "bbH": "{\\bf{H}}", "bbi": "{\\bf{i}}", "bbI": "{\\bf{I}}", "bbj": "{\\bf{j}}", "bbJ": "{\\bf{J}}", "bbk": "{\\bf{k}}", "bbK": "{\\bf{K}}", "bbl": "{\\bf{l}}", "bbL": "{\\bf{L}}", "bbm": "{\\bf{m}}", "bbM": "{\\bf{M}}", "bbn": "{\\bf{n}}", "bbN": "{\\bf{N}}", "bbo": "{\\bf{o}}", "bbO": "{\\bf{O}}", "bbp": "{\\bf{p}}", "bbP": "{\\bf{P}}", "bbq": "{\\bf{q}}", "bbQ": "{\\bf{Q}}", "bbr": "{\\bf{r}}", "bbR": "{\\bf{R}}", "bbs": "{\\bf{s}}", "bbS": "{\\bf{S}}", "bbt": "{\\bf{t}}", "bbT": "{\\bf{T}}", "bbu": "{\\bf{u}}", "bbU": "{\\bf{U}}", "bbv": "{\\bf{v}}", "bbV": "{\\bf{V}}", "bbw": "{\\bf{w}}", "bbW": "{\\bf{W}}", "bbx": "{\\bf{x}}", "bbX": "{\\bf{X}}", "bby": "{\\bf{y}}", "bbY": "{\\bf{Y}}", "bbz": "{\\bf{z}}", "bbZ": "{\\bf{Z}}", "bbZero": "{\\bf{0}}", "bbOne": "{\\bf{1}}", "bC": "{\\mathbb{C}}", "bE": "{\\mathbb{E}}", "bN": "{\\mathbb{N}}", "bQ": "{\\mathbb{Q}}", "bR": "{\\mathbb{R}}", "bS": "{\\mathbb{S}}", "bZ": "{\\mathbb{Z}}", "cA": "{\\mathcal{A}}", "cB": "{\\mathcal{B}}", "cC": "{\\mathcal{C}}", "cD": "{\\mathcal{D}}", "cE": "{\\mathcal{E}}", "cF": "{\\mathcal{F}}", "cG": "{\\mathcal{G}}", "cH": "{\\mathcal{H}}", "cI": "{\\mathcal{I}}", "cJ": "{\\mathcal{J}}", "cK": "{\\mathcal{K}}", "cL": "{\\mathcal{L}}", "cM": "{\\mathcal{M}}", "cN": "{\\mathcal{N}}", "cO": "{\\mathcal{O}}", "cP": "{\\mathcal{P}}", "cQ": "{\\mathcal{Q}}", "cR": "{\\mathcal{R}}", "cS": "{\\mathcal{S}}", "cT": "{\\mathcal{T}}", "cU": "{\\mathcal{U}}", "cV": "{\\mathcal{V}}", "cW": "{\\mathcal{W}}", "cX": "{\\mathcal{X}}", "cY": "{\\mathcal{Y}}", "cZ": "{\\mathcal{Z}}", "cj": "{j}", "ee": "{e}", "bigBrack": ["\\left[ #1 \\right]", 1], "bigCurly": ["\\left\\{ #1 \\right\\}", 1], "bigParen": ["\\left( #1 \\right)", 1], "innerProduct": ["\\langle #1, #2 \\rangle", 2], "norm": ["\\left\\| #1 \\right\\|_{#2}", 2], "real": ["\\Re \\bigCurly{#1}", 1], "imag": ["\\Im \\bigCurly{#1}", 1], "abs": ["\\left| #1 \\right|", 1], "ceil": ["\\left\\lceil #1 \\right\\rceil", 1], "floor": ["\\left\\lfloor #1 \\right\\rfloor", 1], "kron": "{\\otimes}", "krao": "{\\circ}", "range": ["\\bigBrack{ #1, #2 }", 2], "discreteRange": ["\\lbrack\\!\\lbrack #1, #2 \\rbrack\\!\\rbrack", 2], "argmin": "\\operatorname*{arg\\,min}", "diag": "\\operatorname*{diag}", "vecOp": "\\operatorname*{vec}", "matOp": "\\operatorname*{mat}", "adj": "\\operatorname*{\\ast}", "hermitian": "\\operatorname*{H}", "transpose": "\\operatorname*{T}", "prox": "\\operatorname*{prox}", "sinc": "\\operatorname*{sinc}", "relu": "\\operatorname*{ReLu}", "tr": "\\operatorname*{tr}", "grad": "\\operatorname*{\\nabla}", "dft": "\\operatorname*{\\texttt{DFT}}", "fft": "\\operatorname*{\\texttt{FFT}}", "czt": "\\operatorname*{\\texttt{CZT}}", "dtft": "\\operatorname*{\\texttt{DTFT}}", "fs": "\\operatorname*{\\texttt{FS}}", "ctft": "\\operatorname*{\\texttt{F}}", "tuu": "{\\texttt{U} \\to \\texttt{U}}", "tnuu": "{\\texttt{NU} \\to \\texttt{U}}", "tunu": "{\\texttt{U} \\to \\texttt{NU}}", "tnunu": "{\\texttt{NU} \\to \\texttt{NU}}", "circconv": "\\operatorname*{\\circledast}", "conv": "\\operatorname*{\\ast}", "epsBandwidth": ["\\cB_{ #1 }", 1]}}}</script>
@@ -40,7 +40,7 @@
         <li class="right" >
           <a href="index.html" title="Fourier Toolkit"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.1.6.dev11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.1.7.dev42 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
       </ul>
     </div>  
@@ -53,35 +53,30 @@
   <section id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h1>
 <p>The FTK API is built around the scientific Python ecosystem and makes extensive use of ND-arrays.
-Unless otherwise specified, all <a class="reference internal" href="#ft-routines"><span class="std std-ref">routines</span></a> support both CPU and GPU execution.
-The backend is selected implicitly based on the array types provided as inputs:</p>
-<ul class="simple">
-<li><p><a class="reference external" href="https://numpy.org/">NumPy arrays</a> → CPU execution</p></li>
-<li><p><a class="reference external" href="https://cupy.dev/">CuPy arrays</a> → GPU execution</p></li>
-</ul>
-<p>The backend-agnostic type hints
+Unless otherwise specified, all <a class="reference internal" href="#ft-routines"><span class="std std-ref">routines</span></a> support both CPU and GPU execution.</p>
+<p>The type hints
 (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayR</span></code></a>,
 <a class="reference internal" href="#fourier_toolkit.typing.ArrayC" title="fourier_toolkit.typing.ArrayC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayC</span></code></a>,
 <a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayRC</span></code></a>)
-used throughout the API denote placeholders for (NumPy, CuPy) arrays of specific numeric types: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.</p>
+used throughout the API denote placeholders for any array object compliant with the <a class="reference external" href="https://data-apis.org/array-api/latest/">Python array API standard</a>: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.</p>
 <section id="module-fourier_toolkit.typing">
 <span id="array-types"></span><h2>Array Types<a class="headerlink" href="#module-fourier_toolkit.typing" title="Link to this heading">¶</a></h2>
 <dl class="py data">
-<dt class="sig sig-object py" id="fourier_toolkit.typing.ArrayR">
-<span class="sig-prename descclassname"><span class="pre">fourier_toolkit.typing.</span></span><span class="sig-name descname"><span class="pre">ArrayR</span></span><a class="headerlink" href="#fourier_toolkit.typing.ArrayR" title="Link to this definition">¶</a></dt>
-<dd><p>A (NumPy, CuPy) array of dtype float[32,64].</p>
+<dt class="sig sig-object py" id="fourier_toolkit.typing.ArrayC">
+<span class="sig-prename descclassname"><span class="pre">fourier_toolkit.typing.</span></span><span class="sig-name descname"><span class="pre">ArrayC</span></span><a class="headerlink" href="#fourier_toolkit.typing.ArrayC" title="Link to this definition">¶</a></dt>
+<dd><p>Array-API-compatible array of dtype complex[64,128].</p>
 </dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="fourier_toolkit.typing.ArrayC">
-<span class="sig-prename descclassname"><span class="pre">fourier_toolkit.typing.</span></span><span class="sig-name descname"><span class="pre">ArrayC</span></span><a class="headerlink" href="#fourier_toolkit.typing.ArrayC" title="Link to this definition">¶</a></dt>
-<dd><p>A (NumPy, CuPy) array of dtype complex[64,128].</p>
+<dt class="sig sig-object py" id="fourier_toolkit.typing.ArrayR">
+<span class="sig-prename descclassname"><span class="pre">fourier_toolkit.typing.</span></span><span class="sig-name descname"><span class="pre">ArrayR</span></span><a class="headerlink" href="#fourier_toolkit.typing.ArrayR" title="Link to this definition">¶</a></dt>
+<dd><p>Array-API-compatible array of dtype float[32,64].</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="fourier_toolkit.typing.ArrayRC">
 <span class="sig-prename descclassname"><span class="pre">fourier_toolkit.typing.</span></span><span class="sig-name descname"><span class="pre">ArrayRC</span></span><a class="headerlink" href="#fourier_toolkit.typing.ArrayRC" title="Link to this definition">¶</a></dt>
-<dd><p>A (NumPy, CuPy) array of dtype (float[32,64], complex[64,128]).</p>
+<dd><p>Array-API-compatible array of dtype (float[32,64], complex[64,128]).</p>
 </dd></dl>
 
 </section>
@@ -297,8 +292,7 @@ Note that the interpolation step can be done more efficiently via a low-rate fil
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>like</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – Reference object to allow the creation of arrays which are not NumPy arrays.
-If an array-like passed in as <cite>like</cite> supports the <code class="docutils literal notranslate"><span class="pre">__array_function__</span></code> protocol, the result will be defined by it.
-In this case, it ensures the creation of an array object compatible with that passed in via this argument.</p>
+Will inherit the (backend,device,fdtype) of <cite>like</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>mesh</strong> – (D,) axial knot coordinates</p>
@@ -315,8 +309,7 @@ In this case, it ensures the creation of an array object compatible with that pa
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>like</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – Reference object to allow the creation of arrays which are not NumPy arrays.
-If an array-like passed in as <cite>like</cite> supports the <code class="docutils literal notranslate"><span class="pre">__array_function__</span></code> protocol, the result will be defined by it.
-In this case, it ensures the creation of an array object compatible with that passed in via this argument.</p>
+Will inherit the (backend,device,fdtype) of <cite>like</cite>.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>x</strong> – (M1,…,MD, D) mesh coordinates</p>
@@ -362,8 +355,8 @@ In this case, it ensures the creation of an array object compatible with that pa
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#module-fourier_toolkit.typing">Array Types</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#fourier_toolkit.typing.ArrayR"><code class="docutils literal notranslate"><span class="pre">ArrayR</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fourier_toolkit.typing.ArrayC"><code class="docutils literal notranslate"><span class="pre">ArrayC</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fourier_toolkit.typing.ArrayR"><code class="docutils literal notranslate"><span class="pre">ArrayR</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="#fourier_toolkit.typing.ArrayRC"><code class="docutils literal notranslate"><span class="pre">ArrayRC</span></code></a></li>
 </ul>
 </li>
@@ -428,7 +421,7 @@ In this case, it ensures the creation of an array object compatible with that pa
         <li class="right" >
           <a href="index.html" title="Fourier Toolkit"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.1.6.dev11 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.1.7.dev42 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
       </ul>
     </div>

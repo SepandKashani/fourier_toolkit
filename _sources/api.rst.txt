@@ -3,23 +3,19 @@ API Reference
 
 The FTK API is built around the scientific Python ecosystem and makes extensive use of ND-arrays.
 Unless otherwise specified, all :ref:`routines <FT-routines>` support both CPU and GPU execution.
-The backend is selected implicitly based on the array types provided as inputs:
 
-- `NumPy arrays <https://numpy.org/>`_ → CPU execution
-- `CuPy arrays <https://cupy.dev/>`_ → GPU execution
-
-The backend-agnostic type hints
+The type hints
 (:py:obj:`~fourier_toolkit.typing.ArrayR`,
 :py:obj:`~fourier_toolkit.typing.ArrayC`,
 :py:obj:`~fourier_toolkit.typing.ArrayRC`)
-used throughout the API denote placeholders for (NumPy, CuPy) arrays of specific numeric types: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.
+used throughout the API denote placeholders for any array object compliant with the `Python array API standard <https://data-apis.org/array-api/latest/>`_: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.
 
 
 Array Types
 -----------
 
 .. automodule:: fourier_toolkit.typing
-   :members:
+   :members: ArrayR, ArrayC, ArrayRC
    :no-value:
 
 
