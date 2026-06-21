@@ -49,12 +49,20 @@ def array_backend_cases():
         torch = importlib.import_module("torch")
         torch_xp = aac.array_namespace(torch.asarray([0.0]))
         yield pytest.param(
-            ArrayBackend("torch-cpu", torch_xp, "cpu"),
+            ArrayBackend(
+                name="torch-cpu",
+                xp=torch_xp,
+                device="cpu",
+            ),
             id="torch-cpu",
         )
         if torch.cuda.is_available():
             yield pytest.param(
-                ArrayBackend("torch-cuda", torch_xp, "cuda"),
+                ArrayBackend(
+                    name="torch-cuda",
+                    xp=torch_xp,
+                    device="cuda",
+                ),
                 id="torch-cuda",
             )
     except ModuleNotFoundError:
