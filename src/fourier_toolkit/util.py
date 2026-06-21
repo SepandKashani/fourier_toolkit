@@ -174,10 +174,10 @@ class UniformSpec:
 
     def __init__(
         self,
+        *,
         start=None,
         step=None,
         num=None,
-        *,
         center=None,
         span=None,
     ):

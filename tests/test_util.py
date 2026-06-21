@@ -203,11 +203,11 @@ class TestUniformSpec:
 
     @parametrize_step_sign
     def test_scalar_input(self, step_sign):
-        uspec_1 = ftku.UniformSpec(1, step_sign * 0.5, 5)
-        uspec_2 = ftku.UniformSpec((1,), step_sign * 0.5, (5,))
+        uspec_1 = ftku.UniformSpec(start=1, step=step_sign * 0.5, num=5)
+        uspec_2 = ftku.UniformSpec(start=(1,), step=step_sign * 0.5, num=(5,))
         assert uspec_1 == uspec_2
 
-        uspec_3 = ftku.UniformSpec(1, (0.5, step_sign * 0.25), 3)
+        uspec_3 = ftku.UniformSpec(start=1, step=(0.5, step_sign * 0.25), num=3)
         assert uspec_3.start == (1, 1)
         assert uspec_3.step == (0.5, step_sign * 0.25)
         assert uspec_3.num == (3, 3)

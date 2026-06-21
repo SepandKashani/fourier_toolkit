@@ -229,8 +229,8 @@ class TestU2USpecialCase(TestU2U):
         dx *= rng.choice([-1, +1], space_dim)
         dv *= rng.choice([-1, +1], space_dim)
 
-        x_spec = ftku.UniformSpec(x0, dx, M)
-        v_spec = ftku.UniformSpec(v0, dv, N)
+        x_spec = ftku.UniformSpec(start=x0, step=dx, num=M)
+        v_spec = ftku.UniformSpec(start=v0, step=dv, num=N)
         return x_spec, v_spec
 
     @pytest.fixture
@@ -265,8 +265,8 @@ class TestU2UMixCase(TestU2U):
             dv[ax] = rng.uniform(5, 5.5)
             N[ax] += rng.integers(2)  # randomly increase length, or not
 
-        x_spec = ftku.UniformSpec(x0, dx, M)
-        v_spec = ftku.UniformSpec(v0, dv, N)
+        x_spec = ftku.UniformSpec(start=x0, step=dx, num=M)
+        v_spec = ftku.UniformSpec(start=v0, step=dv, num=N)
         return x_spec, v_spec
 
     @pytest.fixture
