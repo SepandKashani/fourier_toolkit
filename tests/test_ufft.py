@@ -173,6 +173,65 @@ class TestU2U:
         assert helper.similar(z, z_gt)
         assert_areclose(z, z_gt, x_spec.ndim)
 
+    @parametrize_real
+    @parametrize_stack
+    def test_jit(
+        self,
+        array_backend,
+        x_spec,
+        v_spec,
+        isign,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can JIT u2u() calls.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
+        fdtype = translate.to_float()
+        cdtype = translate.to_complex()
+
+        # Generate u2u() input
+        rng = np.random.default_rng()
+        if real:
+            w = rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(fdtype)
+        else:
+            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+            w += rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(cdtype)
+
+        # Generate u2u() output ground-truth
+        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
+        A = self._generate_A(x_spec, v_spec, isign).astype(cdtype)
+        for idx in np.ndindex(stack_shape):
+            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
+
+        # Test u2u() compliance
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+
+        if is_jax:
+            import jax
+
+            u2u_jit = jax.jit(u2u, static_argnums=(0, 1, 3))
+        elif is_torch:
+            import torch
+
+            u2u_jit = torch.compile(u2u)
+            # we don't use any torch.compile() options on purpose: user can tune those if/when needed. (If JAX tests work, then we expect the same of PyTorch.)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        z = u2u_jit(x_spec, v_spec, w, isign)
+        assert z.shape == z_gt.shape
+        assert helper.similar(z, z_gt)
+        assert_areclose(z, z_gt, x_spec.ndim)
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
