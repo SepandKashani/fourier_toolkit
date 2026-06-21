@@ -3,7 +3,6 @@ import math
 import warnings
 from collections import namedtuple
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
 from typing import NamedTuple, Optional
 
 import array_api_compat as aac
@@ -153,7 +152,6 @@ class TranslateDType:
         return self._name2dtype[name]
 
 
-@dataclass
 class UniformSpec:
     r"""
     Multi-dimensional uniform mesh specifier.
@@ -168,9 +166,7 @@ class UniformSpec:
 
     """
 
-    start: tuple[float]
-    step: tuple[float]
-    num: tuple[int]
+    __slots__ = ("_start", "_step", "_num")
 
     def __init__(
         self,
@@ -214,9 +210,9 @@ class UniformSpec:
             assert all(n >= 1 for n in num)
 
             D = max(map(len, (start, step, num)))
-            self.start = broadcast_seq(start, D)
-            self.step = broadcast_seq(step, D)
-            self.num = broadcast_seq(num, D)
+            self._start = broadcast_seq(start, D)
+            self._step = broadcast_seq(step, D)
+            self._num = broadcast_seq(num, D)
         elif all(map(provided, (center, span, num))):
             center = broadcast_seq(center, None, float)
             span = broadcast_seq(span, None, float)
@@ -227,18 +223,30 @@ class UniformSpec:
             D = max(map(len, (center, span, num)))
             center = broadcast_seq(center, D)
             span = broadcast_seq(span, D)
-            self.num = broadcast_seq(num, D)
-            self.start = tuple(c - 0.5 * s for (c, s) in zip(center, span))
-            self.step = tuple(s / (n - 1) for (s, n) in zip(span, self.num))
+            self._num = broadcast_seq(num, D)
+            self._start = tuple(c - 0.5 * s for (c, s) in zip(center, span))
+            self._step = tuple(s / (n - 1) for (s, n) in zip(span, self._num))
         else:
             raise ValueError
+
+    @property
+    def start(self) -> tuple[float, ...]:
+        return self._start
+
+    @property
+    def step(self) -> tuple[float, ...]:
+        return self._step
+
+    @property
+    def num(self) -> tuple[int, ...]:
+        return self._num
 
     @property
     def ndim(self) -> int:
         return len(self.start)
 
     @property
-    def span(self) -> tuple[float]:
+    def span(self) -> tuple[float, ...]:
         _span = [None] * self.ndim
         for d in range(self.ndim):
             dx = self.step[d]
@@ -248,7 +256,7 @@ class UniformSpec:
         return tuple(_span)
 
     @property
-    def center(self) -> tuple[float]:
+    def center(self) -> tuple[float, ...]:
         _center = [None] * self.ndim
         for d in range(self.ndim):
             x0 = self.start[d]
@@ -257,6 +265,20 @@ class UniformSpec:
 
             _center[d] = x0 + 0.5 * dx * (nx - 1)
         return tuple(_center)
+
+    def __eq__(self, other):
+        if not isinstance(other, UniformSpec):
+            return NotImplemented
+        return (self.start, self.step, self.num) == (other.start, other.step, other.num)
+
+    def __hash__(self):
+        return hash((self.start, self.step, self.num))
+
+    def __repr__(self):
+        return (
+            f"{type(self).__name__}("
+            f"start={self.start}, step={self.step}, num={self.num})"
+        )
 
     def meshgrid(
         self,
