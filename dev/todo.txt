@@ -1,7 +1,38 @@
 - [ufft.u2u] jax/torch (JIT, JVP/VJP)
-  array_api_extra has helpers for JIT-testing. Scipy array-api page uses them.
+  + [ ] torch.compile() bugs?
+    Test does not fail, but emits warnings. These are the relevant ones.
 
-  tag v0.3
+    ```
+    tests/test_ufft.py::TestU2U::test_jit[torch-cpu-1-1-float32-stack_shape0-True]
+      /home/skashani/Repositories/fourier_toolkit/.venv/lib/python3.14/site-packages/torch/_dynamo/variables/functions.py:2311: UserWarning: Dynamo do
+    es not know how to trace the builtin `cmath.exp.` This function is either a Python builtin (e.g. _warnings.warn) or a third-party C/C++ Python ext
+    ension (perhaps created with pybind).
+      If it is a Python builtin, please file an issue on GitHub so the PyTorch team can add support for it and see the next case for a workaround.
+      If it is a third-party C/C++ Python extension, please either wrap it into a PyTorch-understood custom operator (see https://pytorch.org/tutorial
+    s/advanced/custom_ops_landing_page.html for more details) or, if it is traceable, use `torch.compiler.allow_in_graph`.
+        torch._dynamo.utils.warn_once(explanation + "\n" + "\n".join(hints))
+
+    tests/test_ufft.py::TestU2U::test_jit[torch-cpu-1-1-float32-stack_shape0-True]
+      /home/skashani/Repositories/fourier_toolkit/.venv/lib/python3.14/site-packages/torch/_inductor/lowering.py:2412: UserWarning: Torchinductor does
+    not support code generation for complex operators. Performance may be worse than eager.
+        warnings.warn(
+    ```
+
+    It is a known problem for several years. As long as output is correct wrt non-jit (which it is), can we accept it as-is?
+    Maybe we can replace cmap.exp() w/ sin/cos as workaround?
+
+  + [ ] torch.func.[jvp,vjp,vmap] work
+  + [ ] jax.jvp,vjp,vmap work
+
+  + [ ] Add Jax/PyTorch notes to u2u()
+    - PyTorch cmath issues
+    - how to jit u2u w/ jax/pytorch: static args, params, etc.
+      test suite usage is indicative of how to do things.
+    - what vmap does since u2u() supports leading batching already.
+    - what vjp/vjp compute in each backend. (jax/pytorch differ)
+
+  + [ ] tag v0.3
+
 
 
 - nufft.py, test_nufft.py
