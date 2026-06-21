@@ -12,10 +12,16 @@ from fourier_toolkit.ufft import _CZT
 from . import conftest as ct
 from . import helper
 
+parametrize_real = pytest.mark.parametrize("real", [True, False])
+parametrize_stack = pytest.mark.parametrize(
+    "stack_shape",
+    [(), (1,), (5, 3, 4)],
+)
+
 
 class TestCZT:
-    @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
+    @parametrize_real
+    @parametrize_stack
     def test_apply(self, array_backend, op, dtype, real, stack_shape):
         # output value matches ground truth.
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
@@ -126,8 +132,8 @@ class TestCZT:
 class TestU2U:
     # General U2U case where (x_spec, v_spec) are arbitrary.
 
-    @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
+    @parametrize_real
+    @parametrize_stack
     def test_apply(
         self,
         array_backend,
