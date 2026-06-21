@@ -279,6 +279,15 @@ class TestU2UMixCase(TestU2U):
 
 
 def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
+    """
+    Assess (soft) closeness of (`VAL`, `GT`).
+
+    [Context] array backends use different math libraries. This makes `allclose()` ill-suited to compare (`VAL`, `GT`) when the code paths to generate them differ.
+
+    `assert_areclose()` therefore uses a lax-er notion of closeness:
+    ``areclose(VAL,GT) == allclose(VAL,GT) || rel_L2_close(VAL,GT)``
+    """
+
     if helper.allclose(VAL, GT, GT.dtype):
         assert True
     else:
