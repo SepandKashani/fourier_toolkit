@@ -1,3 +1,4 @@
+import functools
 import numpy as np
 import pytest
 import scipy.signal as sps
@@ -251,6 +252,60 @@ class TestU2U:
                     xp.moveaxis(_z_gt, idx_out, 0),
                     v_spec.ndim,
                 )
+
+    @parametrize_real
+    @parametrize_stack
+    def test_jvp(
+        self,
+        array_backend,
+        x_spec,
+        v_spec,
+        isign,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can JVP u2u() calls.
+
+        # Since u2u() is linear in `w` -> jvp(u2u,w,v) == u2u(v) [w does not matter]
+
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        primal, primal_out_gt = self._generate_io(
+            x_spec, v_spec, isign, dtype, real, stack_shape
+        )
+
+        tangent, tangent_out_gt = self._generate_io(
+            x_spec, v_spec, isign, dtype, real, stack_shape
+        )
+
+        # Test u2u() compliance
+        primal = ct.to_backend(primal, array_backend)
+        primal_out_gt = ct.to_backend(primal_out_gt, array_backend)
+        tangent = ct.to_backend(tangent, array_backend)
+        tangent_out_gt = ct.to_backend(tangent_out_gt, array_backend)
+
+        _u2u = functools.partial(u2u, x_spec, v_spec, isign=isign)
+        if is_jax:
+            import jax
+
+            primal_out, tangent_out = jax.jvp(_u2u, (primal,), (tangent,))
+        elif is_torch:
+            import torch
+
+            primal_out, tangent_out = torch.func.jvp(_u2u, (primal,), (tangent,))
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        assert primal_out.shape == primal_out_gt.shape
+        assert helper.similar(primal_out, primal_out_gt)
+        assert_areclose(primal_out, primal_out_gt, v_spec.ndim)
+        assert tangent_out.shape == tangent_out_gt.shape
+        assert helper.similar(tangent_out, tangent_out_gt)
+        assert_areclose(tangent_out, tangent_out_gt, v_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
