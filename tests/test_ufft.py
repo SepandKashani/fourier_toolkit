@@ -196,6 +196,62 @@ class TestU2U:
         assert helper.similar(z, z_gt)
         assert_areclose(z, z_gt, v_spec.ndim)
 
+    @parametrize_real
+    def test_vmap(
+        self,
+        array_backend,
+        x_spec,
+        v_spec,
+        isign,
+        dtype,
+        real,
+    ):
+        # can VMAP u2u() calls.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        stack_size = 7
+        w, z_gt = self._generate_io(
+            x_spec, v_spec, isign, dtype, real, stack_shape=(stack_size,)
+        )
+
+        # Test u2u() compliance
+        xp = array_backend.xp
+        for idx_in in range(1 + x_spec.ndim):
+            for idx_out in range(1 + v_spec.ndim):
+                _w = xp.moveaxis(ct.to_backend(w, array_backend), 0, idx_in)
+                _z_gt = xp.moveaxis(ct.to_backend(z_gt, array_backend), 0, idx_out)
+
+                if is_jax:
+                    import jax
+
+                    u2u_vmap = jax.vmap(
+                        u2u,
+                        in_axes=(None, None, idx_in, None),
+                        out_axes=idx_out,
+                    )
+                elif is_torch:
+                    import torch
+
+                    u2u_vmap = torch.vmap(
+                        u2u,
+                        in_dims=(None, None, idx_in, None),
+                        out_dims=idx_out,
+                    )
+                else:
+                    raise ValueError("Unknown case encountered.")
+
+                z = u2u_vmap(x_spec, v_spec, _w, isign)
+                assert z.shape == _z_gt.shape
+                assert helper.similar(z, _z_gt)
+                assert_areclose(  # permutations needed to have core-dims at tail
+                    xp.moveaxis(z, idx_out, 0),
+                    xp.moveaxis(_z_gt, idx_out, 0),
+                    v_spec.ndim,
+                )
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
