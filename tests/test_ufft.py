@@ -145,25 +145,7 @@ class TestU2U:
         stack_shape,
     ):
         # output value matches ground truth.
-        translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        # Generate u2u() input
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
-            w += rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(cdtype)
-
-        # Generate u2u() output ground-truth
-        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
-        A = self._generate_A(x_spec, v_spec, isign).astype(cdtype)
-        for idx in np.ndindex(stack_shape):
-            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
+        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
 
         # Test u2u() compliance
         w = ct.to_backend(w, array_backend)
@@ -191,25 +173,7 @@ class TestU2U:
         if not (is_jax or is_torch):
             pytest.skip()
 
-        translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        # Generate u2u() input
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
-            w += rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(cdtype)
-
-        # Generate u2u() output ground-truth
-        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
-        A = self._generate_A(x_spec, v_spec, isign).astype(cdtype)
-        for idx in np.ndindex(stack_shape):
-            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
+        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
 
         # Test u2u() compliance
         w = ct.to_backend(w, array_backend)
@@ -277,6 +241,39 @@ class TestU2U:
         phase = np.tensordot(v_n, x_m, axes=[[-1], [-1]])  # (N1,...,ND,M1,...,MD)
         A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
+
+    @classmethod
+    def _generate_io(
+        cls,
+        x_spec: ftku.UniformSpec,
+        v_spec: ftku.UniformSpec,
+        isign: int,
+        dtype: np.dtype,
+        real: bool,
+        stack_shape: tuple[int, ...],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        # (w, z_gt) arrays used for tests
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
+        fdtype = translate.to_float()
+        cdtype = translate.to_complex()
+
+        # Generate u2u() input
+        rng = np.random.default_rng()
+        if real:
+            w = rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(fdtype)
+        else:
+            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+            w += rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(cdtype)
+
+        # Generate u2u() output ground-truth
+        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
+        A = cls._generate_A(x_spec, v_spec, isign).astype(cdtype)
+        for idx in np.ndindex(stack_shape):
+            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N1,...,ND)
+
+        return (w, z_gt)
 
 
 class TestU2USpecialCase(TestU2U):
