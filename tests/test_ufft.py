@@ -307,6 +307,14 @@ class TestU2U:
         assert helper.similar(tangent_out, tangent_out_gt)
         assert_areclose(tangent_out, tangent_out_gt, v_spec.ndim)
 
+    # Do we test vjp()? -> Not explicitly.
+    #
+    # Rationale:
+    # - JAX/PyTorch have different definitions for vjp(), which makes testing cumbersome.
+    #   That being said, it is rare to call vjp(u2u) manually. Rather some larger backward-pass logic would call it instead.
+    # - In JAX (and PyTorch too?), vjp() is implemented by transposing jvp().
+    #   Therefore, if jvp(u2u) is correct, then vjp(u2u) would be too.
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
