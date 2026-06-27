@@ -153,7 +153,7 @@ class TestU2U:
         z = u2u(x_spec, v_spec, w, isign)
         assert z.shape == z_gt.shape
         assert helper.similar(z, z_gt)
-        assert_areclose(z, z_gt, x_spec.ndim)
+        assert_areclose(z, z_gt, v_spec.ndim)
 
     @parametrize_real
     @parametrize_stack
@@ -194,7 +194,7 @@ class TestU2U:
         z = u2u_jit(x_spec, v_spec, w, isign)
         assert z.shape == z_gt.shape
         assert helper.similar(z, z_gt)
-        assert_areclose(z, z_gt, x_spec.ndim)
+        assert_areclose(z, z_gt, v_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
