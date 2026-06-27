@@ -363,6 +363,10 @@ class TestU2USpecialCase(TestU2U):
 class TestU2UMixCase(TestU2U):
     # Special U2U case where some (x_spec, v_spec) axes permit single-FFT algorithm, and others require CZT algorithm.
 
+    @pytest.fixture(params=[2, 3])
+    def space_dim(self, request) -> int:
+        return request.param
+
     @pytest.fixture
     def xv_spec(self, space_dim) -> tuple[ftku.UniformSpec]:
         rng = np.random.default_rng()
