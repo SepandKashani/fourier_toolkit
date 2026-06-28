@@ -1,35 +1,20 @@
-- [ufft.u2u] jax/torch (JIT, JVP/VJP)
-  + [ ] jax.jvp,vjp work
-  + [ ] torch.func.[jvp,vjp] work
-
+- ufft.py
   + [ ] Investigate torch.vmap(u2u) issue
     When u2u() falls on the FFT case (mix/special-case), then test fails [err ~ 1]
     occurs for D=1,2,3 and all precisions
     fails for all in/out_dims
     understand which op inside u2u() is source of vmap fail: fft(), czt(), hadamard_outer(), other?
 
-  + [ ] Add Jax/PyTorch notes to u2u()
-    - PyTorch cmath issues
-    - how to jit u2u w/ jax/pytorch: static args, params, etc.
-      test suite usage is indicative of how to do things.
-    - what vmap does since u2u() supports leading batching already.
-    - what vjp/vjp compute in each backend. (jax/pytorch differ)
-
-  + [ ] tag v0.3
-
-
 
 - nufft.py, test_nufft.py
-  * make optional dependency.
-  * Array API compliance
-  * Add JAX support via buffer_callback() [or use jax-finufft?]
-    + background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
-    + buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
-  * Add PyTorch support via [built-in feature] or [external package?]
-
-  derivatives wrt (x/v, w) should work
-
-  tag v0.4 -> v1.0 after extensive use in optikal
+  + [ ] Array API compliance
+  + [ ] Add JAX support via buffer_callback() [or use jax-finufft?]
+    * background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
+    * buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
+  + [ ] Add PyTorch support via [built-in feature] or [external package?]
+  + [ ] jvp() wrt (x/v, w) should work
+  + [ ] Tweak nu2u() to use nufft1 algorithm?
+  + [ ] tag v0.4 -> v1.0 after extensive use in optikal
 
 
 - Add MATLAB interface
