@@ -61,8 +61,15 @@ def u2u(
 
     Notes
     -----
-    :math:`\tuu` transforms for arbitrary (x_spec,v_spec) can be implemented using the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
-    This implementation chooses the (FFT, CZT) per axis to maximize efficiency.
+    * :math:`\tuu` transforms for arbitrary (x_spec,v_spec) can be implemented using
+      the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
+      This implementation chooses the (FFT, CZT) per axis to maximize efficiency.
+
+    * Backend-specific notes:
+
+      - [PyTorch] :py:func:`~torch.compile` has limited support for complex-valued operators; do not expect huge performance gains at the moment.
+
+      - [PyTorch] :py:func:`~fourier_toolkit.u2u` supports batching via :py:func:`~torch.vmap`, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.
     """
     assert (isign := int(isign)) in (-1, +1)
 
