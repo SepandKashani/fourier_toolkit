@@ -38,4 +38,5 @@ Helpers
 
 .. autoclass:: fourier_toolkit.UniformSpec
    :members:
+   :undoc-members: start, step, num, center, span, ndim
    :special-members: __getitem__
