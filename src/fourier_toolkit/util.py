@@ -347,33 +347,33 @@ class UniformSpec:
         x = xp.stack(mesh, axis=-1)
         return x
 
-    def __getitem__(self, idx: tuple[int]) -> tuple[float]:
-        """
+    def __getitem__(self, m: tuple[int]) -> tuple[float]:
+        r"""
         Extract a mesh coordinate from its index.
 
         Parameters
         ----------
-        idx: tuple[int]
+        m: tuple[int]
 
         Returns
         -------
-        m: tuple[float]
-            Mesh coordinate at `idx`.
+        x_m: tuple[float]
+            Mesh coordinate :math:`\bbx_{\bbm}`.
 
         Notes
         -----
         Similar to Python sequences, negative indices can be used to index from the end of an axis.
         """
-        idx = broadcast_seq(idx, None, int)
-        assert len(idx) == self.ndim
+        m = broadcast_seq(m, None, int)
+        assert len(m) == self.ndim
 
-        m = [None] * self.ndim
+        x_m = [None] * self.ndim
         for d in range(self.ndim):
             x0 = self.start[d]
             dx = self.step[d]
             nx = self.num[d]
-            assert -nx <= idx[d] < nx
+            assert -nx <= m[d] < nx
 
-            _idx = idx[d] % nx
-            m[d] = x0 + _idx * dx
-        return tuple(m)
+            _idx = m[d] % nx
+            x_m[d] = x0 + _idx * dx
+        return tuple(x_m)
