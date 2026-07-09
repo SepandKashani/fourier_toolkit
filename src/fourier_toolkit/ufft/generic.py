@@ -1,6 +1,5 @@
 import cmath
 import math
-from typing import Literal
 
 import array_api_compat as aac
 import array_api_extra as aae
@@ -10,69 +9,15 @@ import fourier_toolkit.linalg as ftkl
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-
-__all__ = [
-    "u2u",
-]
+from . import ExponentSign
 
 
-ExponentSign = Literal[-1, +1]
-
-
-def u2u(
+def _u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
     w: ftkt.ArrayRC,
     isign: ExponentSign,
 ) -> ftkt.ArrayC:
-    r"""
-    Multi-dimensional Uniform-to-Uniform Fourier Transform. (:math:`\tuu`)
-
-    Computes the Fourier sum
-
-    .. math::
-
-       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
-
-    where :math:`(\bbx_{m}, \bbv_{n})` lie on the regular lattice
-
-    .. math::
-
-       \bbx_{\bbm} &= \bbx_{0} + \Delta_{\bbx} \odot \bbm, \qquad [\bbm]_{d} \in \discreteRange{0}{M_{d}-1}, \\
-       \bbv_{\bbn} &= \bbv_{0} + \Delta_{\bbv} \odot \bbn, \qquad [\bbn]_{d} \in \discreteRange{0}{N_{d}-1},
-
-    with :math:`M = \prod_{d} M_{d}` and :math:`N = \prod_{d} N_{d}`.
-
-    Parameters
-    ----------
-    x_spec: UniformSpec
-        :math:`\bbx_{m}` lattice.
-    v_spec: UniformSpec
-        :math:`\bbv_{n}` lattice.
-    isign: +1, -1
-        Exponent sign.
-    w: ArrayRC
-        (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
-
-    Returns
-    -------
-    z: ArrayC
-        (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
-
-    Notes
-    -----
-    * :math:`\tuu` transforms for arbitrary (x_spec,v_spec) can be implemented using
-      the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
-      This implementation chooses the (FFT, CZT) per axis to maximize efficiency.
-
-    * Backend-specific notes:
-
-      - [PyTorch] :py:func:`~torch.compile` has limited support for complex-valued operators; do not expect huge performance gains at the moment.
-
-      - [PyTorch] :py:func:`~fourier_toolkit.u2u` supports batching via :py:func:`~torch.vmap`, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.
-    """
-    assert (isign := int(isign)) in (-1, +1)
-
     op = _U2U(x_spec=x_spec, v_spec=v_spec)
     if isign == -1:
         z = op.apply(w)
@@ -80,156 +25,6 @@ def u2u(
         xp = aac.array_namespace(w)
         z = xp.conj(op.apply(xp.conj(w)))
     return z
-
-
-# Helper routines (internal) ---------------------------------------------------
-
-
-class _CZT:
-    r"""
-    Multi-dimensional Chirp Z-Transform (CZT) :math:`C: \bC^{N_{1} \times\cdots\times N_{D}} \to
-    \bC^{M_{1} \times\cdots\times M_{D}}`.
-
-    The 1D CZT of parameters :math:`(A, W, M)` is defined as:
-
-    .. math::
-
-       \bby[m]
-       =
-       (C \, \bbx)[m]
-       =
-       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nm},
-
-    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`m \in \discreteRange{0}{M-1}`.
-
-    A D-dimensional CZT corresponds to taking a 1D CZT along each transform axis.
-
-    For stability reasons, this implementation assumes :math:`\abs{A} = \abs{W} = 1`.
-    """
-
-    def __init__(
-        self,
-        N: tuple[int],
-        M: tuple[int],
-        A: tuple[complex],
-        W: tuple[complex],
-    ):
-        r"""
-        Parameters
-        ----------
-        N: tuple[int]
-            (N1,...,ND) dimensions of the input :math:`\bbx`.
-        M: tuple[int]
-            (M1,...,MD) dimensions of the output :math:`\bby = (C \, \bbx)`.
-        A: tuple[complex]
-            (D,) circular offsets.
-        W: tuple[complex]
-            (D,) circular spacings between transform points.
-        """
-        M = ftku.broadcast_seq(M, None, int)
-        D = len(M)
-        N = ftku.broadcast_seq(N, D, int)
-        A = ftku.broadcast_seq(A, D, complex)
-        W = ftku.broadcast_seq(W, D, complex)
-        assert all(m > 0 for m in M)
-        assert all(n > 0 for n in N)
-        assert all(math.isclose(abs(a), 1) for a in A)
-        assert all(math.isclose(abs(w), 1) for w in W)
-
-        self.cfg = ftku.as_namedtuple(
-            M=M,
-            D=D,
-            N=N,
-            A=A,
-            W=W,
-            L=tuple(ftku.next_fast_len(n + m - 1) for (n, m) in zip(N, M)),
-        )
-
-    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
-        r"""
-        Compute :math:`\bby = C \bbx`.
-
-        Parameters
-        ----------
-        x: ArrayRC
-            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
-
-        Returns
-        -------
-        y: ArrayC
-            (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
-        """
-        xp = aac.array_namespace(x)
-
-        AWk2, FWk2, Wk2, extract = self._mod_params(x)
-        pad_width = [(0, 0)] * (x.ndim - self.cfg.D)  # stack dimensions
-        pad_width += [  # core dimensions
-            (0, l - n)
-            for (l, n) in zip(self.cfg.L, self.cfg.N)  # noqa: E741
-        ]
-
-        _x = ftkl.hadamard_outer(x, *AWk2)
-        _x = aae.pad(_x, pad_width)
-        _x = xp.fft.fftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
-        _x = ftkl.hadamard_outer(_x, *FWk2)
-        _x = xp.fft.ifftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
-        y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
-        return y
-
-    # Helper routines (internal) ----------------------------------------------
-    def _mod_params(self, x: ftkt.ArrayRC):
-        """
-        Parameters
-        ----------
-        x: ArrayRC
-
-        Returns
-        -------
-        AWk2: ArrayC
-            (N1,),...,(ND,) pre-FFT modulation vectors.
-        FWk2: ArrayC
-            (L1,),...,(LD,) FFT of convolution filters.
-        Wk2: ArrayC
-            (M1,),...,(MD,) post-FFT modulation vectors.
-        extract: list[slice]
-            (slice1,...,sliceD) FFT interval to extract.
-        """
-        xp = aac.array_namespace(x)
-        translate = ftku.TranslateDType(x)
-        fdtype = translate.to_float()
-
-        # Build modulation vectors (Wk2, AWk2, FWk2).
-        Wk2 = [None] * self.cfg.D
-        AWk2 = [None] * self.cfg.D
-        FWk2 = [None] * self.cfg.D
-        for d in range(self.cfg.D):
-            A = self.cfg.A[d]
-            W = self.cfg.W[d]
-            N = self.cfg.N[d]
-            M = self.cfg.M[d]
-            L = self.cfg.L[d]
-
-            k = xp.arange(max(M, N), dtype=fdtype, device=_get_device(x))
-            _Wk2 = W ** ((k**2) / 2)
-            _AWk2 = (A ** -k[:N]) * _Wk2[:N]
-            _FWk2 = xp.fft.fft(
-                xp.conj(xp.concat([xp.flip(_Wk2[1:N]), _Wk2[:M]])),
-                n=L,
-            )
-            _Wk2 = _Wk2[:M]
-
-            Wk2[d] = _Wk2
-            AWk2[d] = _AWk2
-            FWk2[d] = _FWk2
-
-        # Build (extract,)
-        extract = [slice(None)] * self.cfg.D
-        for d in range(self.cfg.D):
-            N = self.cfg.N[d]
-            M = self.cfg.M[d]
-            extract[d] = slice(N - 1, N + M - 1)
-
-        return AWk2, FWk2, Wk2, extract
 
 
 class _U2U:
@@ -460,6 +255,153 @@ class _U2U:
             B[d] = _B
 
         return ax_czt, czt, B, ax_iczt
+
+
+class _CZT:
+    r"""
+    Multi-dimensional Chirp Z-Transform (CZT) :math:`C: \bC^{N_{1} \times\cdots\times N_{D}} \to
+    \bC^{M_{1} \times\cdots\times M_{D}}`.
+
+    The 1D CZT of parameters :math:`(A, W, M)` is defined as:
+
+    .. math::
+
+       \bby[m]
+       =
+       (C \, \bbx)[m]
+       =
+       \sum_{n=0}^{N-1} \bbx[n] A^{-n} W^{nm},
+
+    where :math:`\bbx \in \bC^{N}`, :math:`(A, W) \in \bC`, and :math:`m \in \discreteRange{0}{M-1}`.
+
+    A D-dimensional CZT corresponds to taking a 1D CZT along each transform axis.
+
+    For stability reasons, this implementation assumes :math:`\abs{A} = \abs{W} = 1`.
+    """
+
+    def __init__(
+        self,
+        N: tuple[int],
+        M: tuple[int],
+        A: tuple[complex],
+        W: tuple[complex],
+    ):
+        r"""
+        Parameters
+        ----------
+        N: tuple[int]
+            (N1,...,ND) dimensions of the input :math:`\bbx`.
+        M: tuple[int]
+            (M1,...,MD) dimensions of the output :math:`\bby = (C \, \bbx)`.
+        A: tuple[complex]
+            (D,) circular offsets.
+        W: tuple[complex]
+            (D,) circular spacings between transform points.
+        """
+        M = ftku.broadcast_seq(M, None, int)
+        D = len(M)
+        N = ftku.broadcast_seq(N, D, int)
+        A = ftku.broadcast_seq(A, D, complex)
+        W = ftku.broadcast_seq(W, D, complex)
+        assert all(m > 0 for m in M)
+        assert all(n > 0 for n in N)
+        assert all(math.isclose(abs(a), 1) for a in A)
+        assert all(math.isclose(abs(w), 1) for w in W)
+
+        self.cfg = ftku.as_namedtuple(
+            M=M,
+            D=D,
+            N=N,
+            A=A,
+            W=W,
+            L=tuple(ftku.next_fast_len(n + m - 1) for (n, m) in zip(N, M)),
+        )
+
+    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
+        r"""
+        Compute :math:`\bby = C \bbx`.
+
+        Parameters
+        ----------
+        x: ArrayRC
+            (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
+
+        Returns
+        -------
+        y: ArrayC
+            (..., M1,...,MD) output :math:`\bby \in \bC^{M_{1} \times\cdots\times M_{D}}`.
+        """
+        xp = aac.array_namespace(x)
+
+        AWk2, FWk2, Wk2, extract = self._mod_params(x)
+        pad_width = [(0, 0)] * (x.ndim - self.cfg.D)  # stack dimensions
+        pad_width += [  # core dimensions
+            (0, l - n)
+            for (l, n) in zip(self.cfg.L, self.cfg.N)  # noqa: E741
+        ]
+
+        _x = ftkl.hadamard_outer(x, *AWk2)
+        _x = aae.pad(_x, pad_width)
+        _x = xp.fft.fftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
+        _x = ftkl.hadamard_outer(_x, *FWk2)
+        _x = xp.fft.ifftn(_x, axes=tuple(range(-self.cfg.D, 0)), norm="backward")
+        y = ftkl.hadamard_outer(_x[..., *extract], *Wk2)
+        return y
+
+    # Helper routines (internal) ----------------------------------------------
+    def _mod_params(self, x: ftkt.ArrayRC):
+        """
+        Parameters
+        ----------
+        x: ArrayRC
+
+        Returns
+        -------
+        AWk2: ArrayC
+            (N1,),...,(ND,) pre-FFT modulation vectors.
+        FWk2: ArrayC
+            (L1,),...,(LD,) FFT of convolution filters.
+        Wk2: ArrayC
+            (M1,),...,(MD,) post-FFT modulation vectors.
+        extract: list[slice]
+            (slice1,...,sliceD) FFT interval to extract.
+        """
+        xp = aac.array_namespace(x)
+        translate = ftku.TranslateDType(x)
+        fdtype = translate.to_float()
+
+        # Build modulation vectors (Wk2, AWk2, FWk2).
+        Wk2 = [None] * self.cfg.D
+        AWk2 = [None] * self.cfg.D
+        FWk2 = [None] * self.cfg.D
+        for d in range(self.cfg.D):
+            A = self.cfg.A[d]
+            W = self.cfg.W[d]
+            N = self.cfg.N[d]
+            M = self.cfg.M[d]
+            L = self.cfg.L[d]
+
+            k = xp.arange(max(M, N), dtype=fdtype, device=_get_device(x))
+            _Wk2 = W ** ((k**2) / 2)
+            _AWk2 = (A ** -k[:N]) * _Wk2[:N]
+            _FWk2 = xp.fft.fft(
+                xp.conj(xp.concat([xp.flip(_Wk2[1:N]), _Wk2[:M]])),
+                n=L,
+            )
+            _Wk2 = _Wk2[:M]
+
+            Wk2[d] = _Wk2
+            AWk2[d] = _AWk2
+            FWk2[d] = _FWk2
+
+        # Build (extract,)
+        extract = [slice(None)] * self.cfg.D
+        for d in range(self.cfg.D):
+            N = self.cfg.N[d]
+            M = self.cfg.M[d]
+            extract[d] = slice(N - 1, N + M - 1)
+
+        return AWk2, FWk2, Wk2, extract
 
 
 def _get_device(x: ftkt.Array):

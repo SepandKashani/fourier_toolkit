@@ -8,7 +8,7 @@ import array_api_compat as aac
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import u2u  # test as exposed to user
-from fourier_toolkit.ufft import _CZT
+from fourier_toolkit.ufft.generic import _CZT
 
 from . import conftest as ct
 from . import helper
