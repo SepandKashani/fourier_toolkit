@@ -43,10 +43,10 @@ def u2u(
         :math:`\bbx_{m}` lattice.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice.
-    isign: +1, -1
-        Exponent sign.
     w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
+    isign: +1, -1
+        Exponent sign.
 
     Returns
     -------
