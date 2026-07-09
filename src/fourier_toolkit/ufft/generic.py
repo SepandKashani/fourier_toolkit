@@ -15,9 +15,9 @@ from . import ExponentSign
 def _u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayRC,  # (..., M1,...,MD)
     isign: ExponentSign,
-) -> ftkt.ArrayC:
+) -> ftkt.ArrayC:  # (..., N1,...,ND)
     op = _U2U(x_spec=x_spec, v_spec=v_spec)
     if isign == -1:
         z = op.apply(w)
