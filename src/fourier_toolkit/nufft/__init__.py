@@ -1,8 +1,7 @@
 import math
 from typing import Literal
 
-import finufft
-import numpy as np
+import array_api_compat as aac
 
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
@@ -59,30 +58,37 @@ def nu2nu(
 
     Notes
     -----
-    (x,v,w) must have the same numerical precision:
+    * (x,v) must share the same (backend,dtype,device).
 
-    - (x,v) float32, (w,) complex64
-    - (x,v) float64, (w,) complex128
+    * (x,v,w) must have the same numerical precision:
+
+      - (x,v) float32, (w,) complex64
+      - (x,v) float64, (w,) complex128
     """
     x = _canonicalize_knots(x)
     v = _canonicalize_knots(v)
-    assert type(x) is type(v)  # common backend
-    assert x.dtype == v.dtype  # common precision
+    assert ftku.similar(x, v)
     M, Dx = x.shape
     N, Dv = v.shape
     assert (D := Dx) == Dv
     assert D in (1, 2, 3)  # FINUFFT limitation
 
+    same_backend = aac.array_namespace(x) == aac.array_namespace(w)
+    same_device = x.device == w.device
+    fdtype = ftku.TranslateDType(w).to_float()
+    same_dtype = x.dtype == fdtype
+    assert all([same_backend, same_device, same_dtype])
     w, sh = _canonicalize_weights(w, M)
-    assert type(x) is type(w)  # common backend
-    fdtype = ftku.TranslateDType(w.dtype).to_float()
-    assert fdtype == x.dtype  # common precision
 
     assert 0 < (eps := float(eps)) < 1
     assert (isign := int(isign)) in (-1, +1)
-    plan = _create_plan(x, v, w, isign, eps, **kwargs)
 
-    z = plan.execute(w).reshape((*sh, N))
+    if aac.is_array_api_obj(w):
+        from . import generic as namespace
+    else:
+        raise NotImplementedError
+
+    z = namespace._nu2nu(x, v, w, isign, eps, **kwargs)
     return z
 
 
@@ -126,7 +132,7 @@ def nu2u(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
     kwargs: dict
-        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.
+        Extra parameters for :py:class:`finufft.Plan`.
         (For advanced users only.)
 
     Returns
@@ -136,36 +142,14 @@ def nu2u(
 
     Notes
     -----
+    * (x,w) must share the same (backend,device).
+
     * (x,w) must have the same numerical precision:
 
       - (x,) float32, (w,) complex64
       - (x,) float64, (w,) complex128
-
-    * This implementation is a thin shell around an :math:`\tnunu` transform.
-      This is because type-1 NUFFTs impose limits on domain(x, v_spec) that are a hindrance in practice.
-      The price of relying on an :math:`\tnunu` transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.
-      Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.
     """
-    x = _canonicalize_knots(x)
-    M, Dx = x.shape
-    N, Dv = v_spec.num, v_spec.ndim
-    assert (D := Dx) == Dv
-    assert D in (1, 2, 3)  # FINUFFT limitation
-
-    sh = w.shape[:-1]
-    z = nu2nu(
-        x=x,
-        v=np.require(
-            a=v_spec.knots(x).reshape(math.prod(N), D),
-            dtype=x.dtype,
-            like=x,
-        ),
-        w=w,
-        isign=isign,
-        eps=eps,
-        **kwargs,
-    ).reshape((*sh, *N))
-    return z
+    raise NotImplementedError
 
 
 def u2nu(
@@ -208,7 +192,7 @@ def u2nu(
     isign: +1, -1
         Exponent sign.
     kwargs: dict
-        Extra parameters for :py:func:`~fourier_toolkit.nu2nu`.
+        Extra parameters for :py:class:`finufft.Plan`.
         (For advanced users only.)
 
     Returns
@@ -218,36 +202,14 @@ def u2nu(
 
     Notes
     -----
+    * (v,w) must share the same (backend,device).
+
     * (v,w) must have the same numerical precision:
 
       - (v,) float32, (w,) complex64
       - (v,) float64, (w,) complex128
-
-    * This implementation is a thin shell around an :math:`\tnunu` transform.
-      This is because type-2 NUFFTs impose limits on domain(x_spec, v) that are a hindrance in practice.
-      The price of relying on an :math:`\tnunu` transform is an extra interpolation step before the FFT, but its runtime is rarely the bottleneck.
-      Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.
     """
-    M, Dx = x_spec.num, x_spec.ndim
-    v = _canonicalize_knots(v)
-    N, Dv = v.shape
-    assert (D := Dx) == Dv
-    assert D in (1, 2, 3)  # FINUFFT limitation
-
-    sh = w.shape[:-D]
-    z = nu2nu(
-        x=np.require(
-            a=x_spec.knots(v).reshape(math.prod(M), D),
-            dtype=v.dtype,
-            like=v,
-        ),
-        v=v,
-        w=w.reshape((*sh, math.prod(M))),
-        isign=isign,
-        eps=eps,
-        **kwargs,
-    ).reshape((*sh, N))
-    return z
+    raise NotImplementedError
 
 
 # Helper routines (internal) ---------------------------------------------------
@@ -256,7 +218,6 @@ def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
     Transform (x, v) knots to canonical form:
     - shape (M|N, D)
     - real-valued
-    - F-ordered
 
     Parameters
     ----------
@@ -267,15 +228,15 @@ def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
     xv_c: ArrayR
         Canonical form of `xv`.
     """
+    xp = aac.array_namespace(xv)
+
     assert xv.ndim in (1, 2)
     if xv.ndim == 1:
-        xv = xv[:, np.newaxis]
-    _, D = xv.shape
+        xv = xp.reshape(xv, (-1, 1))
 
-    translate = ftku.TranslateDType(xv.dtype)
-    fdtype = translate.to_float()
+    fdtype = ftku.TranslateDType(xv).to_float()
 
-    xv_c = np.require(xv, fdtype, "F", like=xv)
+    xv_c = xp.asarray(xv, dtype=fdtype)
     return xv_c
 
 
@@ -284,7 +245,6 @@ def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
     Transform (w,) weights to canonical form:
     - shape (n_trans, M)
     - complex-valued
-    - C-ordered
 
     Parameters
     ----------
@@ -298,65 +258,16 @@ def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
         Shape to transform the output of `plan.execute()` to.
         This is to respect the input's stack shape (...).
     """
+    xp = aac.array_namespace(w)
+
     *sh, Mw = w.shape
     sh_flat = math.prod(sh)
     assert Mw == M
 
-    translate = ftku.TranslateDType(w.dtype)
-    cdtype = translate.to_complex()
+    cdtype = ftku.TranslateDType(w).to_complex()
 
-    w_c = np.require(w, cdtype, "C", like=w)
-    w_c = w_c.reshape((sh_flat, M))
+    w_c = xp.reshape(
+        xp.asarray(w, dtype=cdtype),
+        (sh_flat, M),
+    )
     return w_c, sh
-
-
-def _create_plan(
-    x: ftkt.ArrayR,
-    v: ftkt.ArrayR,
-    w: ftkt.ArrayC,
-    isign: ExponentSign,
-    eps: float,
-    **kwargs,
-) -> finufft.Plan:
-    r"""
-    Plan a type-3 NUFFT.
-
-    Parameters
-    ----------
-    x: ArrayR
-        (M, D)
-    v: ArrayR
-        (N, D)
-    w: ArrayC
-        (n_trans, M)
-    isign: +1, -1
-    eps: ]0, 1[
-    kwargs: dict
-
-    Returns
-    -------
-    plan: finufft.Plan
-    """
-    _, D = x.shape
-    n_trans, _ = w.shape
-
-    plan = finufft.Plan(
-        nufft_type=3,
-        n_modes_or_dim=D,
-        isign=isign,
-        eps=eps,
-        dtype=w.dtype,
-        n_trans=n_trans,
-        **kwargs,  # let FINUFFT parse them for correctness
-    )
-
-    scale = math.sqrt(2 * math.pi)
-    setpts_kwargs = dict(
-        zip(
-            "xyz"[:D] + "stu"[:D],
-            [*(scale * x.T), *(scale * v.T)],
-        )
-    )
-    plan.setpts(**setpts_kwargs)
-
-    return plan
