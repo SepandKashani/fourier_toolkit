@@ -38,9 +38,9 @@ def nu2nu(
     Parameters
     ----------
     x: ArrayR
-        (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.
+        (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.
     v: ArrayR
-        (N, D) frequencies :math:`\bbv_{n} \in \bR^{D}`.
+        (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.
     w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
@@ -122,9 +122,9 @@ def nu2u(
     Parameters
     ----------
     x: ArrayR
-        (M, D) support points :math:`\bbx_{m} \in \bR^{D}`.
+        (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.
     v_spec: UniformSpec
-        :math:`\bbv_{n}` lattice specifier.
+        :math:`\bbv_{n}` lattice.
     w: ArrayRC
         (..., M) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
@@ -182,9 +182,9 @@ def u2nu(
     Parameters
     ----------
     x_spec: UniformSpec
-        :math:`\bbx_{m}` lattice specifier.
+        :math:`\bbx_{m}` lattice.
     v: ArrayR
-        (N, D) support points :math:`\bbv_{n} \in \bR^{D}`.
+        (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.
     w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
     eps: float
