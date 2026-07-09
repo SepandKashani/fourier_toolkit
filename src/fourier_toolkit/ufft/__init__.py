@@ -77,9 +77,7 @@ def u2u(
     """
     assert (isign := int(isign)) in (-1, +1)
 
-    if aac.is_jax_array(w):
-        from . import jax as namespace
-    elif aac.is_torch_array(w):
+    if aac.is_torch_array(w):
         from . import torch as namespace
     else:
         from . import generic as namespace
