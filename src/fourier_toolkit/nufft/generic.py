@@ -4,8 +4,20 @@ import finufft
 
 import fourier_toolkit.typing as ftkt
 
+from . import ExponentSign, _eps_default
 
-from . import ExponentSign
+
+def _nu2nu(
+    x: ftkt.ArrayR,  # (M, D)
+    v: ftkt.ArrayR,  # (N, D)
+    w: ftkt.ArrayRC,  # (n_trans, M)
+    isign: ExponentSign,
+    eps: float = _eps_default,
+    **kwargs,
+) -> ftkt.ArrayC:  # (n_trans, N)
+    plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
+    z = plan.execute(w)
+    return z
 
 
 # Helper routines (internal) ---------------------------------------------------

@@ -65,6 +65,8 @@ def nu2nu(
       - (x,v) float32, (w,) complex64
       - (x,v) float64, (w,) complex128
     """
+    xp = aac.array_namespace(x)
+
     x = _canonicalize_knots(x)
     v = _canonicalize_knots(v)
     assert ftku.similar(x, v)
@@ -88,7 +90,10 @@ def nu2nu(
     else:
         raise NotImplementedError
 
-    z = namespace._nu2nu(x, v, w, isign, eps, **kwargs)
+    z = xp.reshape(
+        namespace._nu2nu(x, v, w, isign, eps, **kwargs),
+        (*sh, N),
+    )
     return z
 
 
