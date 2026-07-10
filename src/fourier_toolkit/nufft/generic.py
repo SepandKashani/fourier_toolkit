@@ -1,4 +1,5 @@
 import math
+import warnings
 
 import finufft
 
@@ -68,6 +69,13 @@ def _create_t3_plan(
             [*(scale * x.T), *(scale * v.T)],
         )
     )
-    plan.setpts(**setpts_kwargs)
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message=r"Argument `.+` does not satisfy the following requirement: .+\. Copying array \(this may reduce performance\)$",
+            category=UserWarning,
+        )
+        plan.setpts(**setpts_kwargs)
 
     return plan
