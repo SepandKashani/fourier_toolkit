@@ -6,11 +6,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>API Reference &#8212; Fourier Toolkit 0.2 documentation</title>
+    <title>API Reference &#8212; Fourier Toolkit 0.4.dev20 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="_static/documentation_options.js?v=10f1778b"></script>
+    <script src="_static/documentation_options.js?v=4582f2de"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script>window.MathJax = {"tex": {"macros": {"bba": "{\\bf{a}}", "bbA": "{\\bf{A}}", "bbb": "{\\bf{b}}", "bbB": "{\\bf{B}}", "bbc": "{\\bf{c}}", "bbC": "{\\bf{C}}", "bbd": "{\\bf{d}}", "bbD": "{\\bf{D}}", "bbe": "{\\bf{e}}", "bbE": "{\\bf{E}}", "bbf": "{\\bf{f}}", "bbF": "{\\bf{F}}", "bbg": "{\\bf{g}}", "bbG": "{\\bf{G}}", "bbh": "{\\bf{h}}", "bbH": "{\\bf{H}}", "bbi": "{\\bf{i}}", "bbI": "{\\bf{I}}", "bbj": "{\\bf{j}}", "bbJ": "{\\bf{J}}", "bbk": "{\\bf{k}}", "bbK": "{\\bf{K}}", "bbl": "{\\bf{l}}", "bbL": "{\\bf{L}}", "bbm": "{\\bf{m}}", "bbM": "{\\bf{M}}", "bbn": "{\\bf{n}}", "bbN": "{\\bf{N}}", "bbo": "{\\bf{o}}", "bbO": "{\\bf{O}}", "bbp": "{\\bf{p}}", "bbP": "{\\bf{P}}", "bbq": "{\\bf{q}}", "bbQ": "{\\bf{Q}}", "bbr": "{\\bf{r}}", "bbR": "{\\bf{R}}", "bbs": "{\\bf{s}}", "bbS": "{\\bf{S}}", "bbt": "{\\bf{t}}", "bbT": "{\\bf{T}}", "bbu": "{\\bf{u}}", "bbU": "{\\bf{U}}", "bbv": "{\\bf{v}}", "bbV": "{\\bf{V}}", "bbw": "{\\bf{w}}", "bbW": "{\\bf{W}}", "bbx": "{\\bf{x}}", "bbX": "{\\bf{X}}", "bby": "{\\bf{y}}", "bbY": "{\\bf{Y}}", "bbz": "{\\bf{z}}", "bbZ": "{\\bf{Z}}", "bbZero": "{\\bf{0}}", "bbOne": "{\\bf{1}}", "bC": "{\\mathbb{C}}", "bE": "{\\mathbb{E}}", "bN": "{\\mathbb{N}}", "bQ": "{\\mathbb{Q}}", "bR": "{\\mathbb{R}}", "bS": "{\\mathbb{S}}", "bZ": "{\\mathbb{Z}}", "cA": "{\\mathcal{A}}", "cB": "{\\mathcal{B}}", "cC": "{\\mathcal{C}}", "cD": "{\\mathcal{D}}", "cE": "{\\mathcal{E}}", "cF": "{\\mathcal{F}}", "cG": "{\\mathcal{G}}", "cH": "{\\mathcal{H}}", "cI": "{\\mathcal{I}}", "cJ": "{\\mathcal{J}}", "cK": "{\\mathcal{K}}", "cL": "{\\mathcal{L}}", "cM": "{\\mathcal{M}}", "cN": "{\\mathcal{N}}", "cO": "{\\mathcal{O}}", "cP": "{\\mathcal{P}}", "cQ": "{\\mathcal{Q}}", "cR": "{\\mathcal{R}}", "cS": "{\\mathcal{S}}", "cT": "{\\mathcal{T}}", "cU": "{\\mathcal{U}}", "cV": "{\\mathcal{V}}", "cW": "{\\mathcal{W}}", "cX": "{\\mathcal{X}}", "cY": "{\\mathcal{Y}}", "cZ": "{\\mathcal{Z}}", "cj": "{j}", "ee": "{e}", "bigBrack": ["\\left[ #1 \\right]", 1], "bigCurly": ["\\left\\{ #1 \\right\\}", 1], "bigParen": ["\\left( #1 \\right)", 1], "innerProduct": ["\\langle #1, #2 \\rangle", 2], "norm": ["\\left\\| #1 \\right\\|_{#2}", 2], "real": ["\\Re \\bigCurly{#1}", 1], "imag": ["\\Im \\bigCurly{#1}", 1], "abs": ["\\left| #1 \\right|", 1], "ceil": ["\\left\\lceil #1 \\right\\rceil", 1], "floor": ["\\left\\lfloor #1 \\right\\rfloor", 1], "kron": "{\\otimes}", "krao": "{\\circ}", "range": ["\\bigBrack{ #1, #2 }", 2], "discreteRange": ["\\lbrack\\!\\lbrack #1, #2 \\rbrack\\!\\rbrack", 2], "argmin": "\\operatorname*{arg\\,min}", "diag": "\\operatorname*{diag}", "vecOp": "\\operatorname*{vec}", "matOp": "\\operatorname*{mat}", "adj": "\\operatorname*{\\ast}", "hermitian": "\\operatorname*{H}", "transpose": "\\operatorname*{T}", "prox": "\\operatorname*{prox}", "sinc": "\\operatorname*{sinc}", "relu": "\\operatorname*{ReLu}", "tr": "\\operatorname*{tr}", "grad": "\\operatorname*{\\nabla}", "dft": "\\operatorname*{\\texttt{DFT}}", "fft": "\\operatorname*{\\texttt{FFT}}", "czt": "\\operatorname*{\\texttt{CZT}}", "dtft": "\\operatorname*{\\texttt{DTFT}}", "fs": "\\operatorname*{\\texttt{FS}}", "ctft": "\\operatorname*{\\texttt{F}}", "tuu": "{\\texttt{U} \\to \\texttt{U}}", "tnuu": "{\\texttt{NU} \\to \\texttt{U}}", "tunu": "{\\texttt{U} \\to \\texttt{NU}}", "tnunu": "{\\texttt{NU} \\to \\texttt{NU}}", "circconv": "\\operatorname*{\\circledast}", "conv": "\\operatorname*{\\ast}", "epsBandwidth": ["\\cB_{ #1 }", 1]}}}</script>
@@ -40,7 +40,7 @@
         <li class="right" >
           <a href="index.html" title="Fourier Toolkit"
              accesskey="P">previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.4.dev20 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
       </ul>
     </div>  
@@ -53,12 +53,18 @@
   <section id="api-reference">
 <h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading">¶</a></h1>
 <p>The FTK API is built around the scientific Python ecosystem and makes extensive use of ND-arrays.
-Unless otherwise specified, all <a class="reference internal" href="#ft-routines"><span class="std std-ref">routines</span></a> support both CPU and GPU execution.</p>
-<p>The type hints
+The type hints
 (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayR</span></code></a>,
 <a class="reference internal" href="#fourier_toolkit.typing.ArrayC" title="fourier_toolkit.typing.ArrayC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayC</span></code></a>,
 <a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ArrayRC</span></code></a>)
 used throughout the API denote placeholders for any array object compliant with the <a class="reference external" href="https://data-apis.org/array-api/latest/">Python array API standard</a>: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.</p>
+<p>The API is tested against the following array backends:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://numpy.org/doc/stable/">NumPy</a></p></li>
+<li><p><a class="reference external" href="https://docs.cupy.dev/en/latest/">CuPy</a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/">JAX</a> (CPU + GPU)</p></li>
+<li><p><a class="reference external" href="https://pytorch.org/docs/stable">PyTorch</a> (CPU + GPU)</p></li>
+</ul>
 <section id="module-fourier_toolkit.typing">
 <span id="array-types"></span><h2>Array Types<a class="headerlink" href="#module-fourier_toolkit.typing" title="Link to this heading">¶</a></h2>
 <dl class="py data">
@@ -82,13 +88,27 @@ used throughout the API denote placeholders for any array object compliant with 
 </section>
 <section id="computing-fourier-sums">
 <span id="ft-routines"></span><h2>Computing Fourier Sums<a class="headerlink" href="#computing-fourier-sums" title="Link to this heading">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>(<a class="reference internal" href="#fourier_toolkit.nu2nu" title="fourier_toolkit.nu2nu"><code class="xref py py-func docutils literal notranslate"><span class="pre">nu2nu()</span></code></a>, <a class="reference internal" href="#fourier_toolkit.nu2u" title="fourier_toolkit.nu2u"><code class="xref py py-func docutils literal notranslate"><span class="pre">nu2u()</span></code></a>, <a class="reference internal" href="#fourier_toolkit.u2nu" title="fourier_toolkit.u2nu"><code class="xref py py-func docutils literal notranslate"><span class="pre">u2nu()</span></code></a>) rely on:</p>
+<ul class="simple">
+<li><p>CPU: <a class="reference external" href="https://finufft.readthedocs.io/en/latest/index.html">FINUFFT</a></p></li>
+<li><p>GPU: <a class="reference external" href="https://finufft.readthedocs.io/en/latest/python_gpu.html">cuFINUFFT</a></p></li>
+</ul>
+<p>The latter is not installed by default. You can install it if needed via</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">cufinufft</span>                        <span class="c1"># cuda12 pre-packaged [20260711]</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">binary</span> <span class="n">cufinufft</span> <span class="n">cufinufft</span>  <span class="c1"># cudaXX</span>
+</pre></div>
+</div>
+<p>It may be necessary to modify <code class="docutils literal notranslate"><span class="pre">LD_LIBRARY_PATH</span></code> afterwards for <code class="docutils literal notranslate"><span class="pre">libcufinufft.so</span></code> to be importable.</p>
+</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="fourier_toolkit.u2u">
 <span class="sig-prename descclassname"><span class="pre">fourier_toolkit.</span></span><span class="sig-name descname"><span class="pre">u2u</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x_spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">v_spec</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">isign</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fourier_toolkit/ufft.html#u2u"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fourier_toolkit.u2u" title="Link to this definition">¶</a></dt>
 <dd><p>Multi-dimensional Uniform-to-Uniform Fourier Transform. (<span class="math notranslate nohighlight">\(\tuu\)</span>)</p>
 <p>Computes the Fourier sum</p>
 <div class="math notranslate nohighlight">
-\[\bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
+\[z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
 <p>where <span class="math notranslate nohighlight">\((\bbx_{m}, \bbv_{n})\)</span> lie on the regular lattice</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\bbx_{\bbm} &amp;= \bbx_{0} + \Delta_{\bbx} \odot \bbm, \qquad [\bbm]_{d} \in \discreteRange{0}{M_{d}-1}, \\
@@ -99,8 +119,8 @@ used throughout the API denote placeholders for any array object compliant with 
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbx_{m}\)</span> lattice.</p></li>
 <li><p><strong>v_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbv_{n}\)</span> lattice.</p></li>
-<li><p><strong>isign</strong> (<em>+1</em><em>, </em><em>-1</em>) – Exponent sign.</p></li>
 <li><p><strong>w</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – (…, M1,…,MD) weights <span class="math notranslate nohighlight">\(w_{m} \in \bC\)</span>.</p></li>
+<li><p><strong>isign</strong> (<em>+1</em><em>, </em><em>-1</em>) – Exponent sign.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -112,13 +132,27 @@ used throughout the API denote placeholders for any array object compliant with 
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p><span class="math notranslate nohighlight">\(\tuu\)</span> transforms for arbitrary (x_spec,v_spec) can be implemented using
+<li><p><span class="math notranslate nohighlight">\(\tuu\)</span> transforms for arbitrary (x_spec,v_spec) can be implemented via
 the CZT algorithm (using 2 FFTs), but a single FFT can be used in some cases.
 This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p></li>
 <li><p>Backend-specific notes:</p>
 <ul>
-<li><p>[PyTorch] <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.compile.html#torch.compile" title="(in PyTorch v2.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">compile()</span></code></a> has limited support for complex-valued operators; do not expect huge performance gains at the moment.</p></li>
-<li><p>[PyTorch] <a class="reference internal" href="#fourier_toolkit.u2u" title="fourier_toolkit.u2u"><code class="xref py py-func docutils literal notranslate"><span class="pre">u2u()</span></code></a> supports batching via <a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.vmap.html#torch.vmap" title="(in PyTorch v2.12)"><code class="xref py py-func docutils literal notranslate"><span class="pre">vmap()</span></code></a>, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.</p></li>
+<li><p>[JAX] supports the following program transforms:</p>
+<ul>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.jit.html#jax.jit" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jit()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vmap.html#jax.vmap" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">vmap()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.jvp.html#jax.jvp" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jvp()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.vjp.html#jax.vjp" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">vjp()</span></code></a></p></li>
+</ul>
+</li>
+<li><p>[PyTorch] supports the following program transforms:</p>
+<ul>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.compile.html#torch.compile" title="(in PyTorch v2.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">compile()</span></code></a>, but it has limited support for complex-valued operators: do not expect huge performance gains.</p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.func.vmap.html#torch.func.vmap" title="(in PyTorch v2.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">vmap()</span></code></a>, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.</p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.func.jvp.html#torch.func.jvp" title="(in PyTorch v2.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jvp()</span></code></a></p></li>
+<li><p><a class="reference external" href="https://docs.pytorch.org/docs/stable/generated/torch.func.vjp.html#torch.func.vjp" title="(in PyTorch v2.13)"><code class="xref py py-func docutils literal notranslate"><span class="pre">vjp()</span></code></a></p></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -130,16 +164,17 @@ This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p><
 <dd><p>Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (<span class="math notranslate nohighlight">\(\tnunu\)</span>)</p>
 <p>Computes the Fourier sum</p>
 <div class="math notranslate nohighlight">
-\[\bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
+\[z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
 <p>where <span class="math notranslate nohighlight">\((\bbx_{m}, \bbv_{n}) \in \bR^{D}\)</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (M, D) support points <span class="math notranslate nohighlight">\(\bbx_{m} \in \bR^{D}\)</span>.</p></li>
-<li><p><strong>v</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (N, D) frequencies <span class="math notranslate nohighlight">\(\bbv_{n} \in \bR^{D}\)</span>.</p></li>
+<li><p><strong>x</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (M, D) knots <span class="math notranslate nohighlight">\(\bbx_{m} \in \bR^{D}\)</span>.</p></li>
+<li><p><strong>v</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (N, D) knots <span class="math notranslate nohighlight">\(\bbv_{n} \in \bR^{D}\)</span>.</p></li>
 <li><p><strong>w</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – (…, M) weights <span class="math notranslate nohighlight">\(w_{m} \in \bC\)</span>.</p></li>
 <li><p><strong>isign</strong> (<em>+1</em><em>, </em><em>-1</em>) – Exponent sign.</p></li>
-<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.</p></li>
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.
+(See <a class="reference internal" href="#nu2nu-notes"><span class="std std-ref">Notes</span></a>.)</p></li>
 <li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Extra parameters for <a class="reference external" href="https://finufft.readthedocs.io/en/latest/python.html#finufft.Plan" title="(in finufft v2.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">finufft.Plan</span></code></a>.
 (For advanced users only.)</p></li>
 </ul>
@@ -151,11 +186,19 @@ This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p><
 <dd class="field-odd"><p><a class="reference internal" href="#fourier_toolkit.typing.ArrayC" title="fourier_toolkit.typing.ArrayC">ArrayC</a></p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>(x,v,w) must have the same numerical precision:</p>
+<p class="rubric" id="nu2nu-notes">Notes</p>
+<ul>
+<li><p>The <span class="math notranslate nohighlight">\(\tnunu\)</span> transform is an approximate transform such that the computed output <span class="math notranslate nohighlight">\(\bbz \in \bC^{N}\)</span> satisfies</p>
+<div class="math notranslate nohighlight">
+\[\norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.\]</div>
+</li>
+<li><p>(x,v,w) must share the same (backend,device).</p></li>
+<li><p>The relative error <span class="math notranslate nohighlight">\(\epsilon\)</span> is limited by the precision of (x,v,w):</p>
 <ul class="simple">
-<li><p>(x,v) float32, (w,) complex64</p></li>
-<li><p>(x,v) float64, (w,) complex128</p></li>
+<li><p>any(x,v,w).dtype = float32 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-06</p></li>
+<li><p>all(x,v,w).dtype = float64 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-14</p></li>
+</ul>
+</li>
 </ul>
 </dd></dl>
 
@@ -165,7 +208,7 @@ This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p><
 <dd><p>Multi-dimensional NonUniform-to-Uniform Fourier Transform. (<span class="math notranslate nohighlight">\(\tnuu\)</span>)</p>
 <p>Computes the Fourier sum</p>
 <div class="math notranslate nohighlight">
-\[\bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
+\[z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
 <p>where <span class="math notranslate nohighlight">\(\bbx_{m} \in \bR^{D}\)</span>, and <span class="math notranslate nohighlight">\(\bbv_{n}\)</span> lies on the regular lattice</p>
 <div class="math notranslate nohighlight">
 \[\bbv_{\bbn} = \bbv_{0} + \Delta_{\bbv} \odot \bbn,
@@ -175,12 +218,13 @@ This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p><
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (M, D) support points <span class="math notranslate nohighlight">\(\bbx_{m} \in \bR^{D}\)</span>.</p></li>
-<li><p><strong>v_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbv_{n}\)</span> lattice specifier.</p></li>
+<li><p><strong>x</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (M, D) knots <span class="math notranslate nohighlight">\(\bbx_{m} \in \bR^{D}\)</span>.</p></li>
+<li><p><strong>v_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbv_{n}\)</span> lattice.</p></li>
 <li><p><strong>w</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – (…, M) weights <span class="math notranslate nohighlight">\(w_{m} \in \bC\)</span>.</p></li>
 <li><p><strong>isign</strong> (<em>+1</em><em>, </em><em>-1</em>) – Exponent sign.</p></li>
-<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.</p></li>
-<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Extra parameters for <a class="reference internal" href="#fourier_toolkit.nu2nu" title="fourier_toolkit.nu2nu"><code class="xref py py-func docutils literal notranslate"><span class="pre">nu2nu()</span></code></a>.
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.
+(See <a class="reference internal" href="#nu2u-notes"><span class="std std-ref">Notes</span></a>.)</p></li>
+<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Extra parameters for <a class="reference external" href="https://finufft.readthedocs.io/en/latest/python.html#finufft.Plan" title="(in finufft v2.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">finufft.Plan</span></code></a>.
 (For advanced users only.)</p></li>
 </ul>
 </dd>
@@ -191,18 +235,19 @@ This implementation chooses the (FFT, CZT) per axis to maximize efficiency.</p><
 <dd class="field-odd"><p><a class="reference internal" href="#fourier_toolkit.typing.ArrayC" title="fourier_toolkit.typing.ArrayC">ArrayC</a></p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>(x,w) must have the same numerical precision:</p>
+<p class="rubric" id="nu2u-notes">Notes</p>
 <ul>
-<li><p>(x,) float32, (w,) complex64</p></li>
-<li><p>(x,) float64, (w,) complex128</p></li>
+<li><p>The <span class="math notranslate nohighlight">\(\tnuu\)</span> transform is an approximate transform such that the computed output <span class="math notranslate nohighlight">\(\bbz \in \bC^{N_{1} \times\cdots\times N_{D}}\)</span> satisfies</p>
+<div class="math notranslate nohighlight">
+\[\norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.\]</div>
+</li>
+<li><p>(x,w) must share the same (backend,device).</p></li>
+<li><p>The relative error <span class="math notranslate nohighlight">\(\epsilon\)</span> is limited by the precision of (x,w):</p>
+<ul class="simple">
+<li><p>any(x,w).dtype = float32 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-06</p></li>
+<li><p>all(x,w).dtype = float64 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-14</p></li>
 </ul>
 </li>
-<li><p>This implementation is a thin shell around an <span class="math notranslate nohighlight">\(\tnunu\)</span> transform.
-This is because type-1 NUFFTs impose limits on domain(x, v_spec) that are a hindrance in practice.
-The price of relying on an <span class="math notranslate nohighlight">\(\tnunu\)</span> transform is an extra interpolation step after the FFT, but its runtime is rarely the bottleneck.
-Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.</p></li>
 </ul>
 </dd></dl>
 
@@ -212,7 +257,7 @@ Note that the interpolation step can be done more efficiently via a low-rate fil
 <dd><p>Multi-dimensional Uniform-to-NonUniform Fourier Transform. (<span class="math notranslate nohighlight">\(\tunu\)</span>)</p>
 <p>Computes the Fourier sum</p>
 <div class="math notranslate nohighlight">
-\[\bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
+\[z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },\]</div>
 <p>where <span class="math notranslate nohighlight">\(\bbv_{n} \in \bR^{D}\)</span>, and <span class="math notranslate nohighlight">\(\bbx_{m}\)</span> lies on the regular lattice</p>
 <div class="math notranslate nohighlight">
 \[\bbx_{\bbm} = \bbx_{0} + \Delta_{\bbx} \odot \bbm,
@@ -222,12 +267,13 @@ Note that the interpolation step can be done more efficiently via a low-rate fil
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbx_{m}\)</span> lattice specifier.</p></li>
-<li><p><strong>v</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (N, D) support points <span class="math notranslate nohighlight">\(\bbv_{n} \in \bR^{D}\)</span>.</p></li>
+<li><p><strong>x_spec</strong> (<a class="reference internal" href="#fourier_toolkit.UniformSpec" title="fourier_toolkit.UniformSpec"><em>UniformSpec</em></a>) – <span class="math notranslate nohighlight">\(\bbx_{m}\)</span> lattice.</p></li>
+<li><p><strong>v</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayR" title="fourier_toolkit.typing.ArrayR"><em>ArrayR</em></a>) – (N, D) knots <span class="math notranslate nohighlight">\(\bbv_{n} \in \bR^{D}\)</span>.</p></li>
 <li><p><strong>w</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – (…, M1,…,MD) weights <span class="math notranslate nohighlight">\(w_{m} \in \bC\)</span>.</p></li>
-<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.</p></li>
 <li><p><strong>isign</strong> (<em>+1</em><em>, </em><em>-1</em>) – Exponent sign.</p></li>
-<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Extra parameters for <a class="reference internal" href="#fourier_toolkit.nu2nu" title="fourier_toolkit.nu2nu"><code class="xref py py-func docutils literal notranslate"><span class="pre">nu2nu()</span></code></a>.
+<li><p><strong>eps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a>) – Target relative error <span class="math notranslate nohighlight">\(\epsilon \in ]0, 1[\)</span>.
+(See <a class="reference internal" href="#u2nu-notes"><span class="std std-ref">Notes</span></a>.)</p></li>
+<li><p><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Extra parameters for <a class="reference external" href="https://finufft.readthedocs.io/en/latest/python.html#finufft.Plan" title="(in finufft v2.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">finufft.Plan</span></code></a>.
 (For advanced users only.)</p></li>
 </ul>
 </dd>
@@ -238,18 +284,19 @@ Note that the interpolation step can be done more efficiently via a low-rate fil
 <dd class="field-odd"><p><a class="reference internal" href="#fourier_toolkit.typing.ArrayC" title="fourier_toolkit.typing.ArrayC">ArrayC</a></p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>(v,w) must have the same numerical precision:</p>
+<p class="rubric" id="u2nu-notes">Notes</p>
 <ul>
-<li><p>(v,) float32, (w,) complex64</p></li>
-<li><p>(v,) float64, (w,) complex128</p></li>
+<li><p>The <span class="math notranslate nohighlight">\(\tunu\)</span> transform is an approximate transform such that the computed output <span class="math notranslate nohighlight">\(\bbz \in \bC^{N}\)</span> satisfies</p>
+<div class="math notranslate nohighlight">
+\[\norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.\]</div>
+</li>
+<li><p>(v,w) must share the same (backend,device).</p></li>
+<li><p>The relative error <span class="math notranslate nohighlight">\(\epsilon\)</span> is limited by the precision of (v,w):</p>
+<ul class="simple">
+<li><p>any(v,w).dtype = float32 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-06</p></li>
+<li><p>all(v,w).dtype = float64 <span class="math notranslate nohighlight">\(\rightarrow \epsilon_{\min}\)</span> = 1e-14</p></li>
 </ul>
 </li>
-<li><p>This implementation is a thin shell around an <span class="math notranslate nohighlight">\(\tnunu\)</span> transform.
-This is because type-2 NUFFTs impose limits on domain(x_spec, v) that are a hindrance in practice.
-The price of relying on an <span class="math notranslate nohighlight">\(\tnunu\)</span> transform is an extra interpolation step before the FFT, but its runtime is rarely the bottleneck.
-Note that the interpolation step can be done more efficiently via a low-rate filter bank, if needed.</p></li>
 </ul>
 </dd></dl>
 
@@ -327,7 +374,7 @@ Note that the interpolation step can be done more efficiently via a low-rate fil
 <dl class="py method">
 <dt class="sig sig-object py" id="fourier_toolkit.UniformSpec.meshgrid">
 <span class="sig-name descname"><span class="pre">meshgrid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparse</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">like</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fourier_toolkit/util.html#UniformSpec.meshgrid"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fourier_toolkit.UniformSpec.meshgrid" title="Link to this definition">¶</a></dt>
-<dd><p>Equivalent of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html#numpy.meshgrid" title="(in NumPy v2.4)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.meshgrid()</span></code></a>.</p>
+<dd><p>Equivalent of <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.meshgrid.html#numpy.meshgrid" title="(in NumPy v2.5)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.meshgrid()</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>like</strong> (<a class="reference internal" href="#fourier_toolkit.typing.ArrayRC" title="fourier_toolkit.typing.ArrayRC"><em>ArrayRC</em></a>) – Reference object to allow the creation of arrays which are not NumPy arrays.
@@ -361,14 +408,14 @@ Will inherit the (backend,device,fdtype) of <cite>like</cite>.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="fourier_toolkit.UniformSpec.__getitem__">
-<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fourier_toolkit/util.html#UniformSpec.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fourier_toolkit.UniformSpec.__getitem__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fourier_toolkit/util.html#UniformSpec.__getitem__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#fourier_toolkit.UniformSpec.__getitem__" title="Link to this definition">¶</a></dt>
 <dd><p>Extract a mesh coordinate from its index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>idx</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>)</p>
+<dd class="field-odd"><p><strong>m</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><em>tuple</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>]</em>)</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>m</strong> – Mesh coordinate at <cite>idx</cite>.</p>
+<dd class="field-even"><p><strong>x_m</strong> – Mesh coordinate <span class="math notranslate nohighlight">\(\bbx_{\bbm}\)</span>.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a>]</p>
@@ -466,7 +513,7 @@ Will inherit the (backend,device,fdtype) of <cite>like</cite>.</p>
         <li class="right" >
           <a href="index.html" title="Fourier Toolkit"
              >previous</a> |</li>
-        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.2 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Fourier Toolkit 0.4.dev20 documentation</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">API Reference</a></li> 
       </ul>
     </div>
