@@ -34,12 +34,16 @@ doc = [
     "sphinx>=9,<10",
     "sphinxcontrib-bibtex>=2,<3",
 ]
+finufft_cuda = [
+    "cufinufft>=2.2,<3",
+]
 test = [
     "pytest>=9,<10",
     "scipy>=1,<2",
 ]
 dev = [
     { include-group = "array_backend" },
+    { include-group = "finufft_cuda" },
     { include-group = "doc" },
     { include-group = "test" },
     "ipython",
