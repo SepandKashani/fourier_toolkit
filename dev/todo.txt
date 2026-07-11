@@ -1,21 +1,27 @@
-- [ ] nufft.py, test_nufft.py
-  + [ ] Array API compliance
-    - [x] _nu2nu() (NP)
-    - [x] _nu2u(), _u2nu() [old algorithm] (NP)
-    - [ ] test CP
-    - [ ] _nu2u(), _u2nu() [new algorithm] (NP)
-      Piggyback on _NU2U() class with apply/adjoint()
+- nufft.py, test_nufft.py
+  + [x] _nu2nu() (NP)
+  + [x] _nu2u(), _u2nu() [old algorithm] (NP)
+  + [x] test NP/CP
   + [ ] tag v0.4
-
+  + [ ] _nu2u(), _u2nu() [new algorithm] (NP)
+      Piggyback on _NU2U() class with apply/adjoint()
+  + [ ] test NP/CP
+  + [ ] tag v0.4.x
 
   + [ ] Add JAX support via buffer_callback()
     * background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
     * buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
   + [ ] Add PyTorch support
-  + [ ] jvp() wrt (x/v, w) should work
-  + [ ] tag v0.5
+  + [ ] vjp/jvp() wrt (x/v, w) should work
+  + [ ] tag v0.4.x
 
-- ufft.py
+
+- ufft.py, test_ufft.py
+  + [ ] add explicit vjp() tests.
+    we will check vjp() correctness by computing gradient of f(w) = \norm{A w}{2}^{2}
+    we know how to compute it analytically: \grad_f(w) = 2 A^{H} A w
+  + [ ] tag v0.4.x
+
   + [ ] Investigate torch.vmap(u2u) issue
     When u2u() falls on the FFT case (mix/special-case), then test fails [err ~ 1]
     occurs for D=1,2,3 and all precisions
@@ -24,7 +30,7 @@
 
     To overcome this issue, use https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html to create an op for u2u().
     Should have full support for jvp(), vjp(), vmap(), compile(), export()?, training?
-  + [ ] tag v0.6
+  + [ ] tag 0.4.x
 
 
 - [ ] Add MATLAB interface
