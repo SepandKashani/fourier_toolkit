@@ -26,7 +26,7 @@ def u2u(
 
     .. math::
 
-       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n})` lie on the regular lattice
 

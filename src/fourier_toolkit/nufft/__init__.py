@@ -33,7 +33,7 @@ def nu2nu(
 
     .. math::
 
-       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`(\bbx_{m}, \bbv_{n}) \in \bR^{D}`.
 
@@ -49,6 +49,7 @@ def nu2nu(
         Exponent sign.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
+        (See :ref:`nu2nu-notes`.)
     kwargs: dict
         Extra parameters for :py:class:`finufft.Plan`.
         (For advanced users only.)
@@ -58,11 +59,23 @@ def nu2nu(
     z: ArrayC
         (..., N) weights :math:`z_{n} \in \bC`.
 
+
+    .. _nu2nu-notes:
+
     Notes
     -----
+    * The :math:`\tnunu` transform is an approximate transform such that the computed output :math:`\bbz \in \bC^{N}` satisfies
+
+      .. math::
+
+         \norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.
+
     * (x,v,w) must share the same (backend,device).
 
-    * The :math:`\tnunu` transform will be computed at the least-precise dtype of (x,v,w).
+    * The relative error :math:`\epsilon` is limited by the precision of (x,v,w):
+
+      - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
+      - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
     fdtype, cdtype = _determine_precision(x, v, w)
 
@@ -110,7 +123,7 @@ def nu2u(
 
     .. math::
 
-       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbx_{m} \in \bR^{D}`, and :math:`\bbv_{n}` lies on the regular lattice
 
@@ -134,6 +147,7 @@ def nu2u(
         Exponent sign.
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
+        (See :ref:`nu2u-notes`.)
     kwargs: dict
         Extra parameters for :py:class:`finufft.Plan`.
         (For advanced users only.)
@@ -143,14 +157,23 @@ def nu2u(
     z: ArrayC
         (..., N1,...,ND) weights :math:`z_{n} \in \bC`.
 
+
+    .. _nu2u-notes:
+
     Notes
     -----
+    * The :math:`\tnuu` transform is an approximate transform such that the computed output :math:`\bbz \in \bC^{N_{1} \times\cdots\times N_{D}}` satisfies
+
+      .. math::
+
+         \norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.
+
     * (x,w) must share the same (backend,device).
 
-    * (x,w) must have the same numerical precision:
+    * The relative error :math:`\epsilon` is limited by the precision of (x,w):
 
-      - (x,) float32, (w,) complex64
-      - (x,) float64, (w,) complex128
+      - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
+      - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
     raise NotImplementedError
 
@@ -170,7 +193,7 @@ def u2nu(
 
     .. math::
 
-       \bbz_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
+       z_{n} = \sum_{m} w_{m} \ee^{ \pm \cj 2\pi \innerProduct{\bbx_{m}}{\bbv_{n}} },
 
     where :math:`\bbv_{n} \in \bR^{D}`, and :math:`\bbx_{m}` lies on the regular lattice
 
@@ -190,10 +213,11 @@ def u2nu(
         (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.
     w: ArrayRC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
-    eps: float
-        Target relative error :math:`\epsilon \in ]0, 1[`.
     isign: +1, -1
         Exponent sign.
+    eps: float
+        Target relative error :math:`\epsilon \in ]0, 1[`.
+        (See :ref:`u2nu-notes`.)
     kwargs: dict
         Extra parameters for :py:class:`finufft.Plan`.
         (For advanced users only.)
@@ -203,14 +227,23 @@ def u2nu(
     z: ArrayC
         (..., N) weights :math:`z_{n} \in \bC`.
 
+
+    .. _u2nu-notes:
+
     Notes
     -----
+    * The :math:`\tunu` transform is an approximate transform such that the computed output :math:`\bbz \in \bC^{N}` satisfies
+
+      .. math::
+
+         \norm{\bbz - \bbz^{GT}}{2} \lesssim \epsilon \norm{\bbz^{GT}}{2}.
+
     * (v,w) must share the same (backend,device).
 
-    * (v,w) must have the same numerical precision:
+    * The relative error :math:`\epsilon` is limited by the precision of (v,w):
 
-      - (v,) float32, (w,) complex64
-      - (v,) float64, (w,) complex128
+      - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
+      - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
     raise NotImplementedError
 
