@@ -1,8 +1,9 @@
+import enum
+import importlib
 import math
 import warnings
 
 import array_api_compat as aac
-import finufft
 
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
@@ -86,17 +87,29 @@ def _create_t3_plan(
     isign: ExponentSign,
     eps: float,
     **kwargs,
-) -> finufft.Plan:
+):
     _, D = x.shape
     n_trans, _ = w.shape
 
-    plan = finufft.Plan(
+    # The [cu]finufft.Plan signatures have slight discrepancies.
+    discrepancy_kwargs = dict()
+    device_type, _ = x.__dlpack_device__()
+    match device_type:
+        case _DLDeviceType.CPU:
+            lib = importlib.import_module("finufft")
+            discrepancy_kwargs["n_modes_or_dim"] = D
+        case _DLDeviceType.CUDA:
+            lib = importlib.import_module("cufinufft")
+            discrepancy_kwargs["n_modes"] = D
+        case _:
+            raise ValueError(f"Unsupported device type: {device_type}.")
+    plan = lib.Plan(
         nufft_type=3,
-        n_modes_or_dim=D,
         isign=isign,
         eps=eps,
         dtype=w.dtype,
         n_trans=n_trans,
+        **discrepancy_kwargs,
         **kwargs,  # let FINUFFT parse them for correctness
     )
 
@@ -120,3 +133,12 @@ def _create_t3_plan(
         plan.setpts(**setpts_kwargs)
 
     return plan
+
+
+class _DLDeviceType(enum.IntEnum):
+    """
+    Subset of `DLPack Device Codes <https://data-apis.org/array-api/latest/API_specification/generated/array_api.array.__dlpack_device__.html#array_api.array.__dlpack_device__>`_.
+    """
+
+    CPU = 1
+    CUDA = 2
