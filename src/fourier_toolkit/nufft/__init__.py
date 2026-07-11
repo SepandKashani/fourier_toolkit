@@ -85,7 +85,7 @@ def nu2nu(
     N, Dv = v.shape
     assert (D := Dx) == Dv
     assert D in (1, 2, 3)  # FINUFFT limitation
-    w, sh = _canonicalize_weights(w, cdtype, M)
+    w, sh = _canonicalize_weights(w, cdtype, (M,))
 
     assert (isign := int(isign)) in (-1, +1)
 
@@ -175,7 +175,33 @@ def nu2u(
       - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
-    raise NotImplementedError
+    fdtype, cdtype = _determine_precision(x, w)
+
+    x = _canonicalize_knots(x, fdtype)
+    M, D = x.shape
+    assert D == v_spec.ndim
+    assert D in (1, 2, 3)  # FINUFFT limitation
+    w, sh = _canonicalize_weights(w, cdtype, (M,))
+
+    assert (isign := int(isign)) in (-1, +1)
+
+    assert 0 < (eps := float(eps)) < 1
+    xp = aac.array_namespace(x)
+    if cdtype == xp.complex64:
+        eps = max(eps, _eps_fp32_min)
+    else:  # xp.complex128
+        eps = max(eps, _eps_fp64_min)
+
+    if aac.is_array_api_obj(w):
+        from . import generic as namespace
+    else:
+        raise NotImplementedError
+
+    z = xp.reshape(
+        namespace._nu2u(x, v_spec, w, isign, eps, **kwargs),
+        (*sh, *v_spec.num),
+    )
+    return z
 
 
 def u2nu(
@@ -245,7 +271,33 @@ def u2nu(
       - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
-    raise NotImplementedError
+    fdtype, cdtype = _determine_precision(v, w)
+
+    v = _canonicalize_knots(v, fdtype)
+    N, D = v.shape
+    assert D == x_spec.ndim
+    assert D in (1, 2, 3)  # FINUFFT limitation
+    w, sh = _canonicalize_weights(w, cdtype, x_spec.num)
+
+    assert (isign := int(isign)) in (-1, +1)
+
+    assert 0 < (eps := float(eps)) < 1
+    xp = aac.array_namespace(v)
+    if cdtype == xp.complex64:
+        eps = max(eps, _eps_fp32_min)
+    else:  # xp.complex128
+        eps = max(eps, _eps_fp64_min)
+
+    if aac.is_array_api_obj(w):
+        from . import generic as namespace
+    else:
+        raise NotImplementedError
+
+    z = xp.reshape(
+        namespace._u2nu(x_spec, v, w, isign, eps, **kwargs),
+        (*sh, N),
+    )
+    return z
 
 
 # Helper routines (internal) ---------------------------------------------------
@@ -300,33 +352,34 @@ def _canonicalize_knots(xv: ftkt.ArrayR, fdtype: ftkt.DType) -> ftkt.ArrayR:
 def _canonicalize_weights(
     w: ftkt.ArrayRC,
     cdtype: ftkt.DType,
-    M: int,
+    sh_core: tuple[int, ...],
 ) -> tuple[ftkt.ArrayC, tuple]:
     """
     Transform (w,) weights to canonical form:
-    - shape (n_trans, M)
+    - shape (n_trans, *sh_core)
     - complex-valued
 
     Parameters
     ----------
     w: ArrayRC
-        (..., M)
+        (..., *sh_core)
 
     Returns
     -------
     w_c: ArrayC
         Canonical form of `w`.
-    sh: tuple[int]
+    sh_stack: tuple[int]
         Shape to transform the output of `plan.execute()` to.
         This is to respect the input's stack shape (...).
     """
-    *sh, Mw = w.shape
-    sh_flat = math.prod(sh)
-    assert Mw == M
+    D = len(sh_core)
+    sh_stack = w.shape[:-D]
+    sh_flat = math.prod(sh_stack)
+    assert w.shape[-D:] == sh_core
 
     xp = aac.array_namespace(w)
     w_c = xp.reshape(
         xp.asarray(w, dtype=cdtype),
-        (sh_flat, M),
+        (sh_flat, *sh_core),
     )
-    return w_c, sh
+    return w_c, sh_stack

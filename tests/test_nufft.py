@@ -139,80 +139,38 @@ class TestNU2NU:
 
 
 class TestNU2U:
-    @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
+    @parametrize_real
+    @parametrize_stack
     def test_value_apply(
         self,
+        array_backend,
         x_m,
         v_spec,
         isign,
-        eps,
         finufft_kwargs,
         dtype,
         real,
         stack_shape,
     ):
         # output value matches ground truth.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        # Generate nu2u() input
-        M, _ = x_m.shape
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, M))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, M))
-            w += rng.standard_normal((*stack_shape, M))
-            w = w.astype(cdtype)
-
-        # Generate nu2u() output ground-truth
-        N = v_spec.num
-        z_gt = np.zeros((*stack_shape, *N), dtype=cdtype)
-        A = self._generate_A(x_m, v_spec, isign)  # (N1,...,ND, M)
-        for idx in np.ndindex(stack_shape):
-            z_gt[idx] = ct.inner_product(w[idx], A, 1)  # (N1,...,ND)
+        w, z_gt = self._generate_io(x_m, v_spec, isign, dtype, real, stack_shape)
 
         # Test nu2u() compliance
+        xp = array_backend.xp
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+        fdtype = ftku.TranslateDType(w).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
         z = nu2u(
-            x=x_m.astype(fdtype),
+            x=x_m,
             v_spec=v_spec,
             w=w,
             isign=isign,
-            eps=eps,
             **finufft_kwargs,
         )
         assert z.shape == z_gt.shape
-        assert ct.rel_error(z, z_gt, D=v_spec.ndim).mean() <= eps * 10
-
-    @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_m, v_spec, isign, eps, finufft_kwargs, dtype, real):
-        # output precision (not dtype!) matches input precision.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        M, _ = x_m.shape
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal(M)
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal(M)
-            w += rng.standard_normal(M)
-            w = w.astype(cdtype)
-
-        z = nu2u(
-            x=x_m.astype(fdtype),
-            v_spec=v_spec,
-            w=w,
-            isign=isign,
-            eps=eps,
-            **finufft_kwargs,
-        )
-        assert z.dtype == cdtype
+        assert helper.similar(z, z_gt)
+        assert_areclose(z, z_gt, v_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -241,13 +199,9 @@ class TestNU2U:
         return request.param
 
     @pytest.fixture
-    def eps(self) -> float:
-        # This order-of-magnitude rel-error should be attainable by both (FP32,FP64) if `upsampfac=2`.
-        return 1e-6
-
-    @pytest.fixture
     def finufft_kwargs(self) -> dict:
         return dict(
+            eps=1e-14,  # actual precision assessed by assert_areclose()
             upsampfac=2,  # to actually reach `eps` precision for type-3
         )
 
@@ -270,82 +224,74 @@ class TestNU2U:
         A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
 
+    @classmethod
+    def _generate_io(
+        cls,
+        x_m: np.ndarray,
+        v_spec: ftku.UniformSpec,
+        isign: int,
+        dtype: np.dtype,
+        real: bool,
+        stack_shape: tuple[int, ...],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        # (w, z_gt) arrays used for tests
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
+        fdtype = translate.to_float()
+        cdtype = translate.to_complex()
+
+        # Generate nu2u() input
+        M, _ = x_m.shape
+        rng = np.random.default_rng()
+        if real:
+            w = rng.standard_normal((*stack_shape, M))
+            w = w.astype(fdtype)
+        else:
+            w = 1j * rng.standard_normal((*stack_shape, M))
+            w += rng.standard_normal((*stack_shape, M))
+            w = w.astype(cdtype)
+
+        # Generate nu2u() output ground-truth
+        z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
+        A = cls._generate_A(x_m, v_spec, isign).astype(cdtype)  # (N1,...,ND, M)
+        for idx in np.ndindex(stack_shape):
+            z_gt[idx] = helper.inner_product(w[idx], A, 1)  # (N1,...,ND)
+
+        return (w, z_gt)
+
 
 class TestU2NU:
-    @pytest.mark.parametrize("real", [True, False])
-    @pytest.mark.parametrize("stack_shape", [(), (1,), (5, 3, 4)])
+    @parametrize_real
+    @parametrize_stack
     def test_value_apply(
         self,
+        array_backend,
         x_spec,
         v_n,
         isign,
-        eps,
         finufft_kwargs,
         dtype,
         real,
         stack_shape,
     ):
         # output value matches ground truth.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        # Generate u2nu() input
-        M = x_spec.num
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, *M))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, *M))
-            w += rng.standard_normal((*stack_shape, *M))
-            w = w.astype(cdtype)
-
-        # Generate u2nu() output ground-truth
-        N, D = v_n.shape
-        z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
-        A = self._generate_A(x_spec, v_n, isign)  # (N, M1,...,MD)
-        for idx in np.ndindex(stack_shape):
-            z_gt[idx] = ct.inner_product(w[idx], A, D)  # (N,)
+        w, z_gt = self._generate_io(x_spec, v_n, isign, dtype, real, stack_shape)
 
         # Test u2nu() compliance
+        xp = array_backend.xp
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+        fdtype = ftku.TranslateDType(w).to_float()
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
         z = u2nu(
             x_spec=x_spec,
-            v=v_n.astype(fdtype),
+            v=v_n,
             w=w,
             isign=isign,
-            eps=eps,
             **finufft_kwargs,
         )
         assert z.shape == z_gt.shape
-        assert ct.rel_error(z, z_gt, D=1).mean() <= eps * 10
-
-    @pytest.mark.parametrize("real", [True, False])
-    def test_prec(self, x_spec, v_n, isign, eps, finufft_kwargs, dtype, real):
-        # output precision (not dtype!) matches input precision.
-        translate = ftku.TranslateDType(dtype)
-        fdtype = translate.to_float()
-        cdtype = translate.to_complex()
-
-        M = x_spec.num
-        rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal(M)
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal(M)
-            w += rng.standard_normal(M)
-            w = w.astype(cdtype)
-
-        z = u2nu(
-            x_spec=x_spec,
-            v=v_n.astype(fdtype),
-            w=w,
-            isign=isign,
-            eps=eps,
-            **finufft_kwargs,
-        )
-        assert z.dtype == cdtype
+        assert helper.similar(z, z_gt)
+        assert_areclose(z, z_gt, 1)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
@@ -374,13 +320,9 @@ class TestU2NU:
         return request.param
 
     @pytest.fixture
-    def eps(self) -> float:
-        # This order-of-magnitude rel-error should be attainable by both (FP32,FP64) if `upsampfac=2`.
-        return 1e-6
-
-    @pytest.fixture
     def finufft_kwargs(self) -> dict:
         return dict(
+            eps=1e-14,  # actual precision assessed by assert_areclose()
             upsampfac=2,  # to actually reach `eps` precision for type-3
         )
 
@@ -402,6 +344,40 @@ class TestU2NU:
         phase = np.tensordot(v_n, x_spec.knots(), axes=[[-1], [-1]])  # (N, M1,...,MD)
         A = np.exp(-isign * 1j * 2 * np.pi * phase)
         return A
+
+    @classmethod
+    def _generate_io(
+        cls,
+        x_spec: ftku.UniformSpec,
+        v_n: np.ndarray,
+        isign: int,
+        dtype: np.dtype,
+        real: bool,
+        stack_shape: tuple[int, ...],
+    ) -> tuple[np.ndarray, np.ndarray]:
+        # (w, z_gt) arrays used for tests
+        translate = ftku.TranslateDType(np.array([], dtype=dtype))
+        fdtype = translate.to_float()
+        cdtype = translate.to_complex()
+
+        # Generate u2nu() input
+        rng = np.random.default_rng()
+        if real:
+            w = rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(fdtype)
+        else:
+            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+            w += rng.standard_normal((*stack_shape, *x_spec.num))
+            w = w.astype(cdtype)
+
+        # Generate u2nu() output ground-truth
+        N, _ = v_n.shape
+        z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
+        A = cls._generate_A(x_spec, v_n, isign).astype(cdtype)  # (N, M1,...,MD)
+        for idx in np.ndindex(stack_shape):
+            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N,)
+
+        return (w, z_gt)
 
 
 def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):

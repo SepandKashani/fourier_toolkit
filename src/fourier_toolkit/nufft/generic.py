@@ -1,9 +1,11 @@
 import math
 import warnings
 
+import array_api_compat as aac
 import finufft
 
 import fourier_toolkit.typing as ftkt
+import fourier_toolkit.util as ftku
 
 from . import ExponentSign, _eps_default
 
@@ -16,6 +18,61 @@ def _nu2nu(
     eps: float = _eps_default,
     **kwargs,
 ) -> ftkt.ArrayC:  # (n_trans, N)
+    plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
+    z = plan.execute(w)
+    return z
+
+
+def _nu2u(
+    x: ftkt.ArrayR,  # (M, D)
+    v_spec: ftku.UniformSpec,
+    w: ftkt.ArrayRC,  # (n_trans, M)
+    isign: ExponentSign,
+    eps: float = _eps_default,
+    **kwargs,
+) -> ftkt.ArrayC:  # (n_trans, N1,...,ND)
+    # Some FINUFFT options are incompatible with how we use FINUFFT's output:
+    # discard them if provided.
+    illegal_kwargs = ("modeord",)
+    for k in illegal_kwargs:
+        kwargs.pop(k, None)
+
+    xp = aac.array_namespace(x)
+    v = xp.reshape(  # (N1...ND, D)
+        v_spec.knots(x),
+        (-1, v_spec.ndim),
+    )
+    plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
+    z = xp.reshape(
+        plan.execute(w),
+        (-1, *v_spec.num),
+    )
+    return z
+
+
+def _u2nu(
+    x_spec: ftku.UniformSpec,
+    v: ftkt.ArrayR,  # (N, D)
+    w: ftkt.ArrayRC,  # (n_trans, M1,...,MD)
+    isign: ExponentSign,
+    eps: float = _eps_default,
+    **kwargs,
+) -> ftkt.ArrayC:  # (n_trans, N)
+    # Some FINUFFT options are incompatible with how we use FINUFFT's output:
+    # discard them if provided.
+    illegal_kwargs = ("modeord",)
+    for k in illegal_kwargs:
+        kwargs.pop(k, None)
+
+    xp = aac.array_namespace(v)
+    x = xp.reshape(  # (M1...MD, D)
+        x_spec.knots(v),
+        (-1, x_spec.ndim),
+    )
+    w = xp.reshape(  # (n_trans, M1...MD)
+        w,
+        (-1, math.prod(x_spec.num)),
+    )
     plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
     z = plan.execute(w)
     return z
