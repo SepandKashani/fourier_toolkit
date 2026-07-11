@@ -14,6 +14,8 @@ __all__ = [
 
 _eps_default: float = 1e-6
 ExponentSign = Literal[-1, +1]
+_eps_fp32_min = 1e-6
+_eps_fp64_min = 1e-14
 
 
 def nu2nu(
@@ -58,32 +60,28 @@ def nu2nu(
 
     Notes
     -----
-    * (x,v) must share the same (backend,dtype,device).
+    * (x,v,w) must share the same (backend,device).
 
-    * (x,v,w) must have the same numerical precision:
-
-      - (x,v) float32, (w,) complex64
-      - (x,v) float64, (w,) complex128
+    * The :math:`\tnunu` transform will be computed at the least-precise dtype of (x,v,w).
     """
-    xp = aac.array_namespace(x)
+    fdtype, cdtype = _determine_precision(x, v, w)
 
-    x = _canonicalize_knots(x)
-    v = _canonicalize_knots(v)
-    assert ftku.similar(x, v)
+    x = _canonicalize_knots(x, fdtype)
+    v = _canonicalize_knots(v, fdtype)
     M, Dx = x.shape
     N, Dv = v.shape
     assert (D := Dx) == Dv
     assert D in (1, 2, 3)  # FINUFFT limitation
+    w, sh = _canonicalize_weights(w, cdtype, M)
 
-    same_backend = aac.array_namespace(x) == aac.array_namespace(w)
-    same_device = x.device == w.device
-    fdtype = ftku.TranslateDType(w).to_float()
-    same_dtype = x.dtype == fdtype
-    assert all([same_backend, same_device, same_dtype])
-    w, sh = _canonicalize_weights(w, M)
+    assert (isign := int(isign)) in (-1, +1)
 
     assert 0 < (eps := float(eps)) < 1
-    assert (isign := int(isign)) in (-1, +1)
+    xp = aac.array_namespace(x)
+    if cdtype == xp.complex64:
+        eps = max(eps, _eps_fp32_min)
+    else:  # xp.complex128
+        eps = max(eps, _eps_fp64_min)
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
@@ -218,7 +216,29 @@ def u2nu(
 
 
 # Helper routines (internal) ---------------------------------------------------
-def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
+def _determine_precision(*args: tuple[ftkt.ArrayRC]) -> tuple[ftkt.DType, ftkt.DType]:
+    """
+    Determine the least precise floating/complex dtype among arrays.
+
+    Returns
+    -------
+    fdtype, cdtype: DType
+        floating/complex dtype
+    """
+    xp = aac.array_namespace(args[0])
+    device = args[0].device
+    for a in args:
+        assert aac.array_namespace(a) == xp  # same backend
+        assert a.device == device  # same device
+        assert xp.finfo(a).bits in (32, 64)  # single/double precision (indirect check)
+
+    n_bits = min(xp.finfo(a).bits for a in args)
+    fdtype = getattr(xp, f"float{n_bits}")
+    cdtype = getattr(xp, f"complex{2 * n_bits}")
+    return fdtype, cdtype
+
+
+def _canonicalize_knots(xv: ftkt.ArrayR, fdtype: ftkt.DType) -> ftkt.ArrayR:
     """
     Transform (x, v) knots to canonical form:
     - shape (M|N, D)
@@ -227,6 +247,7 @@ def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
     Parameters
     ----------
     xv: ArrayR
+        (M|N, [D])
 
     Returns
     -------
@@ -239,13 +260,15 @@ def _canonicalize_knots(xv: ftkt.ArrayR) -> ftkt.ArrayR:
     if xv.ndim == 1:
         xv = xp.reshape(xv, (-1, 1))
 
-    fdtype = ftku.TranslateDType(xv).to_float()
-
     xv_c = xp.asarray(xv, dtype=fdtype)
     return xv_c
 
 
-def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
+def _canonicalize_weights(
+    w: ftkt.ArrayRC,
+    cdtype: ftkt.DType,
+    M: int,
+) -> tuple[ftkt.ArrayC, tuple]:
     """
     Transform (w,) weights to canonical form:
     - shape (n_trans, M)
@@ -254,6 +277,7 @@ def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
     Parameters
     ----------
     w: ArrayRC
+        (..., M)
 
     Returns
     -------
@@ -263,14 +287,11 @@ def _canonicalize_weights(w: ftkt.ArrayRC, M: int) -> tuple[ftkt.ArrayC, tuple]:
         Shape to transform the output of `plan.execute()` to.
         This is to respect the input's stack shape (...).
     """
-    xp = aac.array_namespace(w)
-
     *sh, Mw = w.shape
     sh_flat = math.prod(sh)
     assert Mw == M
 
-    cdtype = ftku.TranslateDType(w).to_complex()
-
+    xp = aac.array_namespace(w)
     w_c = xp.reshape(
         xp.asarray(w, dtype=cdtype),
         (sh_flat, M),
