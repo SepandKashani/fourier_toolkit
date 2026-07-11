@@ -23,32 +23,13 @@ def _nu2nu(
 
 # Helper routines (internal) ---------------------------------------------------
 def _create_t3_plan(
-    x: ftkt.ArrayR,
-    v: ftkt.ArrayR,
-    w: ftkt.ArrayC,
+    x: ftkt.ArrayR,  # (M, D)
+    v: ftkt.ArrayR,  # (N, D)
+    w: ftkt.ArrayC,  # (n_trans, M)
     isign: ExponentSign,
     eps: float,
     **kwargs,
 ) -> finufft.Plan:
-    r"""
-    Plan a type-3 NUFFT.
-
-    Parameters
-    ----------
-    x: ArrayR
-        (M, D)
-    v: ArrayR
-        (N, D)
-    w: ArrayC
-        (n_trans, M)
-    isign: +1, -1
-    eps: ]0, 1[
-    kwargs: dict
-
-    Returns
-    -------
-    plan: finufft.Plan
-    """
     _, D = x.shape
     n_trans, _ = w.shape
 
@@ -71,6 +52,9 @@ def _create_t3_plan(
     )
 
     with warnings.catch_warnings():
+        # FINUFFT stores (x,v) arrays internally in F-order, hence warns user if a copy was
+        # required to do so. Since the Python array API standard has no function to coerce array
+        # ordering, we ignore this warning.
         warnings.filterwarnings(
             "ignore",
             message=r"Argument `.+` does not satisfy the following requirement: .+\. Copying array \(this may reduce performance\)$",
