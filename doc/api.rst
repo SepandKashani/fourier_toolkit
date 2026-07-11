@@ -29,6 +29,23 @@ Array Types
 Computing Fourier Sums
 ----------------------
 
+.. note::
+
+   (:py:func:`~fourier_toolkit.nu2nu`, :py:func:`~fourier_toolkit.nu2u`, :py:func:`~fourier_toolkit.u2nu`) rely on:
+
+   * CPU: `FINUFFT <https://finufft.readthedocs.io/en/latest/index.html>`_
+   * GPU: `cuFINUFFT <https://finufft.readthedocs.io/en/latest/python_gpu.html>`_
+
+   The latter is not installed by default. You can install it if needed via
+
+   .. code::
+
+      pip install cufinufft                        # cuda12 pre-packaged [20260711]
+      pip install --no-binary cufinufft cufinufft  # cudaXX
+
+   It may be necessary to modify ``LD_LIBRARY_PATH`` afterwards for ``libcufinufft.so`` to be importable.
+
+
 .. autofunction:: fourier_toolkit.u2u
 
 .. autofunction:: fourier_toolkit.nu2nu
