@@ -307,13 +307,75 @@ class TestU2U:
         assert helper.similar(tangent_out, tangent_out_gt)
         assert_areclose(tangent_out, tangent_out_gt, v_spec.ndim)
 
-    # Do we test vjp()? -> Not explicitly.
-    #
-    # Rationale:
-    # - JAX/PyTorch have different definitions for vjp(), which makes testing cumbersome.
-    #   That being said, it is rare to call vjp(u2u) manually. Rather some larger backward-pass logic would call it instead.
-    # - In JAX (and PyTorch too?), vjp() is implemented by transposing jvp().
-    #   Therefore, if jvp(u2u) is correct, then vjp(u2u) would be too.
+    @parametrize_real
+    @parametrize_stack
+    def test_vjp(
+        self,
+        array_backend,
+        x_spec,
+        v_spec,
+        isign,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can VJP u2u() calls.
+        #
+        # This is tested indirectly by checking that the gradient of
+        #     f(w) = \norm{u2u(w)}{2}^{2}
+        # computed via grad() matches the analytic ground truth
+        #     \grad_{f}(w) = proj(2 A^{H} A w, w.dtype),
+        #     A = u2u
+
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        def f(
+            x_spec: ftku.UniformSpec,
+            v_spec: ftku.UniformSpec,
+            w: ftkt.ArrayRC,
+            isign,
+        ) -> ftkt.ArrayR:
+            xp = aac.array_namespace(w)
+            z = u2u(x_spec, v_spec, w, isign)
+            out = xp.sum(xp.abs(z) ** 2)
+            return out
+
+        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
+        val_gt = f(x_spec, v_spec, w, isign)
+        grad_gt = 2 * u2u(v_spec, x_spec, z_gt, -isign)
+        if real:
+            grad_gt = grad_gt.real
+
+        # Test u2u() compliance
+        w = ct.to_backend(w, array_backend)
+        val_gt = ct.to_backend(val_gt, array_backend)
+        grad_gt = ct.to_backend(grad_gt, array_backend)
+
+        if is_jax:
+            import jax
+
+            _f = jax.value_and_grad(f, argnums=2)
+            val, grad = _f(x_spec, v_spec, w, isign)
+            grad = grad.conj()  # jax computes \grad_{f}(w^{*})
+            # https://docs.jax.dev/en/latest/complex-differentiation.html (search for "What about VJPs?")
+        elif is_torch:
+            import torch.func
+
+            _f = torch.func.grad_and_value(f, argnums=2)
+            grad, val = _f(x_spec, v_spec, w, isign)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        newaxis = None
+        assert val.shape == val_gt.shape
+        assert helper.similar(val, val_gt)
+        assert_areclose(val[newaxis], val_gt[newaxis], D=1)
+        assert grad.shape == grad_gt.shape
+        assert helper.similar(grad, grad_gt)
+        assert_areclose(grad, grad_gt, D=x_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
