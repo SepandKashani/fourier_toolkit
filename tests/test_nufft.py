@@ -141,7 +141,7 @@ class TestNU2NU:
 class TestNU2U:
     @parametrize_real
     @parametrize_stack
-    def test_value_apply(
+    def test_apply(
         self,
         array_backend,
         x_m,
@@ -262,7 +262,7 @@ class TestNU2U:
 class TestU2NU:
     @parametrize_real
     @parametrize_stack
-    def test_value_apply(
+    def test_apply(
         self,
         array_backend,
         x_spec,
