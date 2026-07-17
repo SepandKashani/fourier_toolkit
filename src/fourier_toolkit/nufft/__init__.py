@@ -352,8 +352,8 @@ def _canonicalize_knots(xv: ftkt.ArrayR, fdtype: ftkt.DType) -> ftkt.ArrayR:
 def _canonicalize_weights(
     w: ftkt.ArrayRC,
     cdtype: ftkt.DType,
-    sh_core: tuple[int, ...],
-) -> tuple[ftkt.ArrayC, tuple]:
+    sh_core: ftkt.TupleI,
+) -> tuple[ftkt.ArrayC, ftkt.TupleI]:
     """
     Transform (w,) weights to canonical form:
     - shape (n_trans, *sh_core)

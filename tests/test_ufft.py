@@ -58,7 +58,7 @@ class TestCZT:
         return request.param
 
     @pytest.fixture(params=[True, False])
-    def M(self, space_dim, request) -> tuple[int]:
+    def M(self, space_dim, request) -> ftkt.TupleI:
         rng = np.random.default_rng()
         M = rng.integers(2, 7, space_dim)
 
@@ -68,7 +68,7 @@ class TestCZT:
         return tuple(map(int, M))  # (M1,...,MD)
 
     @pytest.fixture(params=[True, False])
-    def N(self, space_dim, request) -> tuple[int]:
+    def N(self, space_dim, request) -> ftkt.TupleI:
         rng = np.random.default_rng()
         N = rng.integers(7, 14, space_dim)
 
@@ -78,14 +78,14 @@ class TestCZT:
         return tuple(map(int, N))  # (N1,...,ND)
 
     @pytest.fixture
-    def A(self, space_dim) -> tuple[complex]:
+    def A(self, space_dim) -> ftkt.TupleC:
         rng = np.random.default_rng()
         A = rng.standard_normal(2 * space_dim).view(np.cdouble)
         A /= np.abs(A)
         return tuple(map(complex, A))  # (D,)
 
     @pytest.fixture
-    def W(self, space_dim) -> tuple[complex]:
+    def W(self, space_dim) -> ftkt.TupleC:
         rng = np.random.default_rng()
         W = rng.standard_normal(2 * space_dim).view(np.cdouble)
         W /= np.abs(W)
@@ -430,7 +430,7 @@ class TestU2U:
         isign: int,
         dtype: np.dtype,
         real: bool,
-        stack_shape: tuple[int, ...],
+        stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))

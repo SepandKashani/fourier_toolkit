@@ -88,15 +88,15 @@ class UniformSpec:
             raise ValueError
 
     @property
-    def start(self) -> tuple[float, ...]:
+    def start(self) -> ftkt.TupleR:
         return self._start
 
     @property
-    def step(self) -> tuple[float, ...]:
+    def step(self) -> ftkt.TupleR:
         return self._step
 
     @property
-    def num(self) -> tuple[int, ...]:
+    def num(self) -> ftkt.TupleI:
         return self._num
 
     @property
@@ -104,7 +104,7 @@ class UniformSpec:
         return len(self.start)
 
     @property
-    def span(self) -> tuple[float, ...]:
+    def span(self) -> ftkt.TupleR:
         _span = [None] * self.ndim
         for d in range(self.ndim):
             dx = self.step[d]
@@ -114,7 +114,7 @@ class UniformSpec:
         return tuple(_span)
 
     @property
-    def center(self) -> tuple[float, ...]:
+    def center(self) -> ftkt.TupleR:
         _center = [None] * self.ndim
         for d in range(self.ndim):
             x0 = self.start[d]
@@ -205,7 +205,7 @@ class UniformSpec:
         x = xp.stack(mesh, axis=-1)
         return x
 
-    def __getitem__(self, m: tuple[int]) -> tuple[float]:
+    def __getitem__(self, m: ftkt.TupleI) -> ftkt.TupleR:
         r"""
         Extract a mesh coordinate from its index.
 

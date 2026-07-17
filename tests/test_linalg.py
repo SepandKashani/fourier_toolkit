@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 import fourier_toolkit.linalg as ftkl
+import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 from . import conftest as ct
@@ -36,7 +37,7 @@ class TestHadamardOuter:
         return request.param
 
     @pytest.fixture
-    def space_shape(self, space_dim) -> tuple[int]:
+    def space_shape(self, space_dim) -> ftkt.TupleI:
         rng = np.random.default_rng()
         N = rng.integers(5, 11, space_dim)
         return tuple(map(int, N))  # (N1,...,ND)
@@ -48,7 +49,7 @@ class TestHadamardOuter:
             (5, 3, 4),
         ]
     )
-    def stack_shape(self, request) -> tuple[int]:
+    def stack_shape(self, request) -> ftkt.TupleI:
         return request.param  # (...)
 
     @pytest.fixture(

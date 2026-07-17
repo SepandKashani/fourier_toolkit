@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 
-def hadamard_outer(x: ftkt.ArrayRC, *args: list[ftkt.ArrayRC]) -> ftkt.ArrayRC:
+def hadamard_outer(x: ftkt.ArrayRC, *args: tuple[ftkt.ArrayRC]) -> ftkt.ArrayRC:
     r"""
     Compute Hadamard product of `x` with outer product of `args`:
 

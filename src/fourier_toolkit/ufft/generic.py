@@ -281,10 +281,10 @@ class _CZT:
 
     def __init__(
         self,
-        N: tuple[int],
-        M: tuple[int],
-        A: tuple[complex],
-        W: tuple[complex],
+        N: ftkt.BroadcastableI,
+        M: ftkt.BroadcastableI,
+        A: ftkt.BroadcastableC,
+        W: ftkt.BroadcastableC,
     ):
         r"""
         Parameters

@@ -109,7 +109,7 @@ class TestNU2NU:
         isign: int,
         dtype: np.dtype,
         real: bool,
-        stack_shape: tuple[int, ...],
+        stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
@@ -231,7 +231,7 @@ class TestNU2U:
         isign: int,
         dtype: np.dtype,
         real: bool,
-        stack_shape: tuple[int, ...],
+        stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
@@ -352,7 +352,7 @@ class TestU2NU:
         isign: int,
         dtype: np.dtype,
         real: bool,
-        stack_shape: tuple[int, ...],
+        stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))

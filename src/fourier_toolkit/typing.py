@@ -9,7 +9,13 @@ __all__ = [
     "ArrayNameSpace",
     "ArrayR",
     "ArrayRC",
+    "BroadcastableC",
+    "BroadcastableI",
+    "BroadcastableR",
     "DType",
+    "TupleC",
+    "TupleI",
+    "TupleR",
 ]
 
 
@@ -116,3 +122,10 @@ ArrayRC = typ.Union[
 """
 Array-API-compatible array of dtype (float[32,64], complex[64,128]).
 """
+
+TupleI = tuple[int, ...]
+TupleR = tuple[float, ...]
+TupleC = tuple[complex, ...]
+BroadcastableI = int | TupleI
+BroadcastableR = float | TupleR
+BroadcastableC = complex | TupleC
