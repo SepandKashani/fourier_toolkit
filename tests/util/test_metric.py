@@ -3,6 +3,7 @@ import pytest
 
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
+from fourier_toolkit.util.metric import fp_atol
 
 from .. import conftest as ct
 
@@ -84,9 +85,9 @@ class TestAllClose:
 
         # Add jitter to `b` based on precision.
         if precision == "low":
-            lrhs = ftku.fp_atol["float32"]
+            lrhs = fp_atol["float32"]
         elif precision == "high":
-            lrhs = ftku.fp_atol["float64"]
+            lrhs = fp_atol["float64"]
         else:
             raise ValueError
         b += rng.uniform(-lrhs, +lrhs, size=b.shape)
