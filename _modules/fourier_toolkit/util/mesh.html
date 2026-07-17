@@ -1,20 +1,20 @@
 
 <!DOCTYPE html>
 
-<html lang="en" data-content_root="../../">
+<html lang="en" data-content_root="../../../">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.util &#8212; Fourier Toolkit 0.4 documentation</title>
-    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
-    <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
+    <title>fourier_toolkit.util.mesh &#8212; Fourier Toolkit 0.4.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=d75fae25" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=7f00635f"></script>
-    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
-    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
-    <script src="../../_static/bizstyle.js"></script>
-    <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
+    <script src="../../../_static/documentation_options.js?v=c87aa342"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
     <!--[if lt IE 9]>
     <script src="_static/css3-mediaqueries.js"></script>
@@ -24,14 +24,14 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../../genindex.html" title="General Index"
+          <a href="../../../genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="../../py-modindex.html" title="Python Module Index"
+          <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.util</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.util.mesh</a></li> 
       </ul>
     </div>  
 
@@ -40,163 +40,21 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <h1>Source code for fourier_toolkit.util</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">importlib.resources</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ir</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">namedtuple</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+  <h1>Source code for fourier_toolkit.util.mesh</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">array_api_compat</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">aac</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">numpy.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">DTypeLike</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftkt</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;as_namedtuple&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;broadcast_seq&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;cast_warn&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;next_fast_len&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;TranslateDType&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;UniformSpec&quot;</span><span class="p">,</span>
-<span class="p">]</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">as_namedtuple</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NamedTuple</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Store mapping as named-tuple.</span>
-
-<span class="sd">    The goal is to provide more convenient access to dictionary entries via `.key` syntax.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">nt_t</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;nt_t&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">nt_t</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">y</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">broadcast_seq</span><span class="p">(</span>
-    <span class="n">x</span><span class="p">,</span>
-    <span class="n">N</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">cast</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">_</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Broadcast `x` to a tuple of length `N`.</span>
-
-<span class="sd">    If `N` is omitted, then no broadcasting takes place, only tupling.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">,)</span>
-
-    <span class="k">if</span> <span class="n">N</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">y</span> <span class="o">*=</span> <span class="n">N</span>  <span class="c1"># broadcast</span>
-        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="n">N</span>
-
-    <span class="n">y</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">cast</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
-    <span class="k">return</span> <span class="n">y</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">cast_warn</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span> <span class="n">dtype</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">DType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Cast `x` to `dtype` if type mis-match.</span>
-
-<span class="sd">    Emit warning when cast occurs.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> cast performed.&quot;</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">y</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">next_fast_len</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Find a good FFT size.</span>
-
-<span class="sd">    For broadest compatibility with FFT libraries, the search is restricted to 5-smooth numbers, i.e. numbers of the form :math:`2^{a} 3^{b} 5^{c}`.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    n: int</span>
-<span class="sd">        Lower bound on FFT length.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    n_next: int</span>
-<span class="sd">        A 5-smooth FFT length such that `n_next &gt;= n`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="mi">1</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">3</span><span class="o">**</span><span class="mi">10</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">5</span><span class="o">**</span><span class="mi">10</span><span class="p">)</span>  <span class="c1"># known pre-computed range</span>
-
-    <span class="n">path</span> <span class="o">=</span> <span class="n">ir</span><span class="o">.</span><span class="n">files</span><span class="p">(</span><span class="s2">&quot;fourier_toolkit&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="s2">&quot;resources&quot;</span> <span class="o">/</span> <span class="s2">&quot;5_smooth.txt&quot;</span>
-    <span class="k">with</span> <span class="n">ir</span><span class="o">.</span><span class="n">as_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">comments</span><span class="o">=</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
-    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;right&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">candidates</span><span class="p">[</span><span class="n">idx</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">n</span><span class="p">:</span>
-        <span class="n">n_next</span> <span class="o">=</span> <span class="n">n</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">n_next</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">n_next</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">TranslateDType</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    (int,float,complex) dtype translator.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">map_to_float</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;int32&quot;</span><span class="p">:</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;int64&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;float32&quot;</span><span class="p">:</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;float64&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;complex64&quot;</span><span class="p">:</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;complex128&quot;</span><span class="p">:</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-    <span class="n">map_from_float</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">):</span> <span class="s2">&quot;int32&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">):</span> <span class="s2">&quot;int64&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">):</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">):</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">):</span> <span class="s2">&quot;complex64&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">):</span> <span class="s2">&quot;complex128&quot;</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">):</span>
-        <span class="c1"># Find float-equivalent name of `x.dtype`</span>
-        <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-        <span class="n">info</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">__array_namespace_info__</span><span class="p">()</span>
-        <span class="n">dtypes</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">dtypes</span><span class="p">()</span>
-
-        <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dtype</span> <span class="ow">in</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtype</span><span class="p">:</span>
-                <span class="n">fdtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_to_float</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-                <span class="n">found</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="k">assert</span> <span class="n">found</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Un-recognized input dtype &#39;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&#39;.&quot;</span>
-
-        <span class="c1"># Store (float-equivalent name, backend name-&gt;dtype mapping)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_fdtype</span> <span class="o">=</span> <span class="n">fdtype</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_name2dtype</span> <span class="o">=</span> <span class="n">dtypes</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_int</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DTypeLike</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_from_float</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fdtype</span><span class="p">,</span> <span class="s2">&quot;i&quot;</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name2dtype</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_float</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DTypeLike</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_from_float</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fdtype</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name2dtype</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">to_complex</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DTypeLike</span><span class="p">:</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map_from_float</span><span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fdtype</span><span class="p">,</span> <span class="s2">&quot;c&quot;</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name2dtype</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.dtype</span><span class="w"> </span><span class="kn">import</span> <span class="n">TranslateDType</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.misc</span><span class="w"> </span><span class="kn">import</span> <span class="n">broadcast_seq</span>
 
 
 <div class="viewcode-block" id="UniformSpec">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.UniformSpec">[docs]</a>
+<a class="viewcode-back" href="../../../api.html#fourier_toolkit.UniformSpec">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">UniformSpec</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional uniform mesh specifier.</span>
@@ -214,7 +72,7 @@
     <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_start&quot;</span><span class="p">,</span> <span class="s2">&quot;_step&quot;</span><span class="p">,</span> <span class="s2">&quot;_num&quot;</span><span class="p">)</span>
 
 <div class="viewcode-block" id="UniformSpec.__init__">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.UniformSpec.__init__">[docs]</a>
+<a class="viewcode-back" href="../../../api.html#fourier_toolkit.UniformSpec.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
@@ -278,15 +136,15 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleR</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleR</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_step</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">num</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleI</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num</span>
 
     <span class="nd">@property</span>
@@ -294,7 +152,7 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">span</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">span</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleR</span><span class="p">:</span>
         <span class="n">_span</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span>
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
             <span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
@@ -304,7 +162,7 @@
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">_span</span><span class="p">)</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleR</span><span class="p">:</span>
         <span class="n">_center</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span>
         <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
             <span class="n">x0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start</span><span class="p">[</span><span class="n">d</span><span class="p">]</span>
@@ -329,7 +187,7 @@
         <span class="p">)</span>
 
 <div class="viewcode-block" id="UniformSpec.meshgrid">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.UniformSpec.meshgrid">[docs]</a>
+<a class="viewcode-back" href="../../../api.html#fourier_toolkit.UniformSpec.meshgrid">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">meshgrid</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -381,7 +239,7 @@
 
 
 <div class="viewcode-block" id="UniformSpec.knots">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.UniformSpec.knots">[docs]</a>
+<a class="viewcode-back" href="../../../api.html#fourier_toolkit.UniformSpec.knots">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">knots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">like</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parameters</span>
@@ -402,8 +260,8 @@
 
 
 <div class="viewcode-block" id="UniformSpec.__getitem__">
-<a class="viewcode-back" href="../../api.html#fourier_toolkit.UniformSpec.__getitem__">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<a class="viewcode-back" href="../../../api.html#fourier_toolkit.UniformSpec.__getitem__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleI</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleR</span><span class="p">:</span>
 <span class="w">        </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Extract a mesh coordinate from its index.</span>
 
@@ -443,16 +301,16 @@
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="Main">
         <div class="sphinxsidebarwrapper">
-<h3><a href="../../index.html">Table of Contents</a></h3>
+<h3><a href="../../../index.html">Table of Contents</a></h3>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../references.html">References</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../references.html">References</a></li>
 </ul>
 
 <search id="searchbox" style="display: none" role="search">
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
-    <form class="search" action="../../search.html" method="get">
+    <form class="search" action="../../../search.html" method="get">
       <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
       <input type="submit" value="Go" />
     </form>
@@ -467,14 +325,14 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="../../genindex.html" title="General Index"
+          <a href="../../../genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="../../py-modindex.html" title="Python Module Index"
+          <a href="../../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4 documentation</a> &#187;</li>
-          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
-        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.util</a></li> 
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">fourier_toolkit.util.mesh</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
