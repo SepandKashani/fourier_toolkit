@@ -3,7 +3,8 @@ import array_api_extra as aae
 import opt_einsum as oe
 
 import fourier_toolkit.typing as ftkt
-import fourier_toolkit.util as ftku
+
+from .dtype import TranslateDType
 
 fp_atol = dict(
     float32=1e-5,
@@ -39,7 +40,7 @@ def allclose(a: ftkt.Array, b: ftkt.Array, dtype: ftkt.DType) -> bool:
     info = xp.__array_namespace_info__()
     dtypes = {v: k for (k, v) in info.dtypes().items()}
 
-    fdtype = ftku.TranslateDType(
+    fdtype = TranslateDType(
         xp.asarray([], dtype=dtype),
     ).to_float()
     fdtype_name = dtypes[fdtype]
