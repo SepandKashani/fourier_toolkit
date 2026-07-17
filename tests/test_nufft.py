@@ -7,7 +7,6 @@ import fourier_toolkit.util as ftku
 from fourier_toolkit import nu2nu, nu2u, u2nu  # test as exposed to user
 
 from . import conftest as ct
-from . import helper
 
 parametrize_real = pytest.mark.parametrize("real", [True, False])
 parametrize_stack = pytest.mark.parametrize(
@@ -48,7 +47,7 @@ class TestNU2NU:
             **finufft_kwargs,
         )
         assert z.shape == z_gt.shape
-        assert helper.similar(z, z_gt)
+        assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
 
     # Fixtures ----------------------------------------------------------------
@@ -133,7 +132,7 @@ class TestNU2NU:
         z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
         A = cls._generate_A(x_m, v_n, isign).astype(cdtype)  # (N, M)
         for idx in np.ndindex(stack_shape):
-            z_gt[idx] = helper.inner_product(w[idx], A, 1)  # (N,)
+            z_gt[idx] = ftku.inner_product(w[idx], A, 1)  # (N,)
 
         return (w, z_gt)
 
@@ -169,7 +168,7 @@ class TestNU2U:
             **finufft_kwargs,
         )
         assert z.shape == z_gt.shape
-        assert helper.similar(z, z_gt)
+        assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, v_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
@@ -254,7 +253,7 @@ class TestNU2U:
         z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
         A = cls._generate_A(x_m, v_spec, isign).astype(cdtype)  # (N1,...,ND, M)
         for idx in np.ndindex(stack_shape):
-            z_gt[idx] = helper.inner_product(w[idx], A, 1)  # (N1,...,ND)
+            z_gt[idx] = ftku.inner_product(w[idx], A, 1)  # (N1,...,ND)
 
         return (w, z_gt)
 
@@ -290,7 +289,7 @@ class TestU2NU:
             **finufft_kwargs,
         )
         assert z.shape == z_gt.shape
-        assert helper.similar(z, z_gt)
+        assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
 
     # Fixtures ----------------------------------------------------------------
@@ -375,7 +374,7 @@ class TestU2NU:
         z_gt = np.zeros((*stack_shape, N), dtype=cdtype)
         A = cls._generate_A(x_spec, v_n, isign).astype(cdtype)  # (N, M1,...,MD)
         for idx in np.ndindex(stack_shape):
-            z_gt[idx] = helper.inner_product(w[idx], A, x_spec.ndim)  # (N,)
+            z_gt[idx] = ftku.inner_product(w[idx], A, x_spec.ndim)  # (N,)
 
         return (w, z_gt)
 
@@ -396,13 +395,13 @@ def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
     dtypes = {v: k for (k, v) in info.dtypes().items()}
     fdtype_name = dtypes[GT.dtype]
 
-    if helper.rel_l2_close(VAL, GT, D, eps=helper.fp_atol[fdtype_name]):
+    if ftku.rel_l2_close(VAL, GT, D, eps=ftku.fp_atol[fdtype_name]):
         assert True
     else:
         # fail test, showing statistics
         diff = xp.abs(VAL - GT)
-        linf = helper.rel_linf_distance(VAL, GT, D)
-        l2 = helper.rel_l2_distance(VAL, GT, D)
+        linf = ftku.rel_linf_distance(VAL, GT, D)
+        l2 = ftku.rel_l2_distance(VAL, GT, D)
 
         stat_funcs = (xp.min, xp.mean, xp.max, xp.std)
         stats_diff = [float(f(diff)) for f in stat_funcs]
@@ -416,7 +415,7 @@ def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
                 f"- abs(VAL - GT):              ({', '.join(map(str, stats_diff))})",
                 f"- rel_linf_distance(VAL, GT): ({', '.join(map(str, stats_linf))})",
                 f"- rel_l2_distance(VAL, GT):   ({', '.join(map(str, stats_l2))})",
-                f"- eps(rel_l2_close):           {helper.fp_atol[fdtype_name]}",
+                f"- eps(rel_l2_close):           {ftku.fp_atol[fdtype_name]}",
             ]
         )
 

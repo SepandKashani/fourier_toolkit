@@ -8,7 +8,6 @@ import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
 from . import conftest as ct
-from . import helper
 
 
 class TestAsNamedTuple:
@@ -259,8 +258,8 @@ class TestUniformSpec:
         mesh_1 = uspec_1.meshgrid(sparse, like)
         mesh_1_gt = (1 + step * xp.arange(9, dtype=fdtype, device=device),)
         assert len(mesh_1) == len(mesh_1_gt) == 1
-        assert helper.similar(mesh_1[0], mesh_1_gt[0])
-        assert helper.allclose(mesh_1[0], mesh_1_gt[0], fdtype)
+        assert ftku.similar(mesh_1[0], mesh_1_gt[0])
+        assert ftku.allclose(mesh_1[0], mesh_1_gt[0], fdtype)
 
         # multi-dimensional case
         step_1, step_2 = step_sign * 0.1, 0.2
@@ -280,8 +279,8 @@ class TestUniformSpec:
         assert len(mesh_2) == len(mesh_2_gt) == 2
         for m2, m2gt in zip(mesh_2, mesh_2_gt):
             assert m2.shape == m2gt.shape
-            assert helper.similar(m2, m2gt)
-            assert helper.allclose(m2, m2gt, fdtype)
+            assert ftku.similar(m2, m2gt)
+            assert ftku.allclose(m2, m2gt, fdtype)
 
     @parametrize_fdtype
     def test_knots(self, array_backend, fdtype_name):
@@ -306,8 +305,8 @@ class TestUniformSpec:
         knots_gt = xp.asarray(knots_gt, dtype=fdtype, device=device)
 
         assert knots.shape == knots_gt.shape == (9, 8, 2)
-        assert helper.similar(knots, knots_gt)
-        assert helper.allclose(knots, knots_gt, fdtype)
+        assert ftku.similar(knots, knots_gt)
+        assert ftku.allclose(knots, knots_gt, fdtype)
 
     def test_getitem(self):
         uspec_1 = ftku.UniformSpec(start=0, step=0.5, num=5)

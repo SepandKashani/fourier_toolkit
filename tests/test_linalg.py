@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 
 import fourier_toolkit.linalg as ftkl
+import fourier_toolkit.util as ftku
 
 from . import conftest as ct
-from . import helper
 
 
 class TestHadamardOuter:
@@ -18,8 +18,8 @@ class TestHadamardOuter:
 
         y = ftkl.hadamard_outer(x, *args)
         assert y.shape == y_gt.shape
-        assert helper.similar(y, y_gt)
-        assert helper.allclose(y, y_gt, y_gt.dtype)
+        assert ftku.similar(y, y_gt)
+        assert ftku.allclose(y, y_gt, y_gt.dtype)
 
     def test_prec(self, array_backend, x, args):
         # output precision (not dtype!) matches input precision.

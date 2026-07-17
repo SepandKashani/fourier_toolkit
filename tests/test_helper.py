@@ -2,9 +2,9 @@ import numpy as np
 import pytest
 
 import fourier_toolkit.typing as ftkt
+import fourier_toolkit.util as ftku
 
 from . import conftest as ct
-from . import helper
 
 parametrize_dim = pytest.mark.parametrize("D", [1, 2, 3])
 parametrize_dtype = pytest.mark.parametrize(
@@ -42,14 +42,14 @@ class TestSimilar:
     def test_value(self, array_backend, ab_dtype):
         a = self.create_array(array_backend, ab_dtype)
         b = self.create_array(array_backend, ab_dtype)
-        assert helper.similar(a, b)
+        assert ftku.similar(a, b)
 
         # changing any field should fail
         xp = array_backend.xp
         b = xp.asarray([], dtype=xp.bool, device=b.device)
-        assert not helper.similar(a, b)
+        assert not ftku.similar(a, b)
         b = xp.asarray([1], dtype=xp.bool, device=b.device)
-        assert not helper.similar(a, b)
+        assert not ftku.similar(a, b)
 
 
 class TestAllClose:
@@ -70,7 +70,7 @@ class TestAllClose:
         a = xp.asarray(a, **kwargs)
         b = xp.asarray(b, **kwargs)
 
-        helper.allclose(a, b, a.dtype)
+        ftku.allclose(a, b, a.dtype)
 
     @pytest.mark.parametrize("input_dtype", ["float64", "complex128"])
     @pytest.mark.parametrize("precision", ["low", "high"])
@@ -84,9 +84,9 @@ class TestAllClose:
 
         # Add jitter to `b` based on precision.
         if precision == "low":
-            lrhs = helper.fp_atol["float32"]
+            lrhs = ftku.fp_atol["float32"]
         elif precision == "high":
-            lrhs = helper.fp_atol["float64"]
+            lrhs = ftku.fp_atol["float64"]
         else:
             raise ValueError
         b += rng.uniform(-lrhs, +lrhs, size=b.shape)
@@ -105,7 +105,7 @@ class TestAllClose:
         else:
             raise ValueError
 
-        assert helper.allclose(a, b, comparison_dtype)
+        assert ftku.allclose(a, b, comparison_dtype)
 
 
 class DistanceMixin:
@@ -139,13 +139,13 @@ class DistanceMixin:
 
         c = self.compute_distance(a, b, D)
         assert c.shape == sh_stack
-        assert helper.allclose(c, c_gt, a.dtype)
+        assert ftku.allclose(c, c_gt, a.dtype)
 
 
 class TestRelL2Distance(DistanceMixin):
     @classmethod
     def compute_distance(cls, a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
-        return helper.rel_l2_distance(a, b, D)
+        return ftku.rel_l2_distance(a, b, D)
 
     @classmethod
     def compute_distance_gt(cls, a: np.ndarray, b: np.ndarray, D: int) -> np.ndarray:
@@ -159,7 +159,7 @@ class TestRelL2Distance(DistanceMixin):
 class TestRelLInfDistance(DistanceMixin):
     @classmethod
     def compute_distance(cls, a: ftkt.Array, b: ftkt.Array, D: int) -> ftkt.Array:
-        return helper.rel_linf_distance(a, b, D)
+        return ftku.rel_linf_distance(a, b, D)
 
     @classmethod
     def compute_distance_gt(cls, a: np.ndarray, b: np.ndarray, D: int) -> np.ndarray:
@@ -191,8 +191,8 @@ class TestRelL2Close:
         a2 = xp.asarray(a2, **kwargs)
         b = xp.asarray(b, **kwargs)
 
-        assert helper.rel_l2_close(a1, b, D, eps=1)
-        assert helper.rel_l2_close(a2, b, D, eps=0)
+        assert ftku.rel_l2_close(a1, b, D, eps=1)
+        assert ftku.rel_l2_close(a2, b, D, eps=0)
 
 
 class TestInnerProduct:
@@ -219,8 +219,8 @@ class TestInnerProduct:
         b = xp.asarray(b, **kwargs)
         c_gt = xp.asarray(c_gt, **kwargs)
 
-        assert helper.allclose(
-            helper.inner_product(a, b, D),
+        assert ftku.allclose(
+            ftku.inner_product(a, b, D),
             c_gt,
             xp.complex128,
         )
