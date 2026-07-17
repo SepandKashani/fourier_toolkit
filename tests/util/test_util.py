@@ -7,7 +7,7 @@ import pytest
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-from . import conftest as ct
+from .. import conftest as ct
 
 
 class TestAsNamedTuple:

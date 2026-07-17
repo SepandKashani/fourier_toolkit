@@ -4,7 +4,7 @@ import pytest
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-from . import conftest as ct
+from .. import conftest as ct
 
 parametrize_dim = pytest.mark.parametrize("D", [1, 2, 3])
 parametrize_dtype = pytest.mark.parametrize(
