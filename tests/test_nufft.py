@@ -5,6 +5,7 @@ import pytest
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import nu2nu, nu2u, u2nu  # test as exposed to user
+from fourier_toolkit.util.metric import fp_atol
 
 from . import conftest as ct
 
@@ -395,7 +396,7 @@ def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
     dtypes = {v: k for (k, v) in info.dtypes().items()}
     fdtype_name = dtypes[GT.dtype]
 
-    if ftku.rel_l2_close(VAL, GT, D, eps=ftku.fp_atol[fdtype_name]):
+    if ftku.rel_l2_close(VAL, GT, D, eps=fp_atol[fdtype_name]):
         assert True
     else:
         # fail test, showing statistics
@@ -415,7 +416,7 @@ def assert_areclose(VAL: ftkt.Array, GT: ftkt.Array, D: int):
                 f"- abs(VAL - GT):              ({', '.join(map(str, stats_diff))})",
                 f"- rel_linf_distance(VAL, GT): ({', '.join(map(str, stats_linf))})",
                 f"- rel_l2_distance(VAL, GT):   ({', '.join(map(str, stats_l2))})",
-                f"- eps(rel_l2_close):           {ftku.fp_atol[fdtype_name]}",
+                f"- eps(rel_l2_close):           {fp_atol[fdtype_name]}",
             ]
         )
 
