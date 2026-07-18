@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import collections.abc as cabc
 import typing as typ
 
 __all__ = [
@@ -126,6 +127,6 @@ Array-API-compatible array of dtype (float[32,64], complex[64,128]).
 TupleI = tuple[int, ...]
 TupleR = tuple[float, ...]
 TupleC = tuple[complex, ...]
-BroadcastableI = int | TupleI
-BroadcastableR = float | TupleR
-BroadcastableC = complex | TupleC
+BroadcastableI = int | cabc.Sequence[int]
+BroadcastableR = float | cabc.Sequence[float]
+BroadcastableC = complex | cabc.Sequence[complex]
