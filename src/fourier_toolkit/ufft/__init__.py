@@ -79,6 +79,8 @@ def u2u(
 
     if aac.is_torch_array(w):
         from . import torch as namespace
+    elif aac.is_jax_array(w):
+        from . import jax as namespace
     else:
         from . import generic as namespace
 
