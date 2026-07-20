@@ -8,7 +8,7 @@ import array_api_compat as aac
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-from . import ExponentSign, _eps_default
+from . import ExponentSign
 
 
 def _nu2nu(
@@ -16,7 +16,7 @@ def _nu2nu(
     v: ftkt.ArrayR,  # (N, D)
     w: ftkt.ArrayRC,  # (n_trans, M)
     isign: ExponentSign,
-    eps: float = _eps_default,
+    eps: float,
     **kwargs,
 ) -> ftkt.ArrayC:  # (n_trans, N)
     plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
@@ -29,7 +29,7 @@ def _nu2u(
     v_spec: ftku.UniformSpec,
     w: ftkt.ArrayRC,  # (n_trans, M)
     isign: ExponentSign,
-    eps: float = _eps_default,
+    eps: float,
     **kwargs,
 ) -> ftkt.ArrayC:  # (n_trans, N1,...,ND)
     # Some FINUFFT options are incompatible with how we use FINUFFT's output:
@@ -56,7 +56,7 @@ def _u2nu(
     v: ftkt.ArrayR,  # (N, D)
     w: ftkt.ArrayRC,  # (n_trans, M1,...,MD)
     isign: ExponentSign,
-    eps: float = _eps_default,
+    eps: float,
     **kwargs,
 ) -> ftkt.ArrayC:  # (n_trans, N)
     # Some FINUFFT options are incompatible with how we use FINUFFT's output:
