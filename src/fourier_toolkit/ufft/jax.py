@@ -15,10 +15,7 @@ def _u2u(
     isign: ExponentSign,
 ) -> ftkt.ArrayC:  # (..., N1,...,ND)
     prim = U2UPrimitive(
-        w_aval=jax.core.ShapedArray(
-            shape=x_spec.num,
-            dtype=w.dtype,
-        ),
+        w_aval=jax.typeof(w),
         x_spec=x_spec,
         v_spec=v_spec,
         isign=isign,
@@ -37,8 +34,9 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
         isign: ExponentSign,
     ):
         self.in_avals = (w_aval,)
+        sh_stack = w_aval.shape[: -x_spec.ndim]
         self.out_aval = jax.core.ShapedArray(
-            shape=v_spec.num,
+            shape=(*sh_stack, *v_spec.num),
             # in_avals may be R/C-valued, but out_avals is always C-valued
             dtype=jnp.promote_types(w_aval.dtype, complex),
         )
@@ -82,13 +80,12 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
     ) -> tuple[ftkt.ArrayC]:
         from .generic import _u2u as generic_u2u
 
+        # vjp() computes (A^{\transpose} z), not (A^{\adjoint} z) ...
         z = generic_u2u(
             self.v_spec,
             self.x_spec,
             v,
-            self.isign,
-            # notice (isign) vs (-isign) here: this is due to JAX's VJP conventions as seen here:
-            # https://docs.jax.dev/en/latest/complex-differentiation.html (search for "What about VJPs?")
+            self.isign,  # ... reason why the sign matches the forward pass.
         )
         return (z,)
 
