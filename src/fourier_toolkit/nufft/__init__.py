@@ -77,6 +77,7 @@ def nu2nu(
       - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    # standardize inputs -----------------------------------------------------
     fdtype, cdtype = _determine_precision(x, v, w)
 
     x = _canonicalize_knots(x, fdtype)
@@ -95,6 +96,7 @@ def nu2nu(
         eps = max(eps, _eps_fp32_min)
     else:  # xp.complex128
         eps = max(eps, _eps_fp64_min)
+    # ------------------------------------------------------------------------
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
@@ -177,6 +179,7 @@ def nu2u(
       - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    # standardize inputs -----------------------------------------------------
     fdtype, cdtype = _determine_precision(x, w)
 
     x = _canonicalize_knots(x, fdtype)
@@ -193,6 +196,7 @@ def nu2u(
         eps = max(eps, _eps_fp32_min)
     else:  # xp.complex128
         eps = max(eps, _eps_fp64_min)
+    # ------------------------------------------------------------------------
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
@@ -275,6 +279,7 @@ def u2nu(
       - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    # standardize inputs -----------------------------------------------------
     fdtype, cdtype = _determine_precision(v, w)
 
     v = _canonicalize_knots(v, fdtype)
@@ -291,6 +296,7 @@ def u2nu(
         eps = max(eps, _eps_fp32_min)
     else:  # xp.complex128
         eps = max(eps, _eps_fp64_min)
+    # ------------------------------------------------------------------------
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
