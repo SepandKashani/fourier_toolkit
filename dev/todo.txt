@@ -1,26 +1,25 @@
+- ufft.py, test_ufft.py
+  + [ ] test JAX on GPU; should be error-free
+    No codes changes needed anywhere in principle.
+  + [ ] tag v0.4.x
+
 - nufft.py, test_nufft.py
-  + [ ] Add JAX support via buffer_callback()
+  + [ ] Add JAX support via HiJAX primitive + buffer_callback()
     * background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
     * buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
-  + [ ] jit/vmap for (nu2nu, nu2u, u2nu)
-  + [ ] jvp/vjp for nu2nu [only w, not x/v]
-  + [ ] jvp/vjp for (nu2u, u2nu) [only w, not x/v]
-  + [ ] tag v0.4.2
+  + [ ] replicate ufft.py test suite
+  + [ ] jvp/vjp only for (w,) now, (x,v) later
+  + [ ] tag v0.4.x
   + [ ] note on (x,v) differentiability [+ variant for nu2u/u2nu]
 
 
 - ufft.py, test_ufft.py
-  + [ ] Add proper JAX support via HiJAX primitive
-    Implementation done, but have problems with test_vjp()
-    stack_shape = () is only working option.
-    Why? because implicit stacks contradics vjp's contract.
-    Users should vmap themselves if needed. -> test if this works
+  + [ ] Add proper PyTorch support
+    test_vjp() fails all the time.
+    Reasons:
+    - [TBC] need to compute (A^H z) in PyTorch vs (A^T z) in JAX?
+    - real primal -> complex vjp() output?
 
-    also unsure of my vjp implementation due to JAX conventions: test VJP explicitly, and not through grad() use this test to fine-tune sign conventions in vjp() implementation
-
-  + [ ] doc: comment on modified function signature for jax inputs and use of vmap() expected.
-
-  + [ ] Add PyTorch support
     [vmap] When u2u() falls on the FFT case (mix/special-case), then test fails [err ~ 1]
     occurs for D=1,2,3 and all precisions
     fails for all in/out_dims
@@ -33,4 +32,4 @@
 
 - nufft.py, test_nufft.py
   + [ ] nufft: Add PyTorch support
-  + [ ] tag v0.6
+  + [ ] tag v0.5.x
