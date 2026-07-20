@@ -30,7 +30,7 @@ class TestCZT:
         cdtype = translate.to_complex()
 
         # Generate _CZT.apply() input
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         if real:
             x = rng.standard_normal((*stack_shape, *op.cfg.N))
             x = x.astype(fdtype)
@@ -60,7 +60,7 @@ class TestCZT:
 
     @pytest.fixture(params=[True, False])
     def M(self, space_dim, request) -> ftkt.TupleI:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         M = rng.integers(2, 7, space_dim)
 
         force_one = request.param
@@ -70,7 +70,7 @@ class TestCZT:
 
     @pytest.fixture(params=[True, False])
     def N(self, space_dim, request) -> ftkt.TupleI:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         N = rng.integers(7, 14, space_dim)
 
         force_one = request.param
@@ -80,14 +80,14 @@ class TestCZT:
 
     @pytest.fixture
     def A(self, space_dim) -> ftkt.TupleC:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         A = rng.standard_normal(2 * space_dim).view(np.cdouble)
         A /= np.abs(A)
         return tuple(map(complex, A))  # (D,)
 
     @pytest.fixture
     def W(self, space_dim) -> ftkt.TupleC:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         W = rng.standard_normal(2 * space_dim).view(np.cdouble)
         W /= np.abs(W)
         return tuple(map(complex, W))  # (D,)
@@ -385,7 +385,7 @@ class TestU2U:
 
     @pytest.fixture
     def x_spec(self, space_dim) -> ftku.UniformSpec:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         x0 = rng.standard_normal(space_dim)
         dx = rng.standard_normal(space_dim)
         M = rng.integers(1, 7, space_dim)
@@ -393,7 +393,7 @@ class TestU2U:
 
     @pytest.fixture
     def v_spec(self, space_dim) -> ftku.UniformSpec:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         v0 = rng.standard_normal(space_dim)
         dv = rng.standard_normal(space_dim)
         N = rng.integers(3, 12, space_dim)
@@ -440,7 +440,7 @@ class TestU2U:
         cdtype = translate.to_complex()
 
         # Generate u2u() input
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         if real:
             w = rng.standard_normal((*stack_shape, *x_spec.num))
             w = w.astype(fdtype)
@@ -463,7 +463,7 @@ class TestU2USpecialCase(TestU2U):
 
     @pytest.fixture
     def xv_spec(self, space_dim) -> tuple[ftku.UniformSpec]:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
         x0 = rng.standard_normal(space_dim)
         v0 = rng.standard_normal(space_dim)
         M = rng.integers(1, 7, space_dim)
@@ -495,7 +495,7 @@ class TestU2UMixCase(TestU2U):
 
     @pytest.fixture
     def xv_spec(self, space_dim) -> tuple[ftku.UniformSpec]:
-        rng = np.random.default_rng(10)
+        rng = np.random.default_rng()
 
         # all axes work with single-FFT
         x0 = rng.standard_normal(space_dim)
