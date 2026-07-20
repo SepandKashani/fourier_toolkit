@@ -200,6 +200,7 @@ class TestU2U:
         assert_areclose(z2, z_gt, v_spec.ndim)
 
     @parametrize_real
+    @parametrize_stack
     def test_vmap(
         self,
         array_backend,
@@ -208,22 +209,31 @@ class TestU2U:
         isign,
         dtype,
         real,
+        stack_shape,
     ):
         # can VMAP u2u() calls.
+        #
+        # We explicitly test that implicit stacks not specified to vmap() work too.
         is_jax = array_backend.name.startswith("jax-")
         is_torch = array_backend.name.startswith("torch-")
         if not (is_jax or is_torch):
             pytest.skip()
 
-        stack_size = 7
+        stack_size_extra = 7
+        N_stack_dim = len(stack_shape)
         w, z_gt = self._generate_io(
-            x_spec, v_spec, isign, dtype, real, stack_shape=(stack_size,)
+            x_spec,
+            v_spec,
+            isign,
+            dtype,
+            real,
+            stack_shape=(stack_size_extra, *stack_shape),
         )
 
         # Test u2u() compliance
         xp = array_backend.xp
-        for idx_in in range(1 + x_spec.ndim):
-            for idx_out in range(1 + v_spec.ndim):
+        for idx_in in range(1 + N_stack_dim + x_spec.ndim):
+            for idx_out in range(1 + N_stack_dim + v_spec.ndim):
                 _w = xp.moveaxis(ct.to_backend(w, array_backend), 0, idx_in)
                 _z_gt = xp.moveaxis(ct.to_backend(z_gt, array_backend), 0, idx_out)
 
