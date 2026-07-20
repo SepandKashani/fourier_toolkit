@@ -320,7 +320,7 @@ class TestU2U:
         assert_areclose(tangent_out, tangent_out_gt, v_spec.ndim)
 
     @parametrize_real
-    # @parametrize_stack
+    @parametrize_stack
     def test_vjp(
         self,
         array_backend,
@@ -329,66 +329,54 @@ class TestU2U:
         isign,
         dtype,
         real,
-        # stack_shape,
+        stack_shape,
     ):
         # can VJP u2u() calls.
-        #
-        # This is tested indirectly by checking that the gradient of
-        #     f(w) = \norm{u2u(w)}{2}^{2}
-        # computed via grad() matches the analytic ground truth
-        #     \grad_{f}(w) = proj(2 A^{H} A w, w.dtype),
-        #     A = u2u
 
         is_jax = array_backend.name.startswith("jax-")
         is_torch = array_backend.name.startswith("torch-")
         if not (is_jax or is_torch):
             pytest.skip()
 
-        def f(
-            x_spec: ftku.UniformSpec,
-            v_spec: ftku.UniformSpec,
-            w: ftkt.ArrayRC,
+        primal, primal_out_gt = self._generate_io(
+            x_spec, v_spec, isign, dtype, real, stack_shape
+        )
+        cotangent, cotangent_out_gt = self._generate_io(
+            v_spec,
+            x_spec,
             isign,
-        ) -> ftkt.ArrayR:
-            xp = aac.array_namespace(w)
-            z = u2u(x_spec, v_spec, w, isign)
-            out = xp.sum(xp.abs(z) ** 2)
-            return out
-
-        stack_shape = ()
-        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
-        val_gt = f(x_spec, v_spec, w, isign)
-        grad_gt = 2 * u2u(v_spec, x_spec, z_gt, -isign)
-        if real:
-            grad_gt = grad_gt.real
+            dtype,
+            False,
+            stack_shape,
+            # cotangents must always have the same dtype as primal_out, so C-valued.
+        )
 
         # Test u2u() compliance
-        w = ct.to_backend(w, array_backend)
-        val_gt = ct.to_backend(val_gt, array_backend)
-        grad_gt = ct.to_backend(grad_gt, array_backend)
+        primal = ct.to_backend(primal, array_backend)
+        primal_out_gt = ct.to_backend(primal_out_gt, array_backend)
+        cotangent = ct.to_backend(cotangent, array_backend)
+        cotangent_out_gt = ct.to_backend(cotangent_out_gt, array_backend)
 
+        _u2u = functools.partial(u2u, x_spec, v_spec, isign=isign)
         if is_jax:
             import jax
 
-            _f = jax.value_and_grad(f, argnums=2)
-            val, grad = _f(x_spec, v_spec, w, isign)
-            grad = grad.conj()  # jax computes \grad_{f}(w^{*})
-            # https://docs.jax.dev/en/latest/complex-differentiation.html (search for "What about VJPs?")
+            primal_out, f_vjp = jax.vjp(_u2u, primal)
+            (cotangent_out,) = f_vjp(cotangent)
         elif is_torch:
             import torch.func
 
-            _f = torch.func.grad_and_value(f, argnums=2)
-            grad, val = _f(x_spec, v_spec, w, isign)
+            primal_out, f_vjp = torch.func.vjp(_u2u, primal)
+            (cotangent_out,) = f_vjp(cotangent)
         else:
             raise ValueError("Unknown case encountered.")
 
-        newaxis = None
-        assert val.shape == val_gt.shape
-        assert ftku.similar(val, val_gt)
-        assert_areclose(val[newaxis], val_gt[newaxis], D=1)
-        assert grad.shape == grad_gt.shape
-        assert ftku.similar(grad, grad_gt)
-        assert_areclose(grad, grad_gt, D=x_spec.ndim)
+        assert primal_out.shape == primal_out_gt.shape
+        assert ftku.similar(primal_out, primal_out_gt)
+        assert_areclose(primal_out, primal_out_gt, v_spec.ndim)
+        assert cotangent_out.shape == cotangent_out_gt.shape
+        assert ftku.similar(cotangent_out, cotangent_out_gt)
+        assert_areclose(cotangent_out, cotangent_out_gt, x_spec.ndim)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
