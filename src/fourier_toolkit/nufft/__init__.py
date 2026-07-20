@@ -98,6 +98,8 @@ def nu2nu(
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
+    elif aac.is_jax_array(w):
+        from . import jax as namespace
     else:
         raise NotImplementedError
 
@@ -194,6 +196,8 @@ def nu2u(
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
+    elif aac.is_jax_array(w):
+        from . import jax as namespace
     else:
         raise NotImplementedError
 
@@ -290,6 +294,8 @@ def u2nu(
 
     if aac.is_array_api_obj(w):
         from . import generic as namespace
+    elif aac.is_jax_array(w):
+        from . import jax as namespace
     else:
         raise NotImplementedError
 
