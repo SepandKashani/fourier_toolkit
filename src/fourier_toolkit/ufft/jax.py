@@ -14,9 +14,7 @@ def _u2u(
     w: ftkt.ArrayRC,  # (..., M1,...,MD)
     isign: ExponentSign,
 ) -> ftkt.ArrayC:  # (..., N1,...,ND)
-
-    # primitive of u->u transform /w stacks
-    p = U2UPrimitive(
+    prim = U2UPrimitive(
         w_aval=jax.core.ShapedArray(
             shape=x_spec.num,
             dtype=w.dtype,
@@ -25,14 +23,7 @@ def _u2u(
         v_spec=v_spec,
         isign=isign,
     )
-
-    sh_stack = w.shape[: -x_spec.ndim]
-    pm = jax.vmap(p)
-
-    z = jnp.reshape(
-        pm(jnp.reshape(w, (-1, *x_spec.num))),
-        (*sh_stack, *v_spec.num),
-    )
+    z = prim(w)
     return z
 
 
@@ -84,7 +75,7 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
     ) -> tuple[ftkt.ArrayC, None]:
         return self(w), None
 
-    def vjp_bwd_retval(  # todo: may not have the right JAX convention
+    def vjp_bwd_retval(
         self,
         res: None,
         v: ftkt.ArrayRC,
@@ -95,7 +86,9 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
             self.v_spec,
             self.x_spec,
             v,
-            -self.isign,
+            self.isign,
+            # notice (isign) vs (-isign) here: this is due to JAX's VJP conventions as seen here:
+            # https://docs.jax.dev/en/latest/complex-differentiation.html (search for "What about VJPs?")
         )
         return (z,)
 

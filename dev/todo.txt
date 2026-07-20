@@ -10,7 +10,17 @@
 
 
 - ufft.py, test_ufft.py
-  + [ ] ufft: Add PyTorch support
+  + [ ] Add proper JAX support via HiJAX primitive
+    Implementation done, but have problems with test_vjp()
+    stack_shape = () is only working option.
+    Why? because implicit stacks contradics vjp's contract.
+    Users should vmap themselves if needed. -> test if this works
+
+    also unsure of my vjp implementation due to JAX conventions: test VJP explicitly, and not through grad() use this test to fine-tune sign conventions in vjp() implementation
+
+  + [ ] doc: comment on modified function signature for jax inputs and use of vmap() expected.
+
+  + [ ] Add PyTorch support
     [vmap] When u2u() falls on the FFT case (mix/special-case), then test fails [err ~ 1]
     occurs for D=1,2,3 and all precisions
     fails for all in/out_dims
