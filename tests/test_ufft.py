@@ -192,10 +192,12 @@ class TestU2U:
         else:
             raise ValueError("Unknown case encountered.")
 
-        z = u2u_jit(x_spec, v_spec, w, isign)
-        assert z.shape == z_gt.shape
-        assert ftku.similar(z, z_gt)
-        assert_areclose(z, z_gt, v_spec.ndim)
+        z1 = u2u_jit(x_spec, v_spec, w, isign)
+        z2 = u2u_jit(x_spec, v_spec, w, isign)
+        assert_areclose(z1, z2, v_spec.ndim)  # no side-effects
+        assert z2.shape == z_gt.shape
+        assert ftku.similar(z2, z_gt)
+        assert_areclose(z2, z_gt, v_spec.ndim)
 
     @parametrize_real
     def test_vmap(
