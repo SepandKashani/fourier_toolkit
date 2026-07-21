@@ -3,6 +3,7 @@ __all__ = [
     "as_namedtuple",
     "broadcast_seq",
     "cast_warn",
+    "DLDeviceType",
     "inner_product",
     "next_fast_len",
     "rel_l2_close",
@@ -14,6 +15,9 @@ __all__ = [
 ]
 
 
+from .dlpack import (
+    DLDeviceType,
+)
 from .dtype import (
     TranslateDType,
 )

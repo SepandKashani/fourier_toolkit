@@ -1,4 +1,3 @@
-import enum
 import importlib
 import math
 import warnings
@@ -101,10 +100,10 @@ def _create_t3_plan(
     discrepancy_kwargs = dict()
     device_type, device_id = x.__dlpack_device__()
     match device_type:
-        case _DLDeviceType.CPU:
+        case ftku.DLDeviceType.CPU:
             lib = importlib.import_module("finufft")
             discrepancy_kwargs["n_modes_or_dim"] = D
-        case _DLDeviceType.CUDA:
+        case ftku.DLDeviceType.CUDA:
             lib = importlib.import_module("cufinufft")
             discrepancy_kwargs["n_modes"] = D
             discrepancy_kwargs["gpu_device_id"] = device_id
@@ -140,12 +139,3 @@ def _create_t3_plan(
         plan.setpts(**setpts_kwargs)
 
     return plan
-
-
-class _DLDeviceType(enum.IntEnum):
-    """
-    Subset of `DLPack Device Codes <https://data-apis.org/array-api/latest/API_specification/generated/array_api.array.__dlpack_device__.html#array_api.array.__dlpack_device__>`_.
-    """
-
-    CPU = 1
-    CUDA = 2
