@@ -1,7 +1,12 @@
+import json
+
 import jax
+import jax.experimental.buffer_callback as jbc
 import jax.experimental.hijax as hijax
+import numpy as np
 
 import fourier_toolkit.typing as ftkt
+import fourier_toolkit.util as ftku
 
 from . import ExponentSign
 
@@ -56,7 +61,55 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         super().__init__()
 
     def expand(self, xvw: xvw_t) -> ftkt.ArrayC:
-        raise NotImplementedError
+
+        def low_level_fwd(  # plan and execute
+            ctx: jbc.ExecutionContext,
+            out: jbc.Buffer,
+            x: jbc.Buffer,
+            v: jbc.Buffer,
+            w: jbc.Buffer,
+            params: jbc.Buffer,
+        ):
+            from .generic import _nu2nu as generic_nu2nu
+
+            # de-serialize finufft_kwargs
+            raw_params = np.from_dlpack(params.__dlpack__())
+            finufft_kwargs = json.loads(bytes(raw_params)).decode("utf-8")
+
+            device_type, _ = x.__dlpack_device__()
+            match device_type:
+                case ftku.DLDeviceType.CPU:
+                    xp = np
+                case ftku.DLDeviceType.CUDA:
+                    import cupy as xp
+                case _:
+                    raise ValueError(f"Unsupported device type: {device_type}.")
+
+            cast = lambda _: xp.asarray(_, copy=False)
+            z = generic_nu2nu(
+                cast(x),
+                cast(v),
+                cast(w),
+                **finufft_kwargs,
+            )
+            cast(out)[:] = z
+
+        f_fwd = jbc.buffer_callback(
+            low_level_fwd,
+            jax.ShapeDtypeStruct(
+                shape=self.out_aval.shape,
+                dtype=self.out_aval.dtype,
+            ),
+            command_buffer_compatible=False,  # todo: change me?
+        )
+
+        (x, v, w) = xvw
+        params = np.frombuffer(
+            json.dumps(self.finufft_kwargs).encode("utf-8"),
+            dtype=np.uint8,
+        )
+        z = f_fwd(x, v, w, params)
+        return z
 
     def jvp(
         self,
