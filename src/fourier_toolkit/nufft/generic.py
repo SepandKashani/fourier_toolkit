@@ -19,6 +19,12 @@ def _nu2nu(
     eps: float,
     **kwargs,
 ) -> ftkt.ArrayC:  # (n_trans, N)
+    # Some FINUFFT options are incompatible with how we use FINUFFT's output:
+    # discard them if provided.
+    illegal_kwargs = ("gpu_device_id",)
+    for k in illegal_kwargs:
+        kwargs.pop(k, None)
+
     plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
     z = plan.execute(w)
     return z
@@ -34,7 +40,7 @@ def _nu2u(
 ) -> ftkt.ArrayC:  # (n_trans, N1,...,ND)
     # Some FINUFFT options are incompatible with how we use FINUFFT's output:
     # discard them if provided.
-    illegal_kwargs = ("modeord",)
+    illegal_kwargs = ("modeord", "gpu_device_id")
     for k in illegal_kwargs:
         kwargs.pop(k, None)
 
@@ -61,7 +67,7 @@ def _u2nu(
 ) -> ftkt.ArrayC:  # (n_trans, N)
     # Some FINUFFT options are incompatible with how we use FINUFFT's output:
     # discard them if provided.
-    illegal_kwargs = ("modeord",)
+    illegal_kwargs = ("modeord", "gpu_device_id")
     for k in illegal_kwargs:
         kwargs.pop(k, None)
 
