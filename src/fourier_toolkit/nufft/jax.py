@@ -60,7 +60,12 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         )
         super().__init__()
 
-    def expand(self, xvw: xvw_t) -> ftkt.ArrayC:
+    def expand(
+        self,
+        x: ftkt.ArrayR,
+        v: ftkt.ArrayR,
+        w: ftkt.ArrayC,
+    ) -> ftkt.ArrayC:
 
         def low_level_fwd(  # plan and execute
             ctx: jbc.ExecutionContext,
@@ -73,8 +78,8 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             from .generic import _nu2nu as generic_nu2nu
 
             # de-serialize finufft_kwargs
-            raw_params = np.from_dlpack(params.__dlpack__())
-            finufft_kwargs = json.loads(bytes(raw_params)).decode("utf-8")
+            raw_params = np.from_dlpack(params, copy=False)
+            finufft_kwargs = json.loads(bytes(raw_params).decode("utf-8"))
 
             device_type, _ = x.__dlpack_device__()
             match device_type:
@@ -103,7 +108,6 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             command_buffer_compatible=False,  # todo: change me?
         )
 
-        (x, v, w) = xvw
         params = np.frombuffer(
             json.dumps(self.finufft_kwargs).encode("utf-8"),
             dtype=np.uint8,
