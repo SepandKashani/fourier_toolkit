@@ -14,7 +14,7 @@ from . import ExponentSign
 def _nu2nu(
     x: ftkt.ArrayR,  # (M, D)
     v: ftkt.ArrayR,  # (N, D)
-    w: ftkt.ArrayRC,  # (n_trans, M)
+    w: ftkt.ArrayC,  # (n_trans, M)
     isign: ExponentSign,
     eps: float,
     **kwargs,
@@ -27,7 +27,7 @@ def _nu2nu(
 def _nu2u(
     x: ftkt.ArrayR,  # (M, D)
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,  # (n_trans, M)
+    w: ftkt.ArrayC,  # (n_trans, M)
     isign: ExponentSign,
     eps: float,
     **kwargs,
@@ -54,7 +54,7 @@ def _nu2u(
 def _u2nu(
     x_spec: ftku.UniformSpec,
     v: ftkt.ArrayR,  # (N, D)
-    w: ftkt.ArrayRC,  # (n_trans, M1,...,MD)
+    w: ftkt.ArrayC,  # (n_trans, M1,...,MD)
     isign: ExponentSign,
     eps: float,
     **kwargs,
