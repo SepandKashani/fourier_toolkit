@@ -93,7 +93,7 @@ def _create_t3_plan(
 
     # The [cu]finufft.Plan signatures have slight discrepancies.
     discrepancy_kwargs = dict()
-    device_type, _ = x.__dlpack_device__()
+    device_type, device_id = x.__dlpack_device__()
     match device_type:
         case _DLDeviceType.CPU:
             lib = importlib.import_module("finufft")
@@ -101,6 +101,7 @@ def _create_t3_plan(
         case _DLDeviceType.CUDA:
             lib = importlib.import_module("cufinufft")
             discrepancy_kwargs["n_modes"] = D
+            discrepancy_kwargs["gpu_device_id"] = device_id
         case _:
             raise ValueError(f"Unsupported device type: {device_type}.")
     plan = lib.Plan(
