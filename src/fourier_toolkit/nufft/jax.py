@@ -158,4 +158,16 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         (x, v, w) = args
         w = jnp.moveaxis(w, w_dim, out_dim)
 
-        return self(x, v, w), out_dim
+        # Must initialize a new primitive to evaluate batched computation.
+        #
+        # Reason: `self.out_aval` has output shape /w batched dimension. Since self.expand() calls
+        # buffer_callback() with the latter's output size taken from `self.out_aval`
+        # (no alternative possible), the output buffer is too small to hold the output of
+        # low_level_fwd().
+        prim = NU2NUPrimitive(
+            x_aval=jax.typeof(x),
+            v_aval=jax.typeof(v),
+            w_aval=jax.typeof(w),  # batch dim included
+            **self.params,
+        )
+        return prim(x, v, w), out_dim
