@@ -1,3 +1,5 @@
+import functools
+
 import array_api_compat as aac
 import numpy as np
 import pytest
@@ -169,6 +171,84 @@ class TestNU2NU:
                     xp.moveaxis(_z_gt, idx_out, 0),
                     1,
                 )
+
+    @parametrize_real
+    @parametrize_stack
+    def test_jvp(
+        self,
+        array_backend,
+        x_m,
+        v_n,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can JVP nu2nu() calls.
+
+        # nu2nu() is non-linear in (x,v), but current jvp() implementation considers (x,v) non-differentiable -> no impact on output
+        # so nu2nu() JVP is just linear in `w` -> jvp(nu2nu,(x,v,w),(xt,vt,wt)) == [nu2nu(x,v,w), nu2nu(x,v,wt)] {w does not matter}
+
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        primal, primal_out_gt = self._generate_io(
+            x_m, v_n, isign, dtype, real, stack_shape
+        )
+
+        tangent, tangent_out_gt = self._generate_io(
+            x_m, v_n, isign, dtype, real, stack_shape
+        )
+
+        # Test nu2nu() compliance
+        xp = array_backend.xp
+        primal = ct.to_backend(primal, array_backend)
+        primal_out_gt = ct.to_backend(primal_out_gt, array_backend)
+        tangent = ct.to_backend(tangent, array_backend)
+        tangent_out_gt = ct.to_backend(tangent_out_gt, array_backend)
+        fdtype = ftku.TranslateDType(primal).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
+        # deliberately choose tangents (xt, vt) different than (x,v) as they should not matter.
+        # [until (x,v) differentiation support is added.]
+        xt_m = xp.astype(ct.to_backend(+np.ones(x_m.shape), array_backend), fdtype)
+        vt_n = xp.astype(ct.to_backend(-np.ones(v_n.shape), array_backend), fdtype)
+
+        _nu2nu = functools.partial(
+            nu2nu,
+            isign=isign,
+            eps=eps,
+            finufft_kwargs=finufft_kwargs,
+        )
+        if is_jax:
+            import jax
+
+            primal_out, tangent_out = jax.jvp(
+                _nu2nu,
+                (x_m, v_n, primal),
+                (xt_m, vt_n, tangent),
+            )
+        elif is_torch:
+            import torch
+
+            primal_out, tangent_out = torch.func.jvp(
+                _nu2nu,
+                (x_m, v_n, primal),
+                (xt_m, vt_n, tangent),
+            )
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        assert primal_out.shape == primal_out_gt.shape
+        assert ftku.similar(primal_out, primal_out_gt)
+        assert_areclose(primal_out, primal_out_gt, D=1)
+        assert tangent_out.shape == tangent_out_gt.shape
+        assert ftku.similar(tangent_out, tangent_out_gt)
+        assert_areclose(tangent_out, tangent_out_gt, D=1)
 
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
