@@ -250,6 +250,87 @@ class TestNU2NU:
         assert ftku.similar(tangent_out, tangent_out_gt)
         assert_areclose(tangent_out, tangent_out_gt, D=1)
 
+    @parametrize_real
+    @parametrize_stack
+    def test_vjp(
+        self,
+        array_backend,
+        x_m,
+        v_n,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can VJP nu2nu() calls.
+
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        primal, primal_out_gt = self._generate_io(
+            x_m, v_n, isign, dtype, real, stack_shape
+        )
+        cotangent, cotangent_out_gt = self._generate_io(
+            v_n,
+            x_m,
+            isign,
+            dtype,
+            False,
+            stack_shape,
+            # cotangents must always have the same dtype as primal_out, so C-valued.
+        )
+        # (x,v) cotangent ground truths
+        xt_out_gt = np.zeros(x_m.shape, dtype=float)  # since (x,) non-differentiable
+        vt_out_gt = np.zeros(v_n.shape, dtype=float)  # since (v,) non-differentiable
+
+        # Test nu2nu() compliance
+        xp = array_backend.xp
+        primal = ct.to_backend(primal, array_backend)
+        primal_out_gt = ct.to_backend(primal_out_gt, array_backend)
+        cotangent = ct.to_backend(cotangent, array_backend)
+        cotangent_out_gt = ct.to_backend(cotangent_out_gt, array_backend)
+        fdtype = ftku.TranslateDType(primal).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
+        xt_out_gt = xp.astype(ct.to_backend(xt_out_gt, array_backend), fdtype)
+        vt_out_gt = xp.astype(ct.to_backend(vt_out_gt, array_backend), fdtype)
+
+        _nu2nu = functools.partial(
+            nu2nu,
+            isign=isign,
+            eps=eps,
+            finufft_kwargs=finufft_kwargs,
+        )
+        if is_jax:
+            import jax
+
+            primal_out, f_vjp = jax.vjp(_nu2nu, x_m, v_n, primal)
+            (xt_m, vt_n, cotangent_out) = f_vjp(cotangent)
+        elif is_torch:
+            import torch.func
+
+            primal_out, f_vjp = torch.func.vjp(_nu2nu, x_m, v_n, primal)
+            (xt_m, vt_n, cotangent_out) = f_vjp(cotangent)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        assert primal_out.shape == primal_out_gt.shape
+        assert ftku.similar(primal_out, primal_out_gt)
+        assert_areclose(primal_out, primal_out_gt, D=1)
+        assert cotangent_out.shape == cotangent_out_gt.shape
+        assert ftku.similar(cotangent_out, cotangent_out_gt)
+        assert_areclose(cotangent_out, cotangent_out_gt, D=1)
+        assert xt_m.shape == xt_out_gt.shape
+        assert ftku.similar(xt_m, xt_out_gt)
+        assert ftku.allclose(xt_m, xt_out_gt, fdtype)
+        assert vt_n.shape == vt_out_gt.shape
+        assert ftku.similar(vt_n, vt_out_gt)
+        assert ftku.allclose(vt_n, vt_out_gt, fdtype)
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
