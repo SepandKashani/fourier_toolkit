@@ -2,6 +2,8 @@ import importlib
 import math
 import warnings
 
+import array_api_compat as aac
+
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
@@ -11,19 +13,20 @@ from . import ExponentSign
 def _nu2nu(
     x: ftkt.ArrayR,  # (M, D)
     v: ftkt.ArrayR,  # (N, D)
-    w: ftkt.ArrayC,  # (n_trans, M)
+    w: ftkt.ArrayC,  # (..., M)
     isign: ExponentSign,
     eps: float,
     **kwargs,
-) -> ftkt.ArrayC:  # (n_trans, N)
-    # Some FINUFFT options are incompatible with how we use FINUFFT's output:
-    # discard them if provided.
-    illegal_kwargs = ("gpu_device_id",)
-    for k in illegal_kwargs:
-        kwargs.pop(k, None)
+) -> ftkt.ArrayC:  # (..., N)
+    M, _ = x.shape
+    N, _ = v.shape
+    sh = w.shape[:-1]
 
+    xp = aac.array_namespace(x)
+    w = xp.reshape(w, (math.prod(sh), M))  # (n_trans, M)
     plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
-    z = plan.execute(w)
+
+    z = xp.reshape(plan.execute(w), (*sh, N))
     return z
 
 
@@ -36,6 +39,15 @@ def _create_t3_plan(
     eps: float,
     **kwargs,
 ):
+    # Some FINUFFT options are incompatible with how we use finufft.Plan:
+    # discard them if provided.
+    illegal_kwargs = {
+        "gpu_device_id",
+        "modeord",
+    }
+    for k in illegal_kwargs:
+        kwargs.pop(k, None)
+
     _, D = x.shape
     n_trans, _ = w.shape
 
