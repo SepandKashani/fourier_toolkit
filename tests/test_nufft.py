@@ -79,8 +79,8 @@ class TestNU2NU:
     @pytest.fixture
     def finufft_kwargs(self) -> dict:
         return dict(
-            eps=1e-14,  # actual precision assessed by assert_areclose()
-            upsampfac=2,  # to actually reach `eps` precision for type-3
+            eps=1e-14,  # nu2nu() will tweak it based on FP dtype.
+            upsampfac=2,  # to actually reach `eps` precision for type-3 (FP64)
         )
 
     @pytest.fixture(
