@@ -291,16 +291,18 @@ def _determine_precision(*args: tuple[ftkt.ArrayRC]) -> tuple[ftkt.DType, ftkt.D
     fdtype, cdtype: DType
         floating/complex dtype
     """
-    # Extract device on which array resides, with graceful default to `None`.
-    #
-    # This helper exists to circumvent issues with array-creating functions when used with :py:func:`jax.jit`.
-    get_device = lambda _: getattr(_, "device", None)
+    # # Extract device on which array resides, with graceful default to `None`.
+    # #
+    # # This helper exists to circumvent issues with array-creating functions when used with :py:func:`jax.jit`.
+    # get_device = lambda _: getattr(_, "device", None)
 
     xp = aac.array_namespace(args[0])
-    device = get_device(args[0])
+    # device = get_device(args[0])
     for a in args:
         assert aac.array_namespace(a) == xp  # same backend
-        assert get_device(a) == device  # same device
+        # assert get_device(a) == device  # same device
+        #   [20260722] Deactivated since does not work with jax.vmap()
+        #   Not as issue since device mis-matches will cause breakage downstream anyway.
         assert xp.finfo(a.dtype).bits in (32, 64)  # single/double precision
 
     n_bits = min(xp.finfo(a.dtype).bits for a in args)
