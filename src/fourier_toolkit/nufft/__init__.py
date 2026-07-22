@@ -101,12 +101,10 @@ def nu2nu(
         raise ValueError(f"Unknown dtype: {cdtype}.")
     # ------------------------------------------------------------------------
 
-    if aac.is_array_api_obj(w):
-        from . import generic as namespace
-    elif aac.is_jax_array(w):
+    if aac.is_jax_array(w):
         from . import jax as namespace
     else:
-        raise NotImplementedError
+        from . import generic as namespace
 
     z = namespace._nu2nu(x, v, w, isign, eps, **kwargs)
     return z
