@@ -100,6 +100,79 @@ class TestNU2NU:
         assert ftku.similar(z2, z_gt)
         assert_areclose(z2, z_gt, D=1)
 
+    @parametrize_real
+    @parametrize_stack
+    def test_vmap(
+        self,
+        array_backend,
+        x_m,
+        v_n,
+        isign,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can VMAP nu2nu() calls.
+        #
+        # We explicitly test that implicit stacks not specified to vmap() work too.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        stack_size_extra = 7
+        N_stack_dim = len(stack_shape)
+        w, z_gt = self._generate_io(
+            x_m,
+            v_n,
+            isign,
+            dtype,
+            real,
+            stack_shape=(stack_size_extra, *stack_shape),
+        )
+
+        # Test nu2nu() compliance
+        xp = array_backend.xp
+        fdtype = ftku.TranslateDType(w).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
+        core_ndim = 1
+        for idx_in in range(1 + N_stack_dim + core_ndim):
+            for idx_out in range(1 + N_stack_dim + core_ndim):
+                _w = xp.moveaxis(ct.to_backend(w, array_backend), 0, idx_in)
+                _z_gt = xp.moveaxis(ct.to_backend(z_gt, array_backend), 0, idx_out)
+
+                in_axes = [None] * (4 + len(finufft_kwargs))
+                in_axes[2] = idx_in
+                if is_jax:
+                    import jax
+
+                    nu2nu_vmap = jax.vmap(
+                        nu2nu,
+                        in_axes=in_axes,
+                        out_axes=idx_out,
+                    )
+                elif is_torch:
+                    import torch
+
+                    nu2nu_vmap = torch.vmap(
+                        nu2nu,
+                        in_dims=in_axes,
+                        out_dims=idx_out,
+                    )
+                else:
+                    raise ValueError("Unknown case encountered.")
+
+                z = nu2nu_vmap(x_m, v_n, _w, isign, **finufft_kwargs)
+                assert z.shape == _z_gt.shape
+                assert ftku.similar(z, _z_gt)
+                assert_areclose(  # permutations needed to have core-dims at tail
+                    xp.moveaxis(z, idx_out, 0),
+                    xp.moveaxis(_z_gt, idx_out, 0),
+                    1,
+                )
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
