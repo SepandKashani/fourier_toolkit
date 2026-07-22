@@ -77,25 +77,28 @@ def nu2nu(
       - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    xp = aac.array_namespace(x)
+
     # standardize inputs -----------------------------------------------------
     fdtype, cdtype = _determine_precision(x, v, w)
 
     x = _canonicalize_knots(x, fdtype)
     v = _canonicalize_knots(v, fdtype)
-    M, Dx = x.shape
-    N, Dv = v.shape
+    w = xp.astype(w, cdtype, copy=False)
+    _, Dx = x.shape
+    _, Dv = v.shape
     assert (D := Dx) == Dv
     assert D in (1, 2, 3)  # FINUFFT limitation
-    w, sh = _canonicalize_weights(w, cdtype, (M,))
 
     assert (isign := int(isign)) in (-1, +1)
 
     assert 0 < (eps := float(eps)) < 1
-    xp = aac.array_namespace(x)
     if cdtype == xp.complex64:
         eps = max(eps, _eps_fp32_min)
-    else:  # xp.complex128
+    elif cdtype == xp.complex128:
         eps = max(eps, _eps_fp64_min)
+    else:
+        raise ValueError(f"Unknown dtype: {cdtype}.")
     # ------------------------------------------------------------------------
 
     if aac.is_array_api_obj(w):
@@ -105,10 +108,7 @@ def nu2nu(
     else:
         raise NotImplementedError
 
-    z = xp.reshape(
-        namespace._nu2nu(x, v, w, isign, eps, **kwargs),
-        (*sh, N),
-    )
+    z = namespace._nu2nu(x, v, w, isign, eps, **kwargs)
     return z
 
 
@@ -179,34 +179,15 @@ def nu2u(
       - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
-    # standardize inputs -----------------------------------------------------
-    fdtype, cdtype = _determine_precision(x, w)
-
-    x = _canonicalize_knots(x, fdtype)
-    M, D = x.shape
-    assert D == v_spec.ndim
-    assert D in (1, 2, 3)  # FINUFFT limitation
-    w, sh = _canonicalize_weights(w, cdtype, (M,))
-
-    assert (isign := int(isign)) in (-1, +1)
-
-    assert 0 < (eps := float(eps)) < 1
     xp = aac.array_namespace(x)
-    if cdtype == xp.complex64:
-        eps = max(eps, _eps_fp32_min)
-    else:  # xp.complex128
-        eps = max(eps, _eps_fp64_min)
-    # ------------------------------------------------------------------------
+    v = xp.reshape(
+        v_spec.knots(like=x),
+        (-1, v_spec.ndim),
+    )
 
-    if aac.is_array_api_obj(w):
-        from . import generic as namespace
-    elif aac.is_jax_array(w):
-        from . import jax as namespace
-    else:
-        raise NotImplementedError
-
+    sh = w.shape[:-1]
     z = xp.reshape(
-        namespace._nu2u(x, v_spec, w, isign, eps, **kwargs),
+        nu2nu(x, v, w, isign, eps, **kwargs),
         (*sh, *v_spec.num),
     )
     return z
@@ -279,35 +260,20 @@ def u2nu(
       - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
-    # standardize inputs -----------------------------------------------------
-    fdtype, cdtype = _determine_precision(v, w)
-
-    v = _canonicalize_knots(v, fdtype)
-    N, D = v.shape
-    assert D == x_spec.ndim
-    assert D in (1, 2, 3)  # FINUFFT limitation
-    w, sh = _canonicalize_weights(w, cdtype, x_spec.num)
-
-    assert (isign := int(isign)) in (-1, +1)
-
-    assert 0 < (eps := float(eps)) < 1
     xp = aac.array_namespace(v)
-    if cdtype == xp.complex64:
-        eps = max(eps, _eps_fp32_min)
-    else:  # xp.complex128
-        eps = max(eps, _eps_fp64_min)
-    # ------------------------------------------------------------------------
+    x = xp.reshape(
+        x_spec.knots(like=v),
+        (-1, x_spec.ndim),
+    )
 
-    if aac.is_array_api_obj(w):
-        from . import generic as namespace
-    elif aac.is_jax_array(w):
-        from . import jax as namespace
-    else:
-        raise NotImplementedError
-
-    z = xp.reshape(
-        namespace._u2nu(x_spec, v, w, isign, eps, **kwargs),
-        (*sh, N),
+    sh = w.shape[: -x_spec.ndim]
+    z = nu2nu(
+        x,
+        v,
+        xp.reshape(w, (*sh, math.prod(x_spec.num))),
+        isign,
+        eps,
+        **kwargs,
     )
     return z
 
@@ -359,39 +325,3 @@ def _canonicalize_knots(xv: ftkt.ArrayR, fdtype: ftkt.DType) -> ftkt.ArrayR:
 
     xv_c = xp.asarray(xv, dtype=fdtype)
     return xv_c
-
-
-def _canonicalize_weights(
-    w: ftkt.ArrayRC,
-    cdtype: ftkt.DType,
-    sh_core: ftkt.TupleI,
-) -> tuple[ftkt.ArrayC, ftkt.TupleI]:
-    """
-    Transform (w,) weights to canonical form:
-    - shape (n_trans, *sh_core)
-    - complex-valued
-
-    Parameters
-    ----------
-    w: ArrayRC
-        (..., *sh_core)
-
-    Returns
-    -------
-    w_c: ArrayC
-        Canonical form of `w`.
-    sh_stack: tuple[int]
-        Shape to transform the output of `plan.execute()` to.
-        This is to respect the input's stack shape (...).
-    """
-    D = len(sh_core)
-    sh_stack = w.shape[:-D]
-    sh_flat = math.prod(sh_stack)
-    assert w.shape[-D:] == sh_core
-
-    xp = aac.array_namespace(w)
-    w_c = xp.reshape(
-        xp.asarray(w, dtype=cdtype),
-        (sh_flat, *sh_core),
-    )
-    return w_c, sh_stack
