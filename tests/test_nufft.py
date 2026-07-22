@@ -5,6 +5,7 @@ import pytest
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 from fourier_toolkit import nu2nu, nu2u, u2nu  # test as exposed to user
+from fourier_toolkit.nufft import finufft_kwargsT
 from fourier_toolkit.util.metric import fp_atol
 
 from . import conftest as ct
@@ -25,6 +26,7 @@ class TestNU2NU:
         x_m,
         v_n,
         isign,
+        eps,
         finufft_kwargs,
         dtype,
         real,
@@ -40,13 +42,7 @@ class TestNU2NU:
         fdtype = ftku.TranslateDType(w).to_float()
         x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
         v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
-        z = nu2nu(
-            x=x_m,
-            v=v_n,
-            w=w,
-            isign=isign,
-            **finufft_kwargs,
-        )
+        z = nu2nu(x_m, v_n, w, isign, eps, finufft_kwargs)
         assert z.shape == z_gt.shape
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
@@ -59,6 +55,7 @@ class TestNU2NU:
         x_m,
         v_n,
         isign,
+        eps,
         finufft_kwargs,
         dtype,
         real,
@@ -83,8 +80,7 @@ class TestNU2NU:
         if is_jax:
             import jax
 
-            static_argnums = tuple(range(4, 4 + len(finufft_kwargs)))
-            nu2nu_jit = jax.jit(nu2nu, static_argnums=static_argnums)
+            nu2nu_jit = jax.jit(nu2nu, static_argnums=(3, 4, 5))
         elif is_torch:
             import torch
 
@@ -93,8 +89,8 @@ class TestNU2NU:
         else:
             raise ValueError("Unknown case encountered.")
 
-        z1 = nu2nu_jit(x_m, v_n, w, isign, **finufft_kwargs)
-        z2 = nu2nu_jit(x_m, v_n, w, isign, **finufft_kwargs)
+        z1 = nu2nu_jit(x_m, v_n, w, isign, eps, finufft_kwargs)
+        z2 = nu2nu_jit(x_m, v_n, w, isign, eps, finufft_kwargs)
         assert_areclose(z1, z2, D=1)  # no side-effects
         assert z2.shape == z_gt.shape
         assert ftku.similar(z2, z_gt)
@@ -108,6 +104,7 @@ class TestNU2NU:
         x_m,
         v_n,
         isign,
+        eps,
         finufft_kwargs,
         dtype,
         real,
@@ -143,7 +140,7 @@ class TestNU2NU:
                 _w = xp.moveaxis(ct.to_backend(w, array_backend), 0, idx_in)
                 _z_gt = xp.moveaxis(ct.to_backend(z_gt, array_backend), 0, idx_out)
 
-                in_axes = [None] * (4 + len(finufft_kwargs))
+                in_axes = [None] * 6
                 in_axes[2] = idx_in
                 if is_jax:
                     import jax
@@ -164,7 +161,7 @@ class TestNU2NU:
                 else:
                     raise ValueError("Unknown case encountered.")
 
-                z = nu2nu_vmap(x_m, v_n, _w, isign, **finufft_kwargs)
+                z = nu2nu_vmap(x_m, v_n, _w, isign, eps, finufft_kwargs)
                 assert z.shape == _z_gt.shape
                 assert ftku.similar(z, _z_gt)
                 assert_areclose(  # permutations needed to have core-dims at tail
@@ -199,10 +196,13 @@ class TestNU2NU:
         return request.param
 
     @pytest.fixture
-    def finufft_kwargs(self) -> dict:
-        return dict(
-            eps=1e-14,  # nu2nu() will tweak it based on FP dtype.
-            upsampfac=2,  # to actually reach `eps` precision for type-3 (FP64)
+    def eps(self) -> float:
+        return 1e-14  # nu2nu() will tweak it based on FP dtype.
+
+    @pytest.fixture
+    def finufft_kwargs(self) -> finufft_kwargsT:
+        return (
+            ("upsampfac", 2),  # to actually reach `eps` precision for type-3 (FP64)
         )
 
     @pytest.fixture(
