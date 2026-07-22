@@ -1,5 +1,5 @@
 import math
-from typing import Literal
+import typing as typ
 
 import array_api_compat as aac
 
@@ -13,7 +13,7 @@ __all__ = [
 ]
 
 _eps_default: float = 1e-6
-ExponentSign = Literal[-1, +1]
+ExponentSign = typ.Literal[-1, +1]
 _eps_fp32_min = 1e-6
 _eps_fp64_min = 1e-14
 
