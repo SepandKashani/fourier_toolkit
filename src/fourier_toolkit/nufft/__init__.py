@@ -293,9 +293,9 @@ def _determine_precision(*args: tuple[ftkt.ArrayRC]) -> tuple[ftkt.DType, ftkt.D
     for a in args:
         assert aac.array_namespace(a) == xp  # same backend
         assert a.device == device  # same device
-        assert xp.finfo(a).bits in (32, 64)  # single/double precision (indirect check)
+        assert xp.finfo(a.dtype).bits in (32, 64)  # single/double precision
 
-    n_bits = min(xp.finfo(a).bits for a in args)
+    n_bits = min(xp.finfo(a.dtype).bits for a in args)
     fdtype = getattr(xp, f"float{n_bits}")
     cdtype = getattr(xp, f"complex{2 * n_bits}")
     return fdtype, cdtype
