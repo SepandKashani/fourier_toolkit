@@ -126,7 +126,10 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         primals: xvw_t,
         tangents: xvw_t,
     ) -> tuple[ftkt.ArrayC, ftkt.ArrayC]:
-        raise NotImplementedError
+        # (x,v) non-differentiable at the moment -> jvp() rule identical to u2u()
+        (x, v, w) = primals
+        (xt, vt, wt) = tangents
+        return self(x, v, w), self(x, v, wt)
 
     def vjp_fwd(
         self,
