@@ -1,3 +1,4 @@
+import importlib
 import json
 
 import jax
@@ -21,11 +22,11 @@ xvw_t = tuple[
 def _nu2nu(
     x: ftkt.ArrayR,  # (M, D)
     v: ftkt.ArrayR,  # (N, D)
-    w: ftkt.ArrayC,  # (n_trans, M)
+    w: ftkt.ArrayC,  # (..., M)
     isign: ExponentSign,
     eps: float,
-    **kwargs,  # valid FINUFFT kwargs only
-) -> ftkt.ArrayC:  # (n_trans, N)
+    **kwargs,
+) -> ftkt.ArrayC:  # (..., N)
     prim = NU2NUPrimitive(
         x_aval=jax.typeof(x),
         v_aval=jax.typeof(v),
@@ -51,9 +52,9 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
     ):
         self.in_avals = (x_aval, v_aval, w_aval)
         N, _ = v_aval.shape
-        n_trans, _ = w_aval.shape
+        sh = w_aval.shape[:-1]
         self.out_aval = jax.core.ShapedArray(
-            shape=(n_trans, N),
+            shape=(*sh, N),
             dtype=w_aval.dtype,
         )
         self.params = dict(
@@ -87,18 +88,18 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 case ftku.DLDeviceType.CPU:
                     xp = np
                 case ftku.DLDeviceType.CUDA:
-                    import cupy as xp
+                    xp = importlib.import_module("cupy")
                 case _:
                     raise ValueError(f"Unsupported device type: {device_type}.")
 
-            cast = lambda _: xp.asarray(_, copy=False)
+            asarray = lambda _: xp.asarray(_, copy=False)
             z = generic_nu2nu(
-                cast(x),
-                cast(v),
-                cast(w),
+                asarray(x),
+                asarray(v),
+                asarray(w),
                 **finufft_kwargs,
             )
-            cast(out)[:] = z
+            asarray(out)[:] = z
 
         f_fwd = jbc.buffer_callback(
             low_level_fwd,
