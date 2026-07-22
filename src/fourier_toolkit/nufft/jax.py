@@ -134,16 +134,31 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
     def vjp_fwd(
         self,
         nzs_in: tuple[bool, ...],
-        primals: xvw_t,
-    ) -> tuple[ftkt.ArrayC, None]:
-        raise NotImplementedError
+        x: ftkt.ArrayR,
+        v: ftkt.ArrayR,
+        w: ftkt.ArrayC,
+    ) -> tuple[ftkt.ArrayC, tuple[ftkt.ArrayR, ...]]:
+        return self(x, v, w), (x, v)
 
     def vjp_bwd_retval(
         self,
-        res: None,
-        cotangents: xvw_t,
+        res: tuple[ftkt.ArrayR, ...],
+        cotangents: ftkt.ArrayC,
     ) -> tuple[ftkt.ArrayC]:
-        raise NotImplementedError
+        (x, v) = res
+
+        # vjp() computes (A^{\transpose} z), not (A^{\adjoint} z) ...
+        prim = NU2NUPrimitive(
+            x_aval=jax.typeof(v),
+            v_aval=jax.typeof(x),
+            w_aval=jax.typeof(cotangents),
+            **self.params,  # ... reason why the sign matches the forward pass.
+        )
+
+        xt = jnp.zeros_like(x)  # since non-differentiable (at the moment)
+        vt = jnp.zeros_like(v)  # since non-differentiable (at the moment)
+        wt = prim(v, x, cotangents)
+        return (xt, vt, wt)
 
     def batch(
         self,
