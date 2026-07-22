@@ -6,7 +6,6 @@
     * [ ] Update nu2u,u2nu test suites
   + [ ] note on (x,v) differentiability [+ variant for nu2u/u2nu]
         note on (x,v) batching
-  + [ ] look at #todo comments
   + [ ] tag v0.4.x
 
 
@@ -37,3 +36,5 @@
 - nufft.py, test_nufft.py
   + [ ] nufft: Add PyTorch support
   + [ ] tag v0.5.x
+  + [ ] JAX version uses buffer_callback() w/ `command_buffer_compatible=False`
+    Can this be enabled, and if yes what are the implications?

@@ -111,7 +111,7 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 shape=self.out_aval.shape,
                 dtype=self.out_aval.dtype,
             ),
-            command_buffer_compatible=False,  # todo: change me?
+            command_buffer_compatible=False,  # todo: can it be enabled?
         )
 
         params = np.frombuffer(
