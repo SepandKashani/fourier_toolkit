@@ -7,7 +7,7 @@ import array_api_compat as aac
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-from . import ExponentSign
+from . import ExponentSign, finufft_kwargsT
 
 
 def _nu2nu(
@@ -16,7 +16,7 @@ def _nu2nu(
     w: ftkt.ArrayC,  # (..., M)
     isign: ExponentSign,
     eps: float,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT,
 ) -> ftkt.ArrayC:  # (..., N)
     M, _ = x.shape
     N, _ = v.shape
@@ -24,7 +24,7 @@ def _nu2nu(
 
     xp = aac.array_namespace(x)
     w = xp.reshape(w, (math.prod(sh), M))  # (n_trans, M)
-    plan = _create_t3_plan(x, v, w, isign, eps, **kwargs)
+    plan = _create_t3_plan(x, v, w, isign, eps, finufft_kwargs)
 
     z = xp.reshape(plan.execute(w), (*sh, N))
     return z
@@ -37,7 +37,7 @@ def _create_t3_plan(
     w: ftkt.ArrayC,  # (n_trans, M)
     isign: ExponentSign,
     eps: float,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT,
 ):
     # Some FINUFFT options are incompatible with how we use finufft.Plan:
     # discard them if provided.
@@ -45,8 +45,9 @@ def _create_t3_plan(
         "gpu_device_id",
         "modeord",
     }
+    finufft_kwargs: dict[str, int] = dict(finufft_kwargs)
     for k in illegal_kwargs:
-        kwargs.pop(k, None)
+        finufft_kwargs.pop(k, None)
 
     _, D = x.shape
     n_trans, _ = w.shape
@@ -71,7 +72,7 @@ def _create_t3_plan(
         dtype=w.dtype,
         n_trans=n_trans,
         **discrepancy_kwargs,
-        **kwargs,  # let FINUFFT parse them for correctness
+        **finufft_kwargs,  # let FINUFFT parse them for correctness
     )
 
     scale = math.sqrt(2 * math.pi)

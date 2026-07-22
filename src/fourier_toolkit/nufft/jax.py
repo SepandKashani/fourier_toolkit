@@ -10,7 +10,7 @@ import numpy as np
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
 
-from . import ExponentSign
+from . import ExponentSign, finufft_kwargsT
 
 xvw_t = tuple[
     ftkt.ArrayR,  # x
@@ -25,7 +25,7 @@ def _nu2nu(
     w: ftkt.ArrayC,  # (..., M)
     isign: ExponentSign,
     eps: float,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT,
 ) -> ftkt.ArrayC:  # (..., N)
     prim = NU2NUPrimitive(
         x_aval=jax.typeof(x),
@@ -33,7 +33,7 @@ def _nu2nu(
         w_aval=jax.typeof(w),
         isign=isign,
         eps=eps,
-        **kwargs,
+        finufft_kwargs=finufft_kwargs,
     )
     z = prim(x, v, w)
     return z
@@ -48,7 +48,7 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         *,
         isign: ExponentSign,
         eps: float,
-        **kwargs,
+        finufft_kwargs: finufft_kwargsT,
     ):
         self.in_avals = (x_aval, v_aval, w_aval)
         N, _ = v_aval.shape
@@ -58,7 +58,9 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             dtype=w_aval.dtype,
         )
         self.params = dict(
-            finufft_kwargs=dict(isign=isign, eps=eps, **kwargs),
+            isign=isign,
+            eps=eps,
+            finufft_kwargs=finufft_kwargs,
         )
         super().__init__()
 
@@ -79,9 +81,9 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         ):
             from .generic import _nu2nu as generic_nu2nu
 
-            # de-serialize finufft_kwargs
+            # de-serialize `self.params`
             raw_params = np.from_dlpack(params, copy=False)
-            finufft_kwargs = json.loads(bytes(raw_params).decode("utf-8"))
+            params = json.loads(bytes(raw_params).decode("utf-8"))
 
             device_type, _ = x.__dlpack_device__()
             match device_type:
@@ -97,7 +99,9 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 asarray(x),
                 asarray(v),
                 asarray(w),
-                **finufft_kwargs,
+                isign=params["isign"],
+                eps=params["eps"],
+                finufft_kwargs=params["finufft_kwargs"],
             )
             asarray(out)[:] = z
 
@@ -111,7 +115,7 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         )
 
         params = np.frombuffer(
-            json.dumps(self.finufft_kwargs).encode("utf-8"),
+            json.dumps(self.params).encode("utf-8"),
             dtype=np.uint8,
         )
         z = f_fwd(x, v, w, params)

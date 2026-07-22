@@ -17,6 +17,8 @@ ExponentSign = Literal[-1, +1]
 _eps_fp32_min = 1e-6
 _eps_fp64_min = 1e-14
 
+finufft_kwargsT = tuple[tuple[str, int], ...]
+
 
 def nu2nu(
     x: ftkt.ArrayR,
@@ -24,7 +26,7 @@ def nu2nu(
     w: ftkt.ArrayRC,
     isign: ExponentSign,
     eps: float = _eps_default,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT = (),
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)
@@ -50,8 +52,9 @@ def nu2nu(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
         (See :ref:`nu2nu-notes`.)
-    kwargs: dict
-        Extra parameters for :py:class:`finufft.Plan`.
+    finufft_kwargs: tuple[tuple[str,int], ...]
+        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.
+        Uses FINUFFT's default option settings if omitted.
         (For advanced users only.)
 
     Returns
@@ -106,7 +109,7 @@ def nu2nu(
     else:
         from . import generic as namespace
 
-    z = namespace._nu2nu(x, v, w, isign, eps, **kwargs)
+    z = namespace._nu2nu(x, v, w, isign, eps, finufft_kwargs)
     return z
 
 
@@ -116,7 +119,7 @@ def nu2u(
     w: ftkt.ArrayRC,
     isign: ExponentSign,
     eps: float = _eps_default,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT = (),
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)
@@ -150,8 +153,9 @@ def nu2u(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
         (See :ref:`nu2u-notes`.)
-    kwargs: dict
-        Extra parameters for :py:class:`finufft.Plan`.
+    finufft_kwargs: tuple[tuple[str,int], ...]
+        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.
+        Uses FINUFFT's default option settings if omitted.
         (For advanced users only.)
 
     Returns
@@ -185,7 +189,7 @@ def nu2u(
 
     sh = w.shape[:-1]
     z = xp.reshape(
-        nu2nu(x, v, w, isign, eps, **kwargs),
+        nu2nu(x, v, w, isign, eps, finufft_kwargs),
         (*sh, *v_spec.num),
     )
     return z
@@ -197,7 +201,7 @@ def u2nu(
     w: ftkt.ArrayRC,
     isign: ExponentSign,
     eps: float = _eps_default,
-    **kwargs,
+    finufft_kwargs: finufft_kwargsT = (),
 ) -> ftkt.ArrayC:
     r"""
     Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)
@@ -231,8 +235,9 @@ def u2nu(
     eps: float
         Target relative error :math:`\epsilon \in ]0, 1[`.
         (See :ref:`u2nu-notes`.)
-    kwargs: dict
-        Extra parameters for :py:class:`finufft.Plan`.
+    finufft_kwargs: tuple[tuple[str,int], ...]
+        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.
+        Uses FINUFFT's default option settings if omitted.
         (For advanced users only.)
 
     Returns
@@ -271,7 +276,7 @@ def u2nu(
         xp.reshape(w, (*sh, math.prod(x_spec.num))),
         isign,
         eps,
-        **kwargs,
+        finufft_kwargs,
     )
     return z
 
