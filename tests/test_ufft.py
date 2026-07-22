@@ -16,7 +16,7 @@ from . import conftest as ct
 parametrize_real = pytest.mark.parametrize("real", [True, False])
 parametrize_stack = pytest.mark.parametrize(
     "stack_shape",
-    [(), (1,), (5, 3, 4)],
+    [(), (1,), (1, 2, 3)],
 )
 
 
