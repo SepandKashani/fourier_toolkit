@@ -3,6 +3,7 @@ import json
 import jax
 import jax.experimental.buffer_callback as jbc
 import jax.experimental.hijax as hijax
+import jax.numpy as jnp
 import numpy as np
 
 import fourier_toolkit.typing as ftkt
@@ -144,4 +145,12 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
     ) -> ftkt.ArrayC:
         # piggy-back on fact that generic.nu2nu() accepts stacked arrays
         # do not accept batching (x,v), only (w,)
-        raise NotImplementedError
+        x_dim, v_dim, w_dim = in_dims
+        assert x_dim is None, "Batching (x,) knots is not supported."
+        assert v_dim is None, "Batching (v,) knots is not supported."
+        out_dim = 0
+
+        (x, v, w) = args
+        w = jnp.moveaxis(w, w_dim, out_dim)
+
+        return self(x, v, w), out_dim
