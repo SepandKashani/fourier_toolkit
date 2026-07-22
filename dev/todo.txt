@@ -1,16 +1,20 @@
+- nufft.py, test_nufft.py
+  + [ ] Add JAX support
+  + [ ] replicate ufft.py test suite (NU2NU)
+    * [ ] jvp/vjp only for (w,) now, (x,v) later
+    * [ ] implement remaining JAX primitives
+    * [ ] Update nu2u,u2nu test suites
+  + [ ] note on (x,v) differentiability [+ variant for nu2u/u2nu]
+        note on (x,v) batching
+  + [ ] look at #todo comments
+  + [ ] tag v0.4.x
+
+
 - ufft.py, test_ufft.py
+  + [ ] remote: test numpy/cupy now that device set (linalg,nufft too)
   + [ ] test JAX on GPU; should be error-free
     No codes changes needed anywhere in principle.
   + [ ] tag v0.4.x
-
-- nufft.py, test_nufft.py
-  + [ ] Add JAX support via HiJAX primitive + buffer_callback()
-    * background on buffer_callback(): https://github.com/ROCm/jax/commit/7c2696545d48947e8f5e157a3857687eb2646106
-    * buffer_callback() source code: https://github.com/jax-ml/jax/blob/210b5fc8674e4993254c804720144c570992984e/jax/_src/buffer_callback.py#L38-L129
-  + [ ] replicate ufft.py test suite
-  + [ ] jvp/vjp only for (w,) now, (x,v) later
-  + [ ] tag v0.4.x
-  + [ ] note on (x,v) differentiability [+ variant for nu2u/u2nu]
 
 
 - ufft.py, test_ufft.py
@@ -27,7 +31,7 @@
 
     To overcome this issue, use https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html to create an op for u2u().
     Should have full support for jvp(), vjp(), vmap(), compile(), export()?, training?
-  + [ ] tag v0.5
+  + [ ] tag v0.5.x
 
 
 - nufft.py, test_nufft.py
