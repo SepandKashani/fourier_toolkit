@@ -51,6 +51,55 @@ class TestNU2NU:
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
 
+    @parametrize_real
+    @parametrize_stack
+    def test_jit(
+        self,
+        array_backend,
+        x_m,
+        v_n,
+        isign,
+        finufft_kwargs,
+        dtype,
+        real,
+        stack_shape,
+    ):
+        # can JIT nu2nu() calls.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
+
+        w, z_gt = self._generate_io(x_m, v_n, isign, dtype, real, stack_shape)
+
+        # Test nu2u() compliance
+        xp = array_backend.xp
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+        fdtype = ftku.TranslateDType(w).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
+
+        if is_jax:
+            import jax
+
+            static_argnums = tuple(range(4, 4 + len(finufft_kwargs)))
+            nu2nu_jit = jax.jit(nu2nu, static_argnums=static_argnums)
+        elif is_torch:
+            import torch
+
+            nu2nu_jit = torch.compile(nu2nu)
+            # we don't use any torch.compile() options on purpose: user can tune those if/when needed. (If JAX tests work, then we expect the same of PyTorch.)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        z1 = nu2nu_jit(x_m, v_n, w, isign, **finufft_kwargs)
+        z2 = nu2nu_jit(x_m, v_n, w, isign, **finufft_kwargs)
+        assert_areclose(z1, z2, D=1)  # no side-effects
+        assert z2.shape == z_gt.shape
+        assert ftku.similar(z2, z_gt)
+        assert_areclose(z2, z_gt, D=1)
+
     # Fixtures ----------------------------------------------------------------
     @pytest.fixture(params=[1, 2, 3])
     def space_dim(self, request) -> int:
