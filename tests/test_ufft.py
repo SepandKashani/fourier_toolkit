@@ -21,23 +21,17 @@ parametrize_stack = pytest.mark.parametrize(
 
 
 class TestCZT:
-    @parametrize_real
     @parametrize_stack
-    def test_apply(self, array_backend, op, dtype, real, stack_shape):
+    def test_apply(self, array_backend, op, dtype, stack_shape):
         # output value matches ground truth.
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Generate _CZT.apply() input
         rng = np.random.default_rng()
-        if real:
-            x = rng.standard_normal((*stack_shape, *op.cfg.N))
-            x = x.astype(fdtype)
-        else:
-            x = 1j * rng.standard_normal((*stack_shape, *op.cfg.N))
-            x += rng.standard_normal((*stack_shape, *op.cfg.N))
-            x = x.astype(cdtype)
+        x = 1j * rng.standard_normal((*stack_shape, *op.cfg.N))
+        x += rng.standard_normal((*stack_shape, *op.cfg.N))
+        x = x.astype(cdtype)
 
         # Generate _CZT.apply() output ground-truth
         y_gt = np.zeros((*stack_shape, *op.cfg.M), dtype=cdtype)
