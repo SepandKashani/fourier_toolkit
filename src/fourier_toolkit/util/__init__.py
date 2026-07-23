@@ -4,6 +4,7 @@ __all__ = [
     "broadcast_seq",
     "cast_warn",
     "DLDeviceType",
+    "get_device",
     "inner_product",
     "is_complex",
     "next_fast_len",
@@ -18,6 +19,7 @@ __all__ = [
 
 from .dlpack import (
     DLDeviceType,
+    get_device,
 )
 from .dtype import (
     is_complex,

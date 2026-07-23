@@ -175,13 +175,13 @@ class _U2U:
             nv = self.cfg.v_spec.num
 
             phase_scale_c = -2 * math.pi * dx[ax[d]] * v0[ax[d]]
-            m = xp.arange(nx[ax[d]], dtype=fdtype, device=_get_device(y))
+            m = xp.arange(nx[ax[d]], dtype=fdtype, device=ftku.get_device(y))
             _Cp = xp.exp(1j * phase_scale_c * m)
             Cp[d] = _Cp
 
             phase_scale_b = -2 * math.pi * x0[ax[d]]
             v = v0[ax[d]] + dv[ax[d]] * xp.arange(
-                nv[ax[d]], dtype=fdtype, device=_get_device(y)
+                nv[ax[d]], dtype=fdtype, device=ftku.get_device(y)
             )
             _Bp = xp.exp(1j * phase_scale_b * v)
             Bp[d] = _Bp
@@ -248,7 +248,7 @@ class _U2U:
 
             phase_scale = -2 * math.pi * x0[ax[d]]
             v = v0[ax[d]] + dv[ax[d]] * xp.arange(
-                nv[ax[d]], dtype=fdtype, device=_get_device(y)
+                nv[ax[d]], dtype=fdtype, device=ftku.get_device(y)
             )
             _B = xp.exp(1j * phase_scale * v)
 
@@ -381,7 +381,7 @@ class _CZT:
             M = self.cfg.M[d]
             L = self.cfg.L[d]
 
-            k = xp.arange(max(M, N), dtype=fdtype, device=_get_device(x))
+            k = xp.arange(max(M, N), dtype=fdtype, device=ftku.get_device(x))
             _Wk2 = W ** ((k**2) / 2)
             _AWk2 = (A ** -k[:N]) * _Wk2[:N]
             _FWk2 = xp.fft.fft(
@@ -402,12 +402,3 @@ class _CZT:
             extract[d] = slice(N - 1, N + M - 1)
 
         return AWk2, FWk2, Wk2, extract
-
-
-def _get_device(x: ftkt.Array):
-    """
-    Extract device on which array resides, with graceful default to `None`.
-
-    This helper exists to circumvent issues with array-creating functions when used with :py:func:`jax.jit`.
-    """
-    return getattr(x, "device", None)

@@ -1,5 +1,7 @@
 import enum
 
+import fourier_toolkit.typing as ftkt
+
 
 class DLDeviceType(enum.IntEnum):
     """
@@ -8,3 +10,12 @@ class DLDeviceType(enum.IntEnum):
 
     CPU = 1
     CUDA = 2
+
+
+def get_device(x: ftkt.Array):
+    """
+    Extract device on which array resides, with graceful default to `None`.
+
+    This helper exists to circumvent issues with array-creating functions when used with :py:func:`jax.jit`.
+    """
+    return getattr(x, "device", None)
