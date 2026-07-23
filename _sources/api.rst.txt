@@ -8,7 +8,7 @@ The type hints
 :py:obj:`~fourier_toolkit.typing.ArrayRC`)
 used throughout the API denote placeholders for any array object compliant with the `Python array API standard <https://data-apis.org/array-api/latest/>`_: their goal is to guide the reader when reading the docstrings, and not to perform runtime type-checking.
 
-The API is tested against the following array backends:
+The API is tested against the following array backends, unless noted otherwise:
 
 - `NumPy <https://numpy.org/doc/stable/>`_
 - `CuPy <https://docs.cupy.dev/en/latest/>`_

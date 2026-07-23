@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.4.1 documentation</title>
+    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.4.3.dev20 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=c87aa342"></script>
+    <script src="../../_static/documentation_options.js?v=f7c6d2b1"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.3.dev20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
@@ -61,7 +61,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">u2u</span><span class="p">(</span>
     <span class="n">x_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
     <span class="n">v_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
     <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
@@ -88,7 +88,7 @@
 <span class="sd">        :math:`\bbx_{m}` lattice.</span>
 <span class="sd">    v_spec: UniformSpec</span>
 <span class="sd">        :math:`\bbv_{n}` lattice.</span>
-<span class="sd">    w: ArrayRC</span>
+<span class="sd">    w: ArrayC</span>
 <span class="sd">        (..., M1,...,MD) weights :math:`w_{m} \in \bC`.</span>
 <span class="sd">    isign: +1, -1</span>
 <span class="sd">        Exponent sign.</span>
@@ -118,12 +118,15 @@
 <span class="sd">        + :py:func:`~torch.compile`, but it has limited support for complex-valued operators: do not expect huge performance gains.</span>
 <span class="sd">        + :py:func:`~torch.func.vmap`, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.</span>
 <span class="sd">        + :py:func:`~torch.func.jvp`</span>
-<span class="sd">        + :py:func:`~torch.func.vjp`</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+      <span class="c1"># + :py:func:`~torch.func.vjp`  # todo: add back to docs once PyTorch-specific implementation created</span>
+    <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_torch_array</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">torch</span> <span class="k">as</span> <span class="n">namespace</span>
+    <span class="k">elif</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_jax_array</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">namespace</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic</span> <span class="k">as</span> <span class="n">namespace</span>
 
@@ -167,7 +170,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.3.dev20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>

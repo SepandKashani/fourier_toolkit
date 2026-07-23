@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.4.1 documentation</title>
+    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.4.3.dev20 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=c87aa342"></script>
+    <script src="../../_static/documentation_options.js?v=f7c6d2b1"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.3.dev20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
@@ -42,7 +42,7 @@
             
   <h1>Source code for fourier_toolkit.nufft</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">typ</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">array_api_compat</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">aac</span>
 
@@ -56,9 +56,11 @@
 <span class="p">]</span>
 
 <span class="n">_eps_default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
-<span class="n">ExponentSign</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ExponentSign</span> <span class="o">=</span> <span class="n">typ</span><span class="o">.</span><span class="n">Literal</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">]</span>
 <span class="n">_eps_fp32_min</span> <span class="o">=</span> <span class="mf">1e-6</span>
 <span class="n">_eps_fp64_min</span> <span class="o">=</span> <span class="mf">1e-14</span>
+
+<span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="nu2nu">
@@ -66,10 +68,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">nu2nu</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
     <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)</span>
@@ -88,15 +90,16 @@
 <span class="sd">        (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.</span>
 <span class="sd">    v: ArrayR</span>
 <span class="sd">        (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.</span>
-<span class="sd">    w: ArrayRC</span>
+<span class="sd">    w: ArrayC</span>
 <span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
 <span class="sd">    isign: +1, -1</span>
 <span class="sd">        Exponent sign.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
 <span class="sd">        (See :ref:`nu2nu-notes`.)</span>
-<span class="sd">    kwargs: dict</span>
-<span class="sd">        Extra parameters for :py:class:`finufft.Plan`.</span>
+<span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
+<span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
+<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -121,35 +124,49 @@
 
 <span class="sd">      - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06</span>
 <span class="sd">      - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14</span>
+
+<span class="sd">    * Backend-specific notes:</span>
+
+<span class="sd">      - [JAX] supports the following program transforms:</span>
+
+<span class="sd">        + :py:func:`~jax.jit`</span>
+<span class="sd">        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.</span>
+<span class="sd">        + :py:func:`~jax.jvp`, but (`x`, `v`) are currently not differentiable.</span>
+<span class="sd">        + :py:func:`~jax.vjp`, but (`x`, `v`) are currently not differentiable.</span>
+
+<span class="sd">      - [PyTorch] currently not supported.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+    <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># standardize inputs -----------------------------------------------------</span>
     <span class="n">fdtype</span><span class="p">,</span> <span class="n">cdtype</span> <span class="o">=</span> <span class="n">_determine_precision</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
 
     <span class="n">x</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">)</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">)</span>
-    <span class="n">M</span><span class="p">,</span> <span class="n">Dx</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-    <span class="n">N</span><span class="p">,</span> <span class="n">Dv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cdtype</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">Dx</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">Dv</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">D</span> <span class="o">:=</span> <span class="n">Dx</span><span class="p">)</span> <span class="o">==</span> <span class="n">Dv</span>
     <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
-    <span class="n">w</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_canonicalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cdtype</span><span class="p">,</span> <span class="p">(</span><span class="n">M</span><span class="p">,))</span>
 
     <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span>
-    <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cdtype</span> <span class="o">==</span> <span class="n">xp</span><span class="o">.</span><span class="n">complex64</span><span class="p">:</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp32_min</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># xp.complex128</span>
+    <span class="k">elif</span> <span class="n">cdtype</span> <span class="o">==</span> <span class="n">xp</span><span class="o">.</span><span class="n">complex128</span><span class="p">:</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp64_min</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_array_api_obj</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic</span> <span class="k">as</span> <span class="n">namespace</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown dtype: </span><span class="si">{</span><span class="n">cdtype</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="c1"># ------------------------------------------------------------------------</span>
 
-    <span class="n">z</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="n">namespace</span><span class="o">.</span><span class="n">_nu2nu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_jax_array</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">namespace</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic</span> <span class="k">as</span> <span class="n">namespace</span>
+
+    <span class="n">z</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">_nu2nu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">finufft_kwargs</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">z</span></div>
 
 
@@ -159,10 +176,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">nu2u</span><span class="p">(</span>
     <span class="n">x</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
     <span class="n">v_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
     <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)</span>
@@ -189,15 +206,16 @@
 <span class="sd">        (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.</span>
 <span class="sd">    v_spec: UniformSpec</span>
 <span class="sd">        :math:`\bbv_{n}` lattice.</span>
-<span class="sd">    w: ArrayRC</span>
+<span class="sd">    w: ArrayC</span>
 <span class="sd">        (..., M) weights :math:`w_{m} \in \bC`.</span>
 <span class="sd">    isign: +1, -1</span>
 <span class="sd">        Exponent sign.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
 <span class="sd">        (See :ref:`nu2u-notes`.)</span>
-<span class="sd">    kwargs: dict</span>
-<span class="sd">        Extra parameters for :py:class:`finufft.Plan`.</span>
+<span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
+<span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
+<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -222,31 +240,28 @@
 
 <span class="sd">      - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06</span>
 <span class="sd">      - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14</span>
+
+<span class="sd">    * Backend-specific notes:</span>
+
+<span class="sd">      - [JAX] supports the following program transforms:</span>
+
+<span class="sd">        + :py:func:`~jax.jit`</span>
+<span class="sd">        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.</span>
+<span class="sd">        + :py:func:`~jax.jvp`, but (`x`,) is currently not differentiable.</span>
+<span class="sd">        + :py:func:`~jax.vjp`, but (`x`,) is currently not differentiable.</span>
+
+<span class="sd">      - [PyTorch] currently not supported.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fdtype</span><span class="p">,</span> <span class="n">cdtype</span> <span class="o">=</span> <span class="n">_determine_precision</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-
-    <span class="n">x</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">)</span>
-    <span class="n">M</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
-    <span class="k">assert</span> <span class="n">D</span> <span class="o">==</span> <span class="n">v_spec</span><span class="o">.</span><span class="n">ndim</span>
-    <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
-    <span class="n">w</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_canonicalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cdtype</span><span class="p">,</span> <span class="p">(</span><span class="n">M</span><span class="p">,))</span>
-
-    <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cdtype</span> <span class="o">==</span> <span class="n">xp</span><span class="o">.</span><span class="n">complex64</span><span class="p">:</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp32_min</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># xp.complex128</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp64_min</span><span class="p">)</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+        <span class="n">v_spec</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="n">x</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">v_spec</span><span class="o">.</span><span class="n">ndim</span><span class="p">),</span>
+    <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_array_api_obj</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic</span> <span class="k">as</span> <span class="n">namespace</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">z</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="n">namespace</span><span class="o">.</span><span class="n">_nu2u</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v_spec</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+        <span class="n">nu2nu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="n">finufft_kwargs</span><span class="p">),</span>
         <span class="p">(</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="o">*</span><span class="n">v_spec</span><span class="o">.</span><span class="n">num</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">z</span></div>
@@ -258,10 +273,10 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">u2nu</span><span class="p">(</span>
     <span class="n">x_spec</span><span class="p">:</span> <span class="n">ftku</span><span class="o">.</span><span class="n">UniformSpec</span><span class="p">,</span>
     <span class="n">v</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
     <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)</span>
@@ -288,15 +303,16 @@
 <span class="sd">        :math:`\bbx_{m}` lattice.</span>
 <span class="sd">    v: ArrayR</span>
 <span class="sd">        (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.</span>
-<span class="sd">    w: ArrayRC</span>
+<span class="sd">    w: ArrayC</span>
 <span class="sd">        (..., M1,...,MD) weights :math:`w_{m} \in \bC`.</span>
 <span class="sd">    isign: +1, -1</span>
 <span class="sd">        Exponent sign.</span>
 <span class="sd">    eps: float</span>
 <span class="sd">        Target relative error :math:`\epsilon \in ]0, 1[`.</span>
 <span class="sd">        (See :ref:`u2nu-notes`.)</span>
-<span class="sd">    kwargs: dict</span>
-<span class="sd">        Extra parameters for :py:class:`finufft.Plan`.</span>
+<span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
+<span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
+<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -321,32 +337,33 @@
 
 <span class="sd">      - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06</span>
 <span class="sd">      - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14</span>
+
+<span class="sd">    * Backend-specific notes:</span>
+
+<span class="sd">      - [JAX] supports the following program transforms:</span>
+
+<span class="sd">        + :py:func:`~jax.jit`</span>
+<span class="sd">        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.</span>
+<span class="sd">        + :py:func:`~jax.jvp`, but (`v`,) is currently not differentiable.</span>
+<span class="sd">        + :py:func:`~jax.vjp`, but (`v`,) is currently not differentiable.</span>
+
+<span class="sd">      - [PyTorch] currently not supported.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">fdtype</span><span class="p">,</span> <span class="n">cdtype</span> <span class="o">=</span> <span class="n">_determine_precision</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">)</span>
-
-    <span class="n">v</span> <span class="o">=</span> <span class="n">_canonicalize_knots</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">)</span>
-    <span class="n">N</span><span class="p">,</span> <span class="n">D</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span>
-    <span class="k">assert</span> <span class="n">D</span> <span class="o">==</span> <span class="n">x_spec</span><span class="o">.</span><span class="n">ndim</span>
-    <span class="k">assert</span> <span class="n">D</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># FINUFFT limitation</span>
-    <span class="n">w</span><span class="p">,</span> <span class="n">sh</span> <span class="o">=</span> <span class="n">_canonicalize_weights</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">cdtype</span><span class="p">,</span> <span class="n">x_spec</span><span class="o">.</span><span class="n">num</span><span class="p">)</span>
-
-    <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">eps</span> <span class="o">:=</span> <span class="nb">float</span><span class="p">(</span><span class="n">eps</span><span class="p">))</span> <span class="o">&lt;</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">cdtype</span> <span class="o">==</span> <span class="n">xp</span><span class="o">.</span><span class="n">complex64</span><span class="p">:</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp32_min</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>  <span class="c1"># xp.complex128</span>
-        <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp64_min</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+        <span class="n">x_spec</span><span class="o">.</span><span class="n">knots</span><span class="p">(</span><span class="n">like</span><span class="o">=</span><span class="n">v</span><span class="p">),</span>
+        <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">x_spec</span><span class="o">.</span><span class="n">ndim</span><span class="p">),</span>
+    <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_array_api_obj</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">generic</span> <span class="k">as</span> <span class="n">namespace</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
-
-    <span class="n">z</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="n">namespace</span><span class="o">.</span><span class="n">_u2nu</span><span class="p">(</span><span class="n">x_spec</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">isign</span><span class="p">,</span> <span class="n">eps</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
-        <span class="p">(</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">N</span><span class="p">),</span>
+    <span class="n">sh</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span> <span class="o">-</span><span class="n">x_spec</span><span class="o">.</span><span class="n">ndim</span><span class="p">]</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">nu2nu</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">v</span><span class="p">,</span>
+        <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">sh</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">x_spec</span><span class="o">.</span><span class="n">num</span><span class="p">))),</span>
+        <span class="n">isign</span><span class="p">,</span>
+        <span class="n">eps</span><span class="p">,</span>
+        <span class="n">finufft_kwargs</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">z</span></div>
 
@@ -363,13 +380,15 @@
 <span class="sd">        floating/complex dtype</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="n">device</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">device</span>
+    <span class="c1"># device = ftku.get_device(args[0])</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">==</span> <span class="n">xp</span>  <span class="c1"># same backend</span>
-        <span class="k">assert</span> <span class="n">a</span><span class="o">.</span><span class="n">device</span> <span class="o">==</span> <span class="n">device</span>  <span class="c1"># same device</span>
-        <span class="k">assert</span> <span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># single/double precision (indirect check)</span>
+        <span class="c1"># assert ftku.get_device(a) == device  # same device</span>
+        <span class="c1">#   [20260722] Deactivated since does not work with jax.vmap()</span>
+        <span class="c1">#   Not as issue since device mis-matches will cause breakage downstream anyway.</span>
+        <span class="k">assert</span> <span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># single/double precision</span>
 
-    <span class="n">n_bits</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
+    <span class="n">n_bits</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
     <span class="n">fdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;float</span><span class="si">{</span><span class="n">n_bits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">cdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;complex</span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_bits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fdtype</span><span class="p">,</span> <span class="n">cdtype</span>
@@ -399,42 +418,6 @@
 
     <span class="n">xv_c</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xv</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">fdtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">xv_c</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_canonicalize_weights</span><span class="p">(</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">,</span>
-    <span class="n">cdtype</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">DType</span><span class="p">,</span>
-    <span class="n">sh_core</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleI</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">TupleI</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Transform (w,) weights to canonical form:</span>
-<span class="sd">    - shape (n_trans, *sh_core)</span>
-<span class="sd">    - complex-valued</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    w: ArrayRC</span>
-<span class="sd">        (..., *sh_core)</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    w_c: ArrayC</span>
-<span class="sd">        Canonical form of `w`.</span>
-<span class="sd">    sh_stack: tuple[int]</span>
-<span class="sd">        Shape to transform the output of `plan.execute()` to.</span>
-<span class="sd">        This is to respect the input&#39;s stack shape (...).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">D</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sh_core</span><span class="p">)</span>
-    <span class="n">sh_stack</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="n">D</span><span class="p">]</span>
-    <span class="n">sh_flat</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">sh_stack</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="n">w</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="n">D</span><span class="p">:]</span> <span class="o">==</span> <span class="n">sh_core</span>
-
-    <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
-    <span class="n">w_c</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
-        <span class="n">xp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">cdtype</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">sh_flat</span><span class="p">,</span> <span class="o">*</span><span class="n">sh_core</span><span class="p">),</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">w_c</span><span class="p">,</span> <span class="n">sh_stack</span>
 </pre></div>
 
             <div class="clearer"></div>
@@ -472,7 +455,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.3.dev20 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
