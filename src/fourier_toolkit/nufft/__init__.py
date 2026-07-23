@@ -23,7 +23,7 @@ finufft_kwargsT = tuple[tuple[str, int], ...]
 def nu2nu(
     x: ftkt.ArrayR,
     v: ftkt.ArrayR,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayC,
     isign: ExponentSign,
     eps: float = _eps_default,
     finufft_kwargs: finufft_kwargsT = (),
@@ -45,7 +45,7 @@ def nu2nu(
         (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.
     v: ArrayR
         (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.
-    w: ArrayRC
+    w: ArrayC
         (..., M) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
         Exponent sign.
@@ -80,6 +80,7 @@ def nu2nu(
       - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    assert ftku.is_complex(w)
     xp = aac.array_namespace(x)
 
     # standardize inputs -----------------------------------------------------
@@ -116,7 +117,7 @@ def nu2nu(
 def nu2u(
     x: ftkt.ArrayR,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayC,
     isign: ExponentSign,
     eps: float = _eps_default,
     finufft_kwargs: finufft_kwargsT = (),
@@ -146,7 +147,7 @@ def nu2u(
         (M, D) knots :math:`\bbx_{m} \in \bR^{D}`.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice.
-    w: ArrayRC
+    w: ArrayC
         (..., M) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
         Exponent sign.
@@ -181,6 +182,7 @@ def nu2u(
       - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    assert ftku.is_complex(w)
     xp = aac.array_namespace(x)
     v = xp.reshape(
         v_spec.knots(like=x),
@@ -198,7 +200,7 @@ def nu2u(
 def u2nu(
     x_spec: ftku.UniformSpec,
     v: ftkt.ArrayR,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayC,
     isign: ExponentSign,
     eps: float = _eps_default,
     finufft_kwargs: finufft_kwargsT = (),
@@ -228,7 +230,7 @@ def u2nu(
         :math:`\bbx_{m}` lattice.
     v: ArrayR
         (N, D) knots :math:`\bbv_{n} \in \bR^{D}`.
-    w: ArrayRC
+    w: ArrayC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
         Exponent sign.
@@ -263,6 +265,7 @@ def u2nu(
       - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
     """
+    assert ftku.is_complex(w)
     xp = aac.array_namespace(v)
     x = xp.reshape(
         x_spec.knots(like=v),
