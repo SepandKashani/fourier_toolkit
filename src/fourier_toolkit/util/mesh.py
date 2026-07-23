@@ -90,22 +90,52 @@ class UniformSpec:
 
     @property
     def start(self) -> ftkt.TupleR:
+        r"""
+        Returns
+        -------
+        tuple[int]
+            :math:`\bbx_{0} \in \bR^{D}`
+        """
         return self._start
 
     @property
     def step(self) -> ftkt.TupleR:
+        r"""
+        Returns
+        -------
+        tuple[float]
+            :math:`\Delta_{\bbx} \in \bR^{D}` (signed)
+        """
         return self._step
 
     @property
     def num(self) -> ftkt.TupleI:
+        r"""
+        Returns
+        -------
+        tuple[int]
+            (M1,...,MD) lattice size
+        """
         return self._num
 
     @property
     def ndim(self) -> int:
+        r"""
+        Returns
+        -------
+        int
+            :math:`D \in \bN^{*}`
+        """
         return len(self.start)
 
     @property
     def span(self) -> ftkt.TupleR:
+        r"""
+        Returns
+        -------
+        tuple[float]
+            (D,) axial widths
+        """
         _span = [None] * self.ndim
         for d in range(self.ndim):
             dx = self.step[d]
@@ -116,6 +146,12 @@ class UniformSpec:
 
     @property
     def center(self) -> ftkt.TupleR:
+        r"""
+        Returns
+        -------
+        tuple[float]
+            (D,) geometric center
+        """
         _center = [None] * self.ndim
         for d in range(self.ndim):
             x0 = self.start[d]
