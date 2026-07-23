@@ -1,5 +1,3 @@
-import functools
-
 import array_api_compat as aac
 import numpy as np
 import pytest
@@ -284,7 +282,7 @@ class TestU2U:
         tangent = ct.to_backend(tangent, array_backend)
         tangent_out_gt = ct.to_backend(tangent_out_gt, array_backend)
 
-        _u2u = functools.partial(u2u, x_spec, v_spec, isign=isign)
+        _u2u = lambda w: u2u(x_spec, v_spec, w, isign)
         if is_jax:
             import jax
 
@@ -333,7 +331,7 @@ class TestU2U:
         cotangent = ct.to_backend(cotangent, array_backend)
         cotangent_out_gt = ct.to_backend(cotangent_out_gt, array_backend)
 
-        _u2u = functools.partial(u2u, x_spec, v_spec, isign=isign)
+        _u2u = lambda w: u2u(x_spec, v_spec, w, isign)
         if is_jax:
             import jax
 
