@@ -4,6 +4,7 @@ import opt_einsum as oe
 
 import fourier_toolkit.typing as ftkt
 
+from .dlpack import get_device
 from .dtype import TranslateDType
 
 fp_atol = dict(
@@ -20,7 +21,7 @@ def similar(a: ftkt.Array, b: ftkt.Array) -> bool:
     """
     same_backend = aac.array_namespace(a) == aac.array_namespace(b)
     same_dtype = a.dtype == b.dtype
-    same_device = a.device == b.device
+    same_device = get_device(a) == get_device(b)
 
     return all([same_backend, same_dtype, same_device])
 

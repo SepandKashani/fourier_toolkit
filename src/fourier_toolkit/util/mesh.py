@@ -6,6 +6,7 @@ import numpy as np
 
 import fourier_toolkit.typing as ftkt
 
+from .dlpack import get_device
 from .dtype import TranslateDType
 from .misc import broadcast_seq
 
@@ -162,7 +163,7 @@ class UniformSpec:
 
         xp = aac.array_namespace(like)
         fdtype = TranslateDType(like).to_float()
-        device = like.device
+        device = get_device(like)
 
         mesh_1D = [None] * self.ndim
         for d in range(self.ndim):
