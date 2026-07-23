@@ -79,6 +79,17 @@ def nu2nu(
 
       - any(x,v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
+
+    * Backend-specific notes:
+
+      - [JAX] supports the following program transforms:
+
+        + :py:func:`~jax.jit`
+        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.
+        + :py:func:`~jax.jvp`, but (`x`, `v`) are currently not differentiable.
+        + :py:func:`~jax.vjp`, but (`x`, `v`) are currently not differentiable.
+
+      - [PyTorch] currently not supported.
     """
     assert ftku.is_complex(w)
     xp = aac.array_namespace(x)
@@ -181,6 +192,17 @@ def nu2u(
 
       - any(x,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(x,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
+
+    * Backend-specific notes:
+
+      - [JAX] supports the following program transforms:
+
+        + :py:func:`~jax.jit`
+        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.
+        + :py:func:`~jax.jvp`, but (`x`,) is currently not differentiable.
+        + :py:func:`~jax.vjp`, but (`x`,) is currently not differentiable.
+
+      - [PyTorch] currently not supported.
     """
     assert ftku.is_complex(w)
     xp = aac.array_namespace(x)
@@ -264,6 +286,17 @@ def u2nu(
 
       - any(v,w).dtype = float32 :math:`\rightarrow \epsilon_{\min}` = 1e-06
       - all(v,w).dtype = float64 :math:`\rightarrow \epsilon_{\min}` = 1e-14
+
+    * Backend-specific notes:
+
+      - [JAX] supports the following program transforms:
+
+        + :py:func:`~jax.jit`
+        + :py:func:`~jax.vmap`, but only over (`w`,) for efficiency reasons.
+        + :py:func:`~jax.jvp`, but (`v`,) is currently not differentiable.
+        + :py:func:`~jax.vjp`, but (`v`,) is currently not differentiable.
+
+      - [PyTorch] currently not supported.
     """
     assert ftku.is_complex(w)
     xp = aac.array_namespace(v)
