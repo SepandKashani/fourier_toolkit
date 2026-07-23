@@ -167,21 +167,22 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
         in_dims: tuple[int | None, ...],
     ) -> ftkt.ArrayC:
         # piggy-back on fact that generic.nu2nu() accepts stacked arrays
-        # do not accept batching (x,v), only (w,)
         x_dim, v_dim, w_dim = in_dims
+        out_dim = 0
+
+        # do not accept batching (x,v), only (w,)
         assert x_dim is None, "Batching (x,) knots is not supported."
         assert v_dim is None, "Batching (v,) knots is not supported."
-        out_dim = 0
 
         (x, v, w) = args
         w = jnp.moveaxis(w, w_dim, out_dim)
 
         # Must initialize a new primitive to evaluate batched computation.
         #
-        # Reason: `self.out_aval` has output shape /w batched dimension. Since self.expand() calls
-        # buffer_callback() with the latter's output size taken from `self.out_aval`
-        # (no alternative possible), the output buffer is too small to hold the output of
-        # low_level_fwd().
+        # Reason: When batch() is called, `self.out_aval` has output shape /w batched dimension.
+        # Since self.expand() calls buffer_callback() with the latter's output size taken from
+        # `self.out_aval` (no alternative possible), the output buffer is too small to hold the
+        # output of low_level_fwd().
         prim = NU2NUPrimitive(
             x_aval=jax.typeof(x),
             v_aval=jax.typeof(v),
