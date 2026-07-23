@@ -13,6 +13,23 @@ def random_array(array_backend: ct.ArrayBackend, dtype_name: str) -> ftkt.Array:
     return xp.asarray([], dtype=dtype, device=array_backend.device)
 
 
+class TestIsComplex:
+    @pytest.mark.parametrize(
+        ["in_dtype", "GT"],
+        [
+            ("int32", False),
+            ("int64", False),
+            ("float32", False),
+            ("float64", False),
+            ("complex64", True),
+            ("complex128", True),
+        ],
+    )
+    def test_complexness(self, array_backend, in_dtype, GT):
+        x = random_array(array_backend, in_dtype)
+        assert ftku.is_complex(x) == GT
+
+
 class TestTranslateDType:
     @pytest.mark.parametrize(
         ["in_dtype", "out_dtype_gt"],

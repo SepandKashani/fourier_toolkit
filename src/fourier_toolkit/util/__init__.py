@@ -5,6 +5,7 @@ __all__ = [
     "cast_warn",
     "DLDeviceType",
     "inner_product",
+    "is_complex",
     "next_fast_len",
     "rel_l2_close",
     "rel_l2_distance",
@@ -19,6 +20,7 @@ from .dlpack import (
     DLDeviceType,
 )
 from .dtype import (
+    is_complex,
     TranslateDType,
 )
 from .mesh import (

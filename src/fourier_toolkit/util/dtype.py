@@ -3,6 +3,10 @@ import array_api_compat as aac
 import fourier_toolkit.typing as ftkt
 
 
+def is_complex(x: ftkt.Array) -> bool:
+    return x.dtype == TranslateDType(x).to_complex()
+
+
 class TranslateDType:
     """
     (int,float,complex) dtype translator.
