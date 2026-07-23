@@ -30,7 +30,7 @@ def hadamard_outer(x: ftkt.ArrayRC, *args: tuple[ftkt.ArrayRC]) -> ftkt.ArrayRC:
 
     Note
     ----
-    All inputs must share the same dtype precision.
+    All inputs must share the same dtype.
     """
     D = len(args)
     assert all(A.ndim == 1 for A in args)
@@ -38,6 +38,8 @@ def hadamard_outer(x: ftkt.ArrayRC, *args: tuple[ftkt.ArrayRC]) -> ftkt.ArrayRC:
 
     assert x.ndim >= D
     assert x.shape[-D:] == sh
+
+    assert all(A.dtype == x.dtype for A in args)
 
     x_ind = (Ellipsis, *range(D))
     o_ind = (Ellipsis, *range(D))
