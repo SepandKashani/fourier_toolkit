@@ -73,8 +73,8 @@ def u2u(
         + :py:func:`~torch.compile`, but it has limited support for complex-valued operators: do not expect huge performance gains.
         + :py:func:`~torch.func.vmap`, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.
         + :py:func:`~torch.func.jvp`
-        + :py:func:`~torch.func.vjp`
     """
+      # + :py:func:`~torch.func.vjp`  # todo: add back to docs once PyTorch-specific implementation created
     assert ftku.is_complex(w)
     assert (isign := int(isign)) in (-1, +1)
 
