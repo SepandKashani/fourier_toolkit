@@ -87,12 +87,6 @@ class Array(typ.Protocol[DTypeT]):
     shape: tuple[int, ...]
     size: int
 
-    @property
-    def T(self) -> Array: ...
-
-    @property
-    def mT(self) -> Array: ...
-
     def __array_namespace__(
         self,
         *,
