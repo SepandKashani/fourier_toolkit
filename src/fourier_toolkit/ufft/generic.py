@@ -15,7 +15,7 @@ from . import ExponentSign
 def _u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,  # (..., M1,...,MD)
+    w: ftkt.ArrayC,  # (..., M1,...,MD)
     isign: ExponentSign,
 ) -> ftkt.ArrayC:  # (..., N1,...,ND)
     op = _U2U(x_spec=x_spec, v_spec=v_spec)
@@ -72,13 +72,13 @@ class _U2U:
             czt_axes=tuple(czt_axes),
         )
 
-    def apply(self, w: ftkt.ArrayRC) -> ftkt.ArrayC:
+    def apply(self, w: ftkt.ArrayC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bbz = U \bbw`.
 
         Parameters
         ----------
-        w: ArrayRC
+        w: ArrayC
             (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
 
         Returns
@@ -111,11 +111,11 @@ class _U2U:
         return z
 
     # Helper routines (internal) ----------------------------------------------
-    def _fft_params(self, y: ftkt.ArrayRC):
+    def _fft_params(self, y: ftkt.ArrayC):
         """
         Parameters
         ----------
-        y: ArrayRC
+        y: ArrayC
 
         Returns
         -------
@@ -188,11 +188,11 @@ class _U2U:
 
         return (ax_fft, Cp, fft, Bp, ax_ifft)
 
-    def _czt_params(self, y: ftkt.ArrayRC):
+    def _czt_params(self, y: ftkt.ArrayC):
         """
         Parameters
         ----------
-        y: ArrayRC
+        y: ArrayC
 
         Returns
         -------
@@ -317,13 +317,13 @@ class _CZT:
             L=tuple(ftku.next_fast_len(n + m - 1) for (n, m) in zip(N, M)),
         )
 
-    def apply(self, x: ftkt.ArrayRC) -> ftkt.ArrayC:
+    def apply(self, x: ftkt.ArrayC) -> ftkt.ArrayC:
         r"""
         Compute :math:`\bby = C \bbx`.
 
         Parameters
         ----------
-        x: ArrayRC
+        x: ArrayC
             (..., N1,...,ND) input :math:`\bbx \in \bC^{N_{1} \times\cdots\times N_{D}}`.
 
         Returns
@@ -349,11 +349,11 @@ class _CZT:
         return y
 
     # Helper routines (internal) ----------------------------------------------
-    def _mod_params(self, x: ftkt.ArrayRC):
+    def _mod_params(self, x: ftkt.ArrayC):
         """
         Parameters
         ----------
-        x: ArrayRC
+        x: ArrayC
 
         Returns
         -------

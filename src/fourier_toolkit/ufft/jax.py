@@ -11,7 +11,7 @@ from . import ExponentSign
 def _u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,  # (..., M1,...,MD)
+    w: ftkt.ArrayC,  # (..., M1,...,MD)
     isign: ExponentSign,
 ) -> ftkt.ArrayC:  # (..., N1,...,ND)
     prim = U2UPrimitive(
@@ -37,8 +37,7 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
         sh_stack = w_aval.shape[: -x_spec.ndim]
         self.out_aval = jax.core.ShapedArray(
             shape=(*sh_stack, *v_spec.num),
-            # in_avals may be R/C-valued, but out_avals is always C-valued
-            dtype=jnp.promote_types(w_aval.dtype, complex),
+            dtype=w_aval.dtype,
         )
         self.params = dict(
             x_spec=x_spec,
@@ -47,7 +46,7 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
         )
         super().__init__()
 
-    def expand(self, w: ftkt.ArrayRC) -> ftkt.ArrayC:
+    def expand(self, w: ftkt.ArrayC) -> ftkt.ArrayC:
         from .generic import _u2u as generic_u2u
 
         z = generic_u2u(
@@ -60,23 +59,23 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
 
     def jvp(
         self,
-        primals: tuple[ftkt.ArrayRC],
-        tangents: tuple[ftkt.ArrayRC],
+        primals: tuple[ftkt.ArrayC],
+        tangents: tuple[ftkt.ArrayC],
     ) -> tuple[ftkt.ArrayC, ftkt.ArrayC]:
-        (w1,), (w2,) = primals, tangents
-        return self(w1), self(w2)
+        (w,), (wt,) = primals, tangents
+        return self(w), self(wt)
 
     def vjp_fwd(
         self,
         nzs_in: tuple[bool, ...],
-        w: ftkt.ArrayRC,
+        w: ftkt.ArrayC,
     ) -> tuple[ftkt.ArrayC, None]:
         return self(w), None
 
     def vjp_bwd_retval(
         self,
         res: None,
-        v: ftkt.ArrayRC,
+        v: ftkt.ArrayC,
     ) -> tuple[ftkt.ArrayC]:
         from .generic import _u2u as generic_u2u
 
@@ -92,7 +91,7 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
     def batch(
         self,
         axis_data,  # namedtuple-like
-        args: tuple[ftkt.ArrayRC],
+        args: tuple[ftkt.ArrayC],
         in_dims: tuple[int | None, ...],
     ) -> ftkt.ArrayC:
         # piggy-back on fact that generic.u2u() accepts stacked arrays

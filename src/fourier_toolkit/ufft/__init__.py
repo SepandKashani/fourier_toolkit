@@ -16,7 +16,7 @@ ExponentSign = Literal[-1, +1]
 def u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayC,
     isign: ExponentSign,
 ) -> ftkt.ArrayC:
     r"""
@@ -43,7 +43,7 @@ def u2u(
         :math:`\bbx_{m}` lattice.
     v_spec: UniformSpec
         :math:`\bbv_{n}` lattice.
-    w: ArrayRC
+    w: ArrayC
         (..., M1,...,MD) weights :math:`w_{m} \in \bC`.
     isign: +1, -1
         Exponent sign.
@@ -75,6 +75,7 @@ def u2u(
         + :py:func:`~torch.func.jvp`
         + :py:func:`~torch.func.vjp`
     """
+    assert ftku.is_complex(w)
     assert (isign := int(isign)) in (-1, +1)
 
     if aac.is_torch_array(w):

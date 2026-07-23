@@ -7,7 +7,7 @@ from . import ExponentSign
 def _u2u(
     x_spec: ftku.UniformSpec,
     v_spec: ftku.UniformSpec,
-    w: ftkt.ArrayRC,
+    w: ftkt.ArrayC,
     isign: ExponentSign,
 ) -> ftkt.ArrayC:
     from .generic import _u2u as generic_u2u
