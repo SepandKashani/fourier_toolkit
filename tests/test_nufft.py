@@ -12,7 +12,6 @@ from fourier_toolkit.util.metric import fp_atol
 
 from . import conftest as ct
 
-parametrize_real = pytest.mark.parametrize("real", [True, False])
 parametrize_stack = pytest.mark.parametrize(
     "stack_shape",
     [(), (1,), (1, 2, 3)],
@@ -20,7 +19,6 @@ parametrize_stack = pytest.mark.parametrize(
 
 
 class TestNU2NU:
-    @parametrize_real
     @parametrize_stack
     def test_apply(
         self,
@@ -31,11 +29,10 @@ class TestNU2NU:
         eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # output value matches ground truth.
-        w, z_gt = self._generate_io(x_m, v_n, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
 
         # Test nu2nu() compliance
         xp = array_backend.xp
@@ -49,7 +46,6 @@ class TestNU2NU:
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
 
-    @parametrize_real
     @parametrize_stack
     def test_jit(
         self,
@@ -60,7 +56,6 @@ class TestNU2NU:
         eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # can JIT nu2nu() calls.
@@ -69,7 +64,7 @@ class TestNU2NU:
         if not (is_jax or is_torch):
             pytest.skip()
 
-        w, z_gt = self._generate_io(x_m, v_n, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
 
         # Test nu2u() compliance
         xp = array_backend.xp
@@ -98,7 +93,6 @@ class TestNU2NU:
         assert ftku.similar(z2, z_gt)
         assert_areclose(z2, z_gt, D=1)
 
-    @parametrize_real
     @parametrize_stack
     def test_vmap(
         self,
@@ -109,7 +103,6 @@ class TestNU2NU:
         eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # can VMAP nu2nu() calls.
@@ -127,7 +120,6 @@ class TestNU2NU:
             v_n,
             isign,
             dtype,
-            real,
             stack_shape=(stack_size_extra, *stack_shape),
         )
 
@@ -172,7 +164,6 @@ class TestNU2NU:
                     1,
                 )
 
-    @parametrize_real
     @parametrize_stack
     def test_jvp(
         self,
@@ -183,7 +174,6 @@ class TestNU2NU:
         eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # can JVP nu2nu() calls.
@@ -196,13 +186,9 @@ class TestNU2NU:
         if not (is_jax or is_torch):
             pytest.skip()
 
-        primal, primal_out_gt = self._generate_io(
-            x_m, v_n, isign, dtype, real, stack_shape
-        )
+        primal, primal_out_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
 
-        tangent, tangent_out_gt = self._generate_io(
-            x_m, v_n, isign, dtype, real, stack_shape
-        )
+        tangent, tangent_out_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
 
         # Test nu2nu() compliance
         xp = array_backend.xp
@@ -250,7 +236,6 @@ class TestNU2NU:
         assert ftku.similar(tangent_out, tangent_out_gt)
         assert_areclose(tangent_out, tangent_out_gt, D=1)
 
-    @parametrize_real
     @parametrize_stack
     def test_vjp(
         self,
@@ -261,7 +246,6 @@ class TestNU2NU:
         eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # can VJP nu2nu() calls.
@@ -271,17 +255,9 @@ class TestNU2NU:
         if not (is_jax or is_torch):
             pytest.skip()
 
-        primal, primal_out_gt = self._generate_io(
-            x_m, v_n, isign, dtype, real, stack_shape
-        )
+        primal, primal_out_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
         cotangent, cotangent_out_gt = self._generate_io(
-            v_n,
-            x_m,
-            isign,
-            dtype,
-            False,
-            stack_shape,
-            # cotangents must always have the same dtype as primal_out, so C-valued.
+            v_n, x_m, isign, dtype, stack_shape
         )
         # (x,v) cotangent ground truths
         xt_out_gt = np.zeros(x_m.shape, dtype=float)  # since (x,) non-differentiable
@@ -392,24 +368,18 @@ class TestNU2NU:
         v_n: np.ndarray,
         isign: int,
         dtype: np.dtype,
-        real: bool,
         stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Generate nu2nu() input
         M, _ = x_m.shape
         rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, M))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, M))
-            w += rng.standard_normal((*stack_shape, M))
-            w = w.astype(cdtype)
+        w = 1j * rng.standard_normal((*stack_shape, M))
+        w += rng.standard_normal((*stack_shape, M))
+        w = w.astype(cdtype)
 
         # Generate nu2nu() output ground-truth
         N, _ = v_n.shape
