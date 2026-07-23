@@ -13,7 +13,6 @@ from fourier_toolkit.util.metric import fp_atol
 
 from . import conftest as ct
 
-parametrize_real = pytest.mark.parametrize("real", [True, False])
 parametrize_stack = pytest.mark.parametrize(
     "stack_shape",
     [(), (1,), (1, 2, 3)],
@@ -127,7 +126,6 @@ class TestCZT:
 class TestU2U:
     # General U2U case where (x_spec, v_spec) are arbitrary.
 
-    @parametrize_real
     @parametrize_stack
     def test_apply(
         self,
@@ -136,11 +134,10 @@ class TestU2U:
         v_spec,
         isign,
         dtype,
-        real,
         stack_shape,
     ):
         # output value matches ground truth.
-        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, stack_shape)
 
         # Test u2u() compliance
         w = ct.to_backend(w, array_backend)
@@ -150,7 +147,6 @@ class TestU2U:
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, v_spec.ndim)
 
-    @parametrize_real
     @parametrize_stack
     def test_jit(
         self,
@@ -159,7 +155,6 @@ class TestU2U:
         v_spec,
         isign,
         dtype,
-        real,
         stack_shape,
     ):
         # can JIT u2u() calls.
@@ -168,7 +163,7 @@ class TestU2U:
         if not (is_jax or is_torch):
             pytest.skip()
 
-        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_spec, v_spec, isign, dtype, stack_shape)
 
         # Test u2u() compliance
         w = ct.to_backend(w, array_backend)
@@ -193,7 +188,6 @@ class TestU2U:
         assert ftku.similar(z2, z_gt)
         assert_areclose(z2, z_gt, v_spec.ndim)
 
-    @parametrize_real
     @parametrize_stack
     def test_vmap(
         self,
@@ -202,7 +196,6 @@ class TestU2U:
         v_spec,
         isign,
         dtype,
-        real,
         stack_shape,
     ):
         # can VMAP u2u() calls.
@@ -220,7 +213,6 @@ class TestU2U:
             v_spec,
             isign,
             dtype,
-            real,
             stack_shape=(stack_size_extra, *stack_shape),
         )
 
@@ -259,7 +251,6 @@ class TestU2U:
                     v_spec.ndim,
                 )
 
-    @parametrize_real
     @parametrize_stack
     def test_jvp(
         self,
@@ -268,12 +259,11 @@ class TestU2U:
         v_spec,
         isign,
         dtype,
-        real,
         stack_shape,
     ):
         # can JVP u2u() calls.
 
-        # Since u2u() is linear in `w` -> jvp(u2u,w,v) == u2u(v) [w does not matter]
+        # Since u2u() is linear in `w` -> jvp(u2u,(w,),(v,)) == u2u(v) [w does not matter]
 
         is_jax = array_backend.name.startswith("jax-")
         is_torch = array_backend.name.startswith("torch-")
@@ -281,11 +271,11 @@ class TestU2U:
             pytest.skip()
 
         primal, primal_out_gt = self._generate_io(
-            x_spec, v_spec, isign, dtype, real, stack_shape
+            x_spec, v_spec, isign, dtype, stack_shape
         )
 
         tangent, tangent_out_gt = self._generate_io(
-            x_spec, v_spec, isign, dtype, real, stack_shape
+            x_spec, v_spec, isign, dtype, stack_shape
         )
 
         # Test u2u() compliance
@@ -313,7 +303,6 @@ class TestU2U:
         assert ftku.similar(tangent_out, tangent_out_gt)
         assert_areclose(tangent_out, tangent_out_gt, v_spec.ndim)
 
-    @parametrize_real
     @parametrize_stack
     def test_vjp(
         self,
@@ -322,7 +311,6 @@ class TestU2U:
         v_spec,
         isign,
         dtype,
-        real,
         stack_shape,
     ):
         # can VJP u2u() calls.
@@ -333,16 +321,10 @@ class TestU2U:
             pytest.skip()
 
         primal, primal_out_gt = self._generate_io(
-            x_spec, v_spec, isign, dtype, real, stack_shape
+            x_spec, v_spec, isign, dtype, stack_shape
         )
         cotangent, cotangent_out_gt = self._generate_io(
-            v_spec,
-            x_spec,
-            isign,
-            dtype,
-            False,
-            stack_shape,
-            # cotangents must always have the same dtype as primal_out, so C-valued.
+            v_spec, x_spec, isign, dtype, stack_shape
         )
 
         # Test u2u() compliance
@@ -425,23 +407,17 @@ class TestU2U:
         v_spec: ftku.UniformSpec,
         isign: int,
         dtype: np.dtype,
-        real: bool,
         stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Generate u2u() input
         rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
-            w += rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(cdtype)
+        w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+        w += rng.standard_normal((*stack_shape, *x_spec.num))
+        w = w.astype(cdtype)
 
         # Generate u2u() output ground-truth
         z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
