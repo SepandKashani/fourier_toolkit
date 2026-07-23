@@ -1,5 +1,3 @@
-import functools
-
 import array_api_compat as aac
 import numpy as np
 import pytest
@@ -18,7 +16,38 @@ parametrize_stack = pytest.mark.parametrize(
 )
 
 
-class TestNU2NU:
+class NUFFTMixin:
+    @pytest.fixture(params=[1, 2, 3])
+    def space_dim(self, request) -> int:
+        return request.param
+
+    @pytest.fixture(params=[+1, -1])
+    def isign(self, request) -> int:
+        return request.param
+
+    @pytest.fixture
+    def eps(self) -> float:
+        return 1e-14  # nu2nu() will tweak it based on FP dtype.
+
+    @pytest.fixture
+    def finufft_kwargs(self) -> finufft_kwargsT:
+        return (
+            ("upsampfac", 2),  # to actually reach `eps` precision for type-3 (FP64)
+        )
+
+    @pytest.fixture(
+        params=[
+            np.float32,
+            np.float64,
+        ]
+    )
+    def dtype(self, request) -> np.dtype:
+        # FP precisions to test implementation.
+        # This is NOT the dtype of inputs, just sets the precision.
+        return np.dtype(request.param)
+
+
+class TestNU2NU(NUFFTMixin):
     @parametrize_stack
     def test_apply(
         self,
@@ -66,7 +95,7 @@ class TestNU2NU:
 
         w, z_gt = self._generate_io(x_m, v_n, isign, dtype, stack_shape)
 
-        # Test nu2u() compliance
+        # Test nu2nu() compliance
         xp = array_backend.xp
         w = ct.to_backend(w, array_backend)
         z_gt = ct.to_backend(z_gt, array_backend)
@@ -204,12 +233,7 @@ class TestNU2NU:
         xt_m = xp.astype(ct.to_backend(+np.ones(x_m.shape), array_backend), fdtype)
         vt_n = xp.astype(ct.to_backend(-np.ones(v_n.shape), array_backend), fdtype)
 
-        _nu2nu = functools.partial(
-            nu2nu,
-            isign=isign,
-            eps=eps,
-            finufft_kwargs=finufft_kwargs,
-        )
+        _nu2nu = lambda x, v, w: nu2nu(x, v, w, isign, eps, finufft_kwargs)
         if is_jax:
             import jax
 
@@ -275,12 +299,7 @@ class TestNU2NU:
         xt_out_gt = xp.astype(ct.to_backend(xt_out_gt, array_backend), fdtype)
         vt_out_gt = xp.astype(ct.to_backend(vt_out_gt, array_backend), fdtype)
 
-        _nu2nu = functools.partial(
-            nu2nu,
-            isign=isign,
-            eps=eps,
-            finufft_kwargs=finufft_kwargs,
-        )
+        _nu2nu = lambda x, v, w: nu2nu(x, v, w, isign, eps, finufft_kwargs)
         if is_jax:
             import jax
 
@@ -308,10 +327,6 @@ class TestNU2NU:
         assert ftku.allclose(vt_n, vt_out_gt, fdtype)
 
     # Fixtures ----------------------------------------------------------------
-    @pytest.fixture(params=[1, 2, 3])
-    def space_dim(self, request) -> int:
-        return request.param
-
     @pytest.fixture
     def x_m(self, space_dim) -> np.ndarray:
         rng = np.random.default_rng()
@@ -327,31 +342,6 @@ class TestNU2NU:
         v = rng.uniform(-3, -2, (N, space_dim))
         v *= rng.uniform(size=space_dim)  # to have different spreads in each direction
         return v
-
-    @pytest.fixture(params=[+1, -1])
-    def isign(self, request) -> int:
-        return request.param
-
-    @pytest.fixture
-    def eps(self) -> float:
-        return 1e-14  # nu2nu() will tweak it based on FP dtype.
-
-    @pytest.fixture
-    def finufft_kwargs(self) -> finufft_kwargsT:
-        return (
-            ("upsampfac", 2),  # to actually reach `eps` precision for type-3 (FP64)
-        )
-
-    @pytest.fixture(
-        params=[
-            np.float32,
-            np.float64,
-        ]
-    )
-    def dtype(self, request) -> np.dtype:
-        # FP precisions to test implementation.
-        # This is NOT the dtype of inputs, just sets the precision.
-        return np.dtype(request.param)
 
     # Helper functions --------------------------------------------------------
     @staticmethod
@@ -391,8 +381,11 @@ class TestNU2NU:
         return (w, z_gt)
 
 
-class TestNU2U:
-    @parametrize_real
+class TestNU2U(NUFFTMixin):
+    # Unlike TestNU2NU, we restrict tests to test_[apply,jit]()
+    #
+    # Reason: since nu2u() is implemented in terms of nu2nu(), if the latter works, then the former may only break during JIT.
+
     @parametrize_stack
     def test_apply(
         self,
@@ -400,13 +393,13 @@ class TestNU2U:
         x_m,
         v_spec,
         isign,
+        eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # output value matches ground truth.
-        w, z_gt = self._generate_io(x_m, v_spec, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_m, v_spec, isign, dtype, stack_shape)
 
         # Test nu2u() compliance
         xp = array_backend.xp
@@ -414,22 +407,58 @@ class TestNU2U:
         z_gt = ct.to_backend(z_gt, array_backend)
         fdtype = ftku.TranslateDType(w).to_float()
         x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
-        z = nu2u(
-            x=x_m,
-            v_spec=v_spec,
-            w=w,
-            isign=isign,
-            **finufft_kwargs,
-        )
+        z = nu2u(x_m, v_spec, w, isign, eps, finufft_kwargs)
         assert z.shape == z_gt.shape
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, v_spec.ndim)
 
-    # Fixtures ----------------------------------------------------------------
-    @pytest.fixture(params=[1, 2, 3])
-    def space_dim(self, request) -> int:
-        return request.param
+    @parametrize_stack
+    def test_jit(
+        self,
+        array_backend,
+        x_m,
+        v_spec,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        stack_shape,
+    ):
+        # can JIT nu2u() calls.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
 
+        w, z_gt = self._generate_io(x_m, v_spec, isign, dtype, stack_shape)
+
+        # Test nu2u() compliance
+        xp = array_backend.xp
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+        fdtype = ftku.TranslateDType(w).to_float()
+        x_m = xp.astype(ct.to_backend(x_m, array_backend), fdtype)
+
+        if is_jax:
+            import jax
+
+            nu2u_jit = jax.jit(nu2u, static_argnums=(1, 3, 4, 5))
+        elif is_torch:
+            import torch
+
+            nu2u_jit = torch.compile(nu2u)
+            # we don't use any torch.compile() options on purpose: user can tune those if/when needed. (If JAX tests work, then we expect the same of PyTorch.)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        z1 = nu2u_jit(x_m, v_spec, w, isign, eps, finufft_kwargs)
+        z2 = nu2u_jit(x_m, v_spec, w, isign, eps, finufft_kwargs)
+        assert_areclose(z1, z2, D=v_spec.ndim)  # no side-effects
+        assert z2.shape == z_gt.shape
+        assert ftku.similar(z2, z_gt)
+        assert_areclose(z2, z_gt, D=v_spec.ndim)
+
+    # Fixtures ----------------------------------------------------------------
     @pytest.fixture
     def x_m(self, space_dim) -> np.ndarray:
         rng = np.random.default_rng()
@@ -447,28 +476,6 @@ class TestNU2U:
         N = rng.integers(3, 12, space_dim)
         return ftku.UniformSpec(start=v0, step=dv, num=N)
 
-    @pytest.fixture(params=[+1, -1])
-    def isign(self, request) -> int:
-        return request.param
-
-    @pytest.fixture
-    def finufft_kwargs(self) -> dict:
-        return dict(
-            eps=1e-14,  # actual precision assessed by assert_areclose()
-            upsampfac=2,  # to actually reach `eps` precision for type-3
-        )
-
-    @pytest.fixture(
-        params=[
-            np.float32,
-            np.float64,
-        ]
-    )
-    def dtype(self, request) -> np.dtype:
-        # FP precisions to test implementation.
-        # This is NOT the dtype of inputs, just sets the precision.
-        return np.dtype(request.param)
-
     # Helper functions --------------------------------------------------------
     @staticmethod
     def _generate_A(x_m, v_spec, isign) -> np.ndarray:
@@ -484,24 +491,18 @@ class TestNU2U:
         v_spec: ftku.UniformSpec,
         isign: int,
         dtype: np.dtype,
-        real: bool,
         stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Generate nu2u() input
         M, _ = x_m.shape
         rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, M))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, M))
-            w += rng.standard_normal((*stack_shape, M))
-            w = w.astype(cdtype)
+        w = 1j * rng.standard_normal((*stack_shape, M))
+        w += rng.standard_normal((*stack_shape, M))
+        w = w.astype(cdtype)
 
         # Generate nu2u() output ground-truth
         z_gt = np.zeros((*stack_shape, *v_spec.num), dtype=cdtype)
@@ -512,8 +513,11 @@ class TestNU2U:
         return (w, z_gt)
 
 
-class TestU2NU:
-    @parametrize_real
+class TestU2NU(NUFFTMixin):
+    # Unlike TestNU2NU, we restrict tests to test_[apply,jit]()
+    #
+    # Reason: since u2nu() is implemented in terms of nu2nu(), if the latter works, then the former may only break during JIT.
+
     @parametrize_stack
     def test_apply(
         self,
@@ -521,13 +525,13 @@ class TestU2NU:
         x_spec,
         v_n,
         isign,
+        eps,
         finufft_kwargs,
         dtype,
-        real,
         stack_shape,
     ):
         # output value matches ground truth.
-        w, z_gt = self._generate_io(x_spec, v_n, isign, dtype, real, stack_shape)
+        w, z_gt = self._generate_io(x_spec, v_n, isign, dtype, stack_shape)
 
         # Test u2nu() compliance
         xp = array_backend.xp
@@ -535,22 +539,58 @@ class TestU2NU:
         z_gt = ct.to_backend(z_gt, array_backend)
         fdtype = ftku.TranslateDType(w).to_float()
         v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
-        z = u2nu(
-            x_spec=x_spec,
-            v=v_n,
-            w=w,
-            isign=isign,
-            **finufft_kwargs,
-        )
+        z = u2nu(x_spec, v_n, w, isign, eps, finufft_kwargs)
         assert z.shape == z_gt.shape
         assert ftku.similar(z, z_gt)
         assert_areclose(z, z_gt, 1)
 
-    # Fixtures ----------------------------------------------------------------
-    @pytest.fixture(params=[1, 2, 3])
-    def space_dim(self, request) -> int:
-        return request.param
+    @parametrize_stack
+    def test_jit(
+        self,
+        array_backend,
+        x_spec,
+        v_n,
+        isign,
+        eps,
+        finufft_kwargs,
+        dtype,
+        stack_shape,
+    ):
+        # can JIT u2nu() calls.
+        is_jax = array_backend.name.startswith("jax-")
+        is_torch = array_backend.name.startswith("torch-")
+        if not (is_jax or is_torch):
+            pytest.skip()
 
+        w, z_gt = self._generate_io(x_spec, v_n, isign, dtype, stack_shape)
+
+        # Test u2nu() compliance
+        xp = array_backend.xp
+        w = ct.to_backend(w, array_backend)
+        z_gt = ct.to_backend(z_gt, array_backend)
+        fdtype = ftku.TranslateDType(w).to_float()
+        v_n = xp.astype(ct.to_backend(v_n, array_backend), fdtype)
+
+        if is_jax:
+            import jax
+
+            u2nu_jit = jax.jit(u2nu, static_argnums=(0, 3, 4, 5))
+        elif is_torch:
+            import torch
+
+            u2nu_jit = torch.compile(u2nu)
+            # we don't use any torch.compile() options on purpose: user can tune those if/when needed. (If JAX tests work, then we expect the same of PyTorch.)
+        else:
+            raise ValueError("Unknown case encountered.")
+
+        z1 = u2nu_jit(x_spec, v_n, w, isign, eps, finufft_kwargs)
+        z2 = u2nu_jit(x_spec, v_n, w, isign, eps, finufft_kwargs)
+        assert_areclose(z1, z2, D=1)  # no side-effects
+        assert z2.shape == z_gt.shape
+        assert ftku.similar(z2, z_gt)
+        assert_areclose(z2, z_gt, D=1)
+
+    # Fixtures ----------------------------------------------------------------
     @pytest.fixture
     def x_spec(self, space_dim) -> ftku.UniformSpec:
         rng = np.random.default_rng()
@@ -568,28 +608,6 @@ class TestU2NU:
         v *= rng.uniform(size=space_dim)  # to have different spreads in each direction
         return v
 
-    @pytest.fixture(params=[+1, -1])
-    def isign(self, request) -> int:
-        return request.param
-
-    @pytest.fixture
-    def finufft_kwargs(self) -> dict:
-        return dict(
-            eps=1e-14,  # actual precision assessed by assert_areclose()
-            upsampfac=2,  # to actually reach `eps` precision for type-3
-        )
-
-    @pytest.fixture(
-        params=[
-            np.float32,
-            np.float64,
-        ]
-    )
-    def dtype(self, request) -> np.dtype:
-        # FP precisions to test implementation.
-        # This is NOT the dtype of inputs, just sets the precision.
-        return np.dtype(request.param)
-
     # Helper functions --------------------------------------------------------
     @staticmethod
     def _generate_A(x_spec, v_n, isign) -> np.ndarray:
@@ -605,23 +623,17 @@ class TestU2NU:
         v_n: np.ndarray,
         isign: int,
         dtype: np.dtype,
-        real: bool,
         stack_shape: ftkt.TupleI,
     ) -> tuple[np.ndarray, np.ndarray]:
         # (w, z_gt) arrays used for tests
         translate = ftku.TranslateDType(np.array([], dtype=dtype))
-        fdtype = translate.to_float()
         cdtype = translate.to_complex()
 
         # Generate u2nu() input
         rng = np.random.default_rng()
-        if real:
-            w = rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(fdtype)
-        else:
-            w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
-            w += rng.standard_normal((*stack_shape, *x_spec.num))
-            w = w.astype(cdtype)
+        w = 1j * rng.standard_normal((*stack_shape, *x_spec.num))
+        w += rng.standard_normal((*stack_shape, *x_spec.num))
+        w = w.astype(cdtype)
 
         # Generate u2nu() output ground-truth
         N, _ = v_n.shape
