@@ -5,7 +5,6 @@ import jax
 import jax.experimental.buffer_callback as jbc
 import jax.experimental.hijax as hijax
 import jax.numpy as jnp
-import numpy as np
 
 import fourier_toolkit.typing as ftkt
 import fourier_toolkit.util as ftku
@@ -94,7 +93,7 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             device_type, _ = x.__dlpack_device__()
             match device_type:
                 case ftku.DLDeviceType.CPU:
-                    xp = np
+                    xp = importlib.import_module("numpy")
                 case ftku.DLDeviceType.CUDA:
                     xp = importlib.import_module("cupy")
                 case _:
@@ -120,10 +119,11 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             command_buffer_compatible=False,  # todo: can it be enabled?
         )
 
-        params = np.frombuffer(
+        params = jnp.frombuffer(
             json.dumps(self.params).encode("utf-8"),
-            dtype=np.uint8,
+            dtype=jnp.uint8,
         )
+
         z = f_fwd(x, v, w, params)
         return z
 
