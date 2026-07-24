@@ -82,7 +82,13 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             from .generic import _nu2nu as generic_nu2nu
 
             # de-serialize `self.params`
-            raw_params = np.from_dlpack(params, copy=False)
+            #
+            # buffer_callback() enforces all Buffer inputs to lie on the same device, even if they
+            # were on different devices initially. So, while `params` could stay on the CPU, in
+            # practice it will automatically be converted to a GPU array and transferred to the
+            # device if (x,v,w) are GPU arrays. A host<>device<>host round trip is thus unavoidable
+            # with buffer_callback() right now. (20260724)
+            raw_params = jax.device_get(jnp.from_dlpack(params))
             params = json.loads(bytes(raw_params).decode("utf-8"))
 
             device_type, _ = x.__dlpack_device__()
