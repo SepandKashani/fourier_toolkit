@@ -1,7 +1,3 @@
-- run full test suite
-  fix broken (non-PyTorch) stuff, GPU included
-
-
 - ufft.py, test_ufft.py
   + Add proper PyTorch support
     test_vjp() fails all the time.
@@ -15,11 +11,13 @@
     understand which op inside u2u() is source of vmap fail: fft(), czt(), hadamard_outer(), other?
 
     To overcome this issue, use https://docs.pytorch.org/tutorials/advanced/python_custom_ops.html to create an op for u2u().
-    Should have full support for jvp(), vjp(), vmap(), compile(), export()?, training?
+    Should have full support for jvp(), vjp(), vmap(), compile()
 
 
 - nufft.py, test_nufft.py
   + Add PyTorch support
-  + JAX version uses buffer_callback() w/ `command_buffer_compatible=False`
-    Can this be enabled, and if yes what are the implications? (A GPU thing)
+
   + Add differentiability in (x,v)
+
+  + buffer_callback(): can jax.device_get() be avoided using another JAX API to call foreign code?
+    [20260724] No alternative at this point in time.
