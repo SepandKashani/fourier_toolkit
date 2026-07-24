@@ -13,3 +13,27 @@ Fourier Toolkit
 
 
 Fourier Toolkit (FTK) is a collection of utilities to compute Fourier sums.
+
+
+Setup
+-----
+
+.. code-block:: bash
+
+   # user install
+   pip install fourier_toolkit@git+https://github.com/SepandKashani/fourier_toolkit.git
+
+   # developer install
+   git clone https://github.com/SepandKashani/fourier_toolkit.git
+   cd fourier_toolkit/
+   uv sync --group dev
+   uv run pre-commit install
+
+   # run test suite
+   uv run pytest -v
+
+   # build HTML docs
+   uv run make -C doc/ html
+
+   # creating a release
+   uv run dev/create_release.py <version>

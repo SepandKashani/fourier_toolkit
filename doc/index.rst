@@ -46,27 +46,3 @@ At their core, they all leverage the *Fast Fourier Transform* algorithm (FFT) in
 - When either :math:`(\bbx_{m}, \bbv_{n})` are non-uniform, we talk of *Non-uniform FFTs*: the latter combine the FFT with convolution/interpolation steps to compute :eq:`dirac-sum-FT` within a chosen relative error :math:`\epsilon \ll 1`.
 
 FTK is thus a toolbox to evaluate Fourier sums efficiently by building on mature libraries.
-
-
-Setup
------
-
-.. code-block:: bash
-
-   # user install
-   pip install fourier_toolkit@git+https://github.com/SepandKashani/fourier_toolkit.git
-
-   # developer install
-   git clone https://github.com/SepandKashani/fourier_toolkit.git
-   cd fourier_toolkit/
-   uv sync --group dev
-   uv run pre-commit install
-
-   # run test suite
-   uv run pytest -v
-
-   # build HTML docs
-   uv run make -C doc/ html
-
-   # creating a release
-   uv run dev/create_release.py <version>
