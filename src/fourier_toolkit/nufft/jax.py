@@ -116,7 +116,11 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 shape=self.out_aval.shape,
                 dtype=self.out_aval.dtype,
             ),
-            command_buffer_compatible=False,  # todo: can it be enabled?
+            command_buffer_compatible=False,
+            # It is debatable whether `command_buffer_compatible` can be enabled since a
+            # device<>host transfer takes place within low_level_fwd().
+            # At some point there will be an alternative JAX API to do the equivalent of
+            # buffer_callback(), at which point its enablement will be re-assessed.
         )
 
         params = jnp.frombuffer(
