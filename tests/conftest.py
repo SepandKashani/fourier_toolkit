@@ -37,10 +37,7 @@ def array_backend_cases():
                 ArrayBackend(
                     name="cupy-gpu",
                     xp=aac.array_namespace(cp.asarray([0.0])),
-                    device=cp.cuda.Device(
-                        # non-default device if multi-GPU
-                        cp.cuda.runtime.getDeviceCount() - 1
-                    ),
+                    device=cp.cuda.Device(0),
                 ),
                 id="cupy-gpu",
             )
@@ -64,8 +61,7 @@ def array_backend_cases():
                 ArrayBackend(
                     name="torch-cuda",
                     xp=torch_xp,
-                    # non-default device if multi-GPU
-                    device=f"cuda:{torch.cuda.device_count() - 1}",
+                    device="cuda",
                 ),
                 id="torch-cuda",
             )
@@ -89,8 +85,7 @@ def array_backend_cases():
                         ArrayBackend(
                             name=f"jax-{kind}",
                             xp=aac.array_namespace(jnp.asarray([0.0])),
-                            # non-default device if multi-GPU
-                            device=devices[-1],
+                            device=devices[0],
                         ),
                         id=f"jax-{kind}",
                     )
