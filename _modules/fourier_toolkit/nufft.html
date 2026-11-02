@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.4.4 documentation</title>
+    <title>fourier_toolkit.nufft &#8212; Fourier Toolkit 0.4.6.dev2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=90733dfc"></script>
+    <script src="../../_static/documentation_options.js?v=a43dd36f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.6.dev2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
@@ -50,9 +50,9 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;nu2nu&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;nu2u&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;u2nu&quot;</span><span class="p">,</span>
+    <span class="s2">"nu2nu"</span><span class="p">,</span>
+    <span class="s2">"nu2u"</span><span class="p">,</span>
+    <span class="s2">"u2nu"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">_eps_default</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
@@ -73,7 +73,7 @@
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Multi-dimensional NonUniform-to-NonUniform Fourier Transform. (:math:`\tnunu`)</span>
 
 <span class="sd">    Computes the Fourier sum</span>
@@ -99,7 +99,7 @@
 <span class="sd">        (See :ref:`nu2nu-notes`.)</span>
 <span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
 <span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
-<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
+<span class="sd">        Uses FINUFFT's default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -135,7 +135,7 @@
 <span class="sd">        + :py:func:`~jax.vjp`, but (`x`, `v`) are currently not differentiable.</span>
 
 <span class="sd">      - [PyTorch] currently not supported.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
@@ -158,7 +158,7 @@
     <span class="k">elif</span> <span class="n">cdtype</span> <span class="o">==</span> <span class="n">xp</span><span class="o">.</span><span class="n">complex128</span><span class="p">:</span>
         <span class="n">eps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">eps</span><span class="p">,</span> <span class="n">_eps_fp64_min</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown dtype: </span><span class="si">{</span><span class="n">cdtype</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown dtype: </span><span class="si">{</span><span class="n">cdtype</span><span class="si">}</span><span class="s2">."</span><span class="p">)</span>
     <span class="c1"># ------------------------------------------------------------------------</span>
 
     <span class="k">if</span> <span class="n">aac</span><span class="o">.</span><span class="n">is_jax_array</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
@@ -181,7 +181,7 @@
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Multi-dimensional NonUniform-to-Uniform Fourier Transform. (:math:`\tnuu`)</span>
 
 <span class="sd">    Computes the Fourier sum</span>
@@ -215,7 +215,7 @@
 <span class="sd">        (See :ref:`nu2u-notes`.)</span>
 <span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
 <span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
-<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
+<span class="sd">        Uses FINUFFT's default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -251,7 +251,7 @@
 <span class="sd">        + :py:func:`~jax.vjp`, but (`x`,) is currently not differentiable.</span>
 
 <span class="sd">      - [PyTorch] currently not supported.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
@@ -278,7 +278,7 @@
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_eps_default</span><span class="p">,</span>
     <span class="n">finufft_kwargs</span><span class="p">:</span> <span class="n">finufft_kwargsT</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Multi-dimensional Uniform-to-NonUniform Fourier Transform. (:math:`\tunu`)</span>
 
 <span class="sd">    Computes the Fourier sum</span>
@@ -312,7 +312,7 @@
 <span class="sd">        (See :ref:`u2nu-notes`.)</span>
 <span class="sd">    finufft_kwargs: tuple[tuple[str,int], ...]</span>
 <span class="sd">        Immutable sequence of (key,value) options for :py:class:`finufft.Plan`.</span>
-<span class="sd">        Uses FINUFFT&#39;s default option settings if omitted.</span>
+<span class="sd">        Uses FINUFFT's default option settings if omitted.</span>
 <span class="sd">        (For advanced users only.)</span>
 
 <span class="sd">    Returns</span>
@@ -348,7 +348,7 @@
 <span class="sd">        + :py:func:`~jax.vjp`, but (`v`,) is currently not differentiable.</span>
 
 <span class="sd">      - [PyTorch] currently not supported.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">xp</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
@@ -371,14 +371,14 @@
 
 <span class="c1"># Helper routines (internal) ---------------------------------------------------</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">_determine_precision</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayRC</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ftkt</span><span class="o">.</span><span class="n">DType</span><span class="p">,</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">DType</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Determine the least precise floating/complex dtype among arrays.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    fdtype, cdtype: DType</span>
 <span class="sd">        floating/complex dtype</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="c1"># device = ftku.get_device(args[0])</span>
     <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
@@ -389,13 +389,13 @@
         <span class="k">assert</span> <span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>  <span class="c1"># single/double precision</span>
 
     <span class="n">n_bits</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">)</span>
-    <span class="n">fdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;float</span><span class="si">{</span><span class="n">n_bits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">cdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;complex</span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_bits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"float</span><span class="si">{</span><span class="n">n_bits</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">cdtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">xp</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"complex</span><span class="si">{</span><span class="mi">2</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_bits</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">fdtype</span><span class="p">,</span> <span class="n">cdtype</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_canonicalize_knots</span><span class="p">(</span><span class="n">xv</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">,</span> <span class="n">fdtype</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">DType</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayR</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Transform (x, v) knots to canonical form:</span>
 <span class="sd">    - shape (M|N, D)</span>
 <span class="sd">    - real-valued</span>
@@ -409,7 +409,7 @@
 <span class="sd">    -------</span>
 <span class="sd">    xv_c: ArrayR</span>
 <span class="sd">        Canonical form of `xv`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="n">xp</span> <span class="o">=</span> <span class="n">aac</span><span class="o">.</span><span class="n">array_namespace</span><span class="p">(</span><span class="n">xv</span><span class="p">)</span>
 
     <span class="k">assert</span> <span class="n">xv</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
@@ -455,14 +455,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.6.dev2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.nufft</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2026, Sepand KASHANI &lt;sepand@kashani.ch&gt;.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
     </div>
   </body>
 </html>

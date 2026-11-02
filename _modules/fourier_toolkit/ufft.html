@@ -5,11 +5,11 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.4.4 documentation</title>
+    <title>fourier_toolkit.ufft &#8212; Fourier Toolkit 0.4.6.dev2 documentation</title>
     <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d75fae25" />
     <link rel="stylesheet" type="text/css" href="../../_static/bizstyle.css?v=5283bb3d" />
     
-    <script src="../../_static/documentation_options.js?v=90733dfc"></script>
+    <script src="../../_static/documentation_options.js?v=a43dd36f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/bizstyle.js"></script>
@@ -29,7 +29,7 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.6.dev2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
@@ -49,7 +49,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">fourier_toolkit.util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ftku</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;u2u&quot;</span><span class="p">,</span>
+    <span class="s2">"u2u"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -64,7 +64,7 @@
     <span class="n">w</span><span class="p">:</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">,</span>
     <span class="n">isign</span><span class="p">:</span> <span class="n">ExponentSign</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ftkt</span><span class="o">.</span><span class="n">ArrayC</span><span class="p">:</span>
-<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">"""</span>
 <span class="sd">    Multi-dimensional Uniform-to-Uniform Fourier Transform. (:math:`\tuu`)</span>
 
 <span class="sd">    Computes the Fourier sum</span>
@@ -118,7 +118,7 @@
 <span class="sd">        + :py:func:`~torch.compile`, but it has limited support for complex-valued operators: do not expect huge performance gains.</span>
 <span class="sd">        + :py:func:`~torch.func.vmap`, but it is currently broken when any transform axis uses the FFT algorithm instead of the CZT algorithm.</span>
 <span class="sd">        + :py:func:`~torch.func.jvp`</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
       <span class="c1"># + :py:func:`~torch.func.vjp`  # todo: add back to docs once PyTorch-specific implementation created</span>
     <span class="k">assert</span> <span class="n">ftku</span><span class="o">.</span><span class="n">is_complex</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
     <span class="k">assert</span> <span class="p">(</span><span class="n">isign</span> <span class="o">:=</span> <span class="nb">int</span><span class="p">(</span><span class="n">isign</span><span class="p">))</span> <span class="ow">in</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">)</span>
@@ -170,14 +170,14 @@
         <li class="right" >
           <a href="../../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.4 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Fourier Toolkit 0.4.6.dev2 documentation</a> &#187;</li>
           <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
         <li class="nav-item nav-item-this"><a href="">fourier_toolkit.ufft</a></li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
     &#169; Copyright 2026, Sepand KASHANI &lt;sepand@kashani.ch&gt;.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.2.0.
     </div>
   </body>
 </html>
