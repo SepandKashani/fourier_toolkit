@@ -99,6 +99,12 @@ class U2UPrimitive(hijax.VJPHiPrimitive):
         out_dim = 0
 
         (w,) = args
-        w = jnp.moveaxis(w, in_dim, out_dim)
-
-        return self(w), out_dim
+        if in_dim is None:
+            return self(w), out_dim
+        else:
+            w = jnp.moveaxis(w, in_dim, out_dim)
+            prim = U2UPrimitive(
+                w_aval=jax.typeof(w),  # batch dim included
+                **self.params,
+            )
+            return prim(w), out_dim
