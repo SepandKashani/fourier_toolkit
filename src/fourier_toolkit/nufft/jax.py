@@ -154,15 +154,16 @@ class NU2NUPrimitive(hijax.HiPrim):
         in_dims: tuple[int | None, ...],
     ) -> ftkt.ArrayC:
         x_dim, v_dim, w_dim = in_dims
-        out_dim = 0
         # do not accept batching (x,v), only (w,)
         assert x_dim is None, "Batching (x,) knots is not supported."
         assert v_dim is None, "Batching (v,) knots is not supported."
 
         (x, v, w) = args
         if w_dim is None:
+            out_dim = None
             return self(x, v, w), out_dim
         else:
+            out_dim = 0
             w = jnp.moveaxis(w, w_dim, out_dim)
             prim = NU2NUPrimitive(
                 x_aval=jax.typeof(x),

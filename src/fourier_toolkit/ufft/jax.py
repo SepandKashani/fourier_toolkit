@@ -96,12 +96,13 @@ class U2UPrimitive(hijax.HiPrim):
     ) -> ftkt.ArrayC:
         # piggy-back on fact that generic.u2u() accepts stacked arrays
         (in_dim,) = in_dims
-        out_dim = 0
 
         (w,) = args
         if in_dim is None:
+            out_dim = None
             return self(w), out_dim
         else:
+            out_dim = 0
             w = jnp.moveaxis(w, in_dim, out_dim)
             prim = U2UPrimitive(
                 w_aval=jax.typeof(w),  # batch dim included
