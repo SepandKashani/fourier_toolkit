@@ -1,5 +1,4 @@
 import importlib
-import json
 
 import jax
 import jax.experimental.buffer_callback as jbc
@@ -76,19 +75,8 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
             x: jbc.Buffer,
             v: jbc.Buffer,
             w: jbc.Buffer,
-            params: jbc.Buffer,
         ):
             from .generic import _nu2nu as generic_nu2nu
-
-            # de-serialize `self.params`
-            #
-            # buffer_callback() enforces all Buffer inputs to lie on the same device, even if they
-            # were on different devices initially. So, while `params` could stay on the CPU, in
-            # practice it will automatically be converted to a GPU array and transferred to the
-            # device if (x,v,w) are GPU arrays. A host<>device<>host round trip is thus unavoidable
-            # with buffer_callback() right now. (20260724)
-            raw_params = jax.device_get(jnp.from_dlpack(params))
-            params = json.loads(bytes(raw_params).decode("utf-8"))
 
             device_type, _ = x.__dlpack_device__()
             match device_type:
@@ -104,9 +92,9 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 asarray(x),
                 asarray(v),
                 asarray(w),
-                isign=params["isign"],
-                eps=params["eps"],
-                finufft_kwargs=params["finufft_kwargs"],
+                isign=self.isign,
+                eps=self.eps,
+                finufft_kwargs=self.params["finufft_kwargs"],
             )
             asarray(out)[:] = z
 
@@ -116,19 +104,10 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 shape=self.out_aval.shape,
                 dtype=self.out_aval.dtype,
             ),
-            command_buffer_compatible=False,
-            # It is debatable whether `command_buffer_compatible` can be enabled since a
-            # device<>host transfer takes place within low_level_fwd().
-            # At some point there will be an alternative JAX API to do the equivalent of
-            # buffer_callback(), at which point its enablement will be re-assessed.
+            command_buffer_compatible=False,  # unsure if can be enabled safely
         )
 
-        params = jnp.frombuffer(
-            json.dumps(self.params).encode("utf-8"),
-            dtype=jnp.uint8,
-        )
-
-        z = f_fwd(x, v, w, params)
+        z = f_fwd(x, v, w)
         return z
 
     def jvp(
