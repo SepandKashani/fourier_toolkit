@@ -24,7 +24,7 @@ def _u2u(
     return z
 
 
-class U2UPrimitive(hijax.VJPHiPrimitive):
+class U2UPrimitive(hijax.HiPrim):
     def __init__(
         self,
         w_aval: jax.core.ShapedArray,

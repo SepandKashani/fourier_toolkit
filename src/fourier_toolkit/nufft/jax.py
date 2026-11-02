@@ -37,7 +37,7 @@ def _nu2nu(
     return z
 
 
-class NU2NUPrimitive(hijax.VJPHiPrimitive):
+class NU2NUPrimitive(hijax.HiPrim):
     def __init__(
         self,
         x_aval: jax.core.ShapedArray,
