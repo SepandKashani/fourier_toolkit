@@ -18,6 +18,3 @@
   + Add PyTorch support
 
   + Add differentiability in (x,v)
-
-  + buffer_callback(): can jax.device_get() be avoided using another JAX API to call foreign code?
-    [20260724] No alternative at this point in time.
