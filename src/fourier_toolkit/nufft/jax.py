@@ -92,9 +92,7 @@ class NU2NUPrimitive(hijax.VJPHiPrimitive):
                 asarray(x),
                 asarray(v),
                 asarray(w),
-                isign=self.isign,
-                eps=self.eps,
-                finufft_kwargs=self.params["finufft_kwargs"],
+                **self.params,
             )
             asarray(out)[:] = z
 
